@@ -1,0 +1,38 @@
+name: Pokemon Game CI-CD Pipeline
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  test-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code download karo
+        uses: actions/checkout@v4
+
+      - name: Python 3 setup karo
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Dependencies install karo
+        run: pip install -r requirements.txt
+
+      - name: Database & Rules Audit Test karo
+        run: python verify.py
+
+  deploy-job:
+    needs: test-job
+    runs-on: self-hosted
+
+    steps:
+      - name: Latest code checkout karo
+        uses: actions/checkout@v4
+
+      - name: Dependencies install karo
+        run: pip install -r requirements.txt --break-system-packages
+
+      - name: Pokemon Server Start/Restart karo via PM2 (Port 5050)
+        run: |
+          pm2 restart pokemon-game || pm2 start "python3 server.py" --name "pokemon-game"
