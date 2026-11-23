@@ -1,0 +1,12 @@
+{
+  "anilist_page": 3,
+  "anilist_has_more": true,
+  "jikan_page": 1,
+  "jikan_has_more": true,
+  "kitsu_offset": 40,
+  "kitsu_has_more": true,
+  "total_imported": 26,
+  "total_duplicates_merged": 24,
+  "total_failed": 0,
+  "last_sync": "2026-11-22 14:11:10 UTC"
+}

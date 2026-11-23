@@ -1,0 +1,2591 @@
+/* ==========================================================================
+   POKÉDEX AUCTION & POWER RANKING SYSTEM - HIGH-AESTHETIC CSS
+   ========================================================================== */
+
+:root {
+  --bg-primary: #0a0d14;
+  --bg-secondary: #121722;
+  --bg-card: #182030;
+  --bg-card-hover: #1f2a40;
+  --bg-input: #1a2334;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-glow: rgba(79, 134, 247, 0.3);
+
+  --text-main: #f0f4fc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  --accent-gold: #f59e0b;
+  --accent-gold-glow: rgba(245, 158, 11, 0.25);
+  --accent-blue: #3b82f6;
+  --accent-cyan: #06b6d4;
+  --accent-purple: #8b5cf6;
+  --accent-red: #ef4444;
+
+  /* Tier colors */
+  --tier-s-plus: #ffd700;
+  --tier-s-plus-bg: linear-gradient(135deg, #ef4444 0%, #f59e0b 50%, #ec4899 100%);
+  --tier-s: #f59e0b;
+  --tier-s-bg: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+  --tier-a: #ec4899;
+  --tier-a-bg: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+  --tier-b: #3b82f6;
+  --tier-b-bg: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+  --tier-c: #10b981;
+  --tier-c-bg: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  --tier-d: #64748b;
+  --tier-d-bg: linear-gradient(135deg, #475569 0%, #64748b 100%);
+
+  /* Type Colors */
+  --type-normal: #a8a77a;
+  --type-fire: #ee8130;
+  --type-water: #6390f0;
+  --type-grass: #7ac74c;
+  --type-electric: #f7d02c;
+  --type-ice: #96d9d6;
+  --type-fighting: #c22e28;
+  --type-poison: #a33ea1;
+  --type-ground: #e2bf65;
+  --type-flying: #a98ff3;
+  --type-psychic: #f95587;
+  --type-bug: #a6b91a;
+  --type-rock: #b6a136;
+  --type-ghost: #735797;
+  --type-dragon: #6f35fc;
+  --type-steel: #b7b7ce;
+  --type-dark: #705746;
+  --type-fairy: #d685ad;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  min-height: 100vh;
+  line-height: 1.5;
+  background-image: 
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59, 130, 246, 0.15), transparent),
+    radial-gradient(circle at 100% 100%, rgba(245, 158, 11, 0.05), transparent);
+}
+
+/* ==========================================================================
+   HEADER
+   ========================================================================== */
+
+.app-header {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  padding: 1.25rem 2rem 0.75rem 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pokeball-icon {
+  width: 44px;
+  height: 44px;
+  position: relative;
+  background: white;
+  border-radius: 50%;
+  border: 4px solid #1e293b;
+  overflow: hidden;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.4);
+  animation: pulse 3s infinite ease-in-out;
+}
+
+.pb-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: #ef4444;
+}
+
+.pb-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  background: white;
+  border: 3px solid #1e293b;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+
+.pb-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: #f8fafc;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.brand h1 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+}
+
+.btn-outline:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: none;
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+/* Metrics Ticker */
+.metrics-ticker {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  max-width: 1440px;
+  margin: 0.75rem auto 0 auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+  overflow-x: auto;
+  font-size: 0.8rem;
+}
+
+.ticker-item {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.ticker-item .label {
+  color: var(--text-muted);
+}
+
+.ticker-item .value {
+  font-weight: 700;
+  color: #38bdf8;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.ticker-tier-bar {
+  display: flex;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+
+.tier-pill {
+  padding: 0.15rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.tier-S-plus { background: var(--tier-s-plus-bg); }
+.tier-S { background: var(--tier-s-bg); }
+.tier-A { background: var(--tier-a-bg); }
+.tier-B { background: var(--tier-b-bg); }
+.tier-C { background: var(--tier-c-bg); }
+.tier-D { background: var(--tier-d-bg); }
+
+/* ==========================================================================
+   MAIN LAYOUT & CONTROLS
+   ========================================================================== */
+
+.main-layout {
+  max-width: 1440px;
+  margin: 1.5rem auto;
+  padding: 0 1.5rem;
+}
+
+.controls-panel {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  width: 20px;
+  height: 20px;
+  color: var(--text-muted);
+}
+
+.search-box input {
+  width: 100%;
+  padding: 0.85rem 2.75rem 0.85rem 3rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-main);
+  font-size: 1rem;
+  outline: none;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.search-box input:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.clear-btn {
+  position: absolute;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.4rem;
+  cursor: pointer;
+  display: none;
+}
+
+.clear-btn:hover {
+  color: var(--text-main);
+}
+
+.quick-toggles {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.toggle-btn {
+  padding: 0.4rem 0.9rem;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.toggle-btn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-main);
+}
+
+.toggle-btn.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+  font-weight: 600;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.control-group label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.control-group select {
+  padding: 0.6rem 0.8rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-main);
+  font-size: 0.85rem;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+}
+
+.control-group select:focus {
+  border-color: var(--accent-blue);
+}
+
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.reset-link {
+  background: none;
+  border: none;
+  color: #38bdf8;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.reset-link:hover {
+  text-decoration: underline;
+}
+
+/* ==========================================================================
+   CATALOG GRID & CARDS
+   ========================================================================== */
+
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.pokemon-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.pokemon-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  opacity: 0.8;
+}
+
+.pokemon-card.tier-border-S-plus::before { background: var(--tier-s-plus-bg); }
+.pokemon-card.tier-border-S::before { background: var(--tier-s-bg); }
+.pokemon-card.tier-border-A::before { background: var(--tier-a-bg); }
+.pokemon-card.tier-border-B::before { background: var(--tier-b-bg); }
+.pokemon-card.tier-border-C::before { background: var(--tier-c-bg); }
+.pokemon-card.tier-border-D::before { background: var(--tier-d-bg); }
+
+.pokemon-card:hover {
+  transform: translateY(-4px);
+  background: var(--bg-card-hover);
+  border-color: var(--border-glow);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.dex-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.card-tier-badge {
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.card-img-wrap {
+  width: 100%;
+  height: 160px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin-bottom: 0.75rem;
+}
+
+.card-img-bg {
+  position: absolute;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.04) 0%, transparent 70%);
+  z-index: 0;
+}
+
+.pokemon-card img {
+  max-width: 140px;
+  max-height: 140px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 12px rgba(0,0,0,0.4));
+  transition: transform 0.3s ease;
+  z-index: 1;
+}
+
+.pokemon-card:hover img {
+  transform: scale(1.08);
+}
+
+.card-info {
+  margin-bottom: 0.75rem;
+}
+
+.pokemon-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pokemon-category {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.type-pill-list {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.type-badge {
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+.type-normal { background: var(--type-normal); }
+.type-fire { background: var(--type-fire); }
+.type-water { background: var(--type-water); }
+.type-grass { background: var(--type-grass); }
+.type-electric { background: var(--type-electric); color: #1e293b; text-shadow: none; }
+.type-ice { background: var(--type-ice); color: #1e293b; text-shadow: none; }
+.type-fighting { background: var(--type-fighting); }
+.type-poison { background: var(--type-poison); }
+.type-ground { background: var(--type-ground); }
+.type-flying { background: var(--type-flying); }
+.type-psychic { background: var(--type-psychic); }
+.type-bug { background: var(--type-bug); }
+.type-rock { background: var(--type-rock); }
+.type-ghost { background: var(--type-ghost); }
+.type-dragon { background: var(--type-dragon); }
+.type-steel { background: var(--type-steel); color: #1e293b; text-shadow: none; }
+.type-dark { background: var(--type-dark); }
+.type-fairy { background: var(--type-fairy); }
+
+/* Rating & Auction Metrics Box */
+.card-metrics {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 10px;
+  padding: 0.75rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.metric-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-col .metric-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+.metric-col .metric-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.metric-power {
+  color: #38bdf8;
+}
+
+.metric-auction {
+  color: #fbbf24;
+}
+
+/* Mini stat bars */
+.mini-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.mini-stat-row {
+  display: flex;
+  align-items: center;
+  font-size: 0.72rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.stat-abbr {
+  width: 32px;
+  color: var(--text-muted);
+}
+
+.stat-bar-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+  margin: 0 0.5rem;
+}
+
+.stat-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: #3b82f6;
+}
+
+.stat-val {
+  width: 28px;
+  text-align: right;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   PAGINATION
+   ========================================================================== */
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.page-nav-btn {
+  padding: 0.6rem 1.25rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-main);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.page-nav-btn:hover:not(:disabled) {
+  background: var(--bg-card);
+  border-color: var(--accent-blue);
+}
+
+.page-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.page-info {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+/* ==========================================================================
+   MODAL DRAWER & DIALOG
+   ========================================================================== */
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 1.5rem;
+}
+
+.modal-backdrop.active {
+  display: flex;
+}
+
+.modal-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 820px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  padding: 2rem;
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: var(--text-main);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.modal-close-btn:hover {
+  background: rgba(239, 68, 68, 0.8);
+}
+
+/* Detail modal layout */
+.detail-header {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  align-items: center;
+}
+
+.detail-img-wrap {
+  width: 220px;
+  height: 220px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.detail-img-wrap img {
+  max-width: 190px;
+  max-height: 190px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
+}
+
+.detail-intro {
+  flex: 1;
+}
+
+.detail-badges {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.detail-title {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.detail-category {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+}
+
+.detail-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.meta-chip {
+  background: var(--bg-card);
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.meta-chip .chip-label {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.meta-chip .chip-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* Auction Valuation Showcase Box */
+.auction-showcase-box {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.05) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 14px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.auction-showcase-text h4 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  color: #fbbf24;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
+.auction-showcase-text p {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.auction-price-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #f59e0b;
+  text-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+}
+
+/* Detail Stats Table */
+.detail-section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+.stats-breakdown-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-full-row {
+  display: flex;
+  align-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+}
+
+.stat-full-label {
+  width: 140px;
+  color: var(--text-secondary);
+}
+
+.stat-full-bar-track {
+  flex: 1;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 50px;
+  overflow: hidden;
+  margin: 0 1rem;
+}
+
+.stat-full-bar-fill {
+  height: 100%;
+  border-radius: 50px;
+  background: linear-gradient(90deg, #3b82f6, #06b6d4);
+}
+
+.stat-full-val {
+  width: 40px;
+  text-align: right;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+/* Type Matchups Pill Grid */
+.type-matchup-list {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+/* Action buttons in modal */
+.modal-footer-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+/* Auction Bid Simulator Widget */
+.bid-simulator {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.bid-controls {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.bid-input {
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-main);
+  padding: 0.5rem 0.75rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  width: 160px;
+}
+
+.bid-btn {
+  background: #f59e0b;
+  color: #1e293b;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bid-btn:hover {
+  background: #d97706;
+}
+
+/* Metrics Dialog Table */
+.metrics-dialog {
+  max-width: 900px;
+}
+
+.metrics-dialog h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.metric-block {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.metric-block h3 {
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+  color: #38bdf8;
+}
+
+.metric-block ul {
+  list-style: none;
+  font-size: 0.85rem;
+}
+
+.metric-block li {
+  margin-bottom: 0.4rem;
+}
+
+.metric-block pre {
+  background: #0d121c;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+}
+
+.tier-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.tier-table th, .tier-table td {
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* App Footer */
+.app-footer {
+  text-align: center;
+  padding: 2rem 1rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border-color);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .detail-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .detail-badges {
+    justify-content: center;
+  }
+  .type-pill-list {
+    justify-content: center;
+  }
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+  .auction-showcase-box {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+}
+
+/* ==========================================================================
+   MULTIPLAYER ARENA STYLES
+   ========================================================================== */
+
+/* Top Navigation Tabs */
+.nav-tabs {
+  display: flex;
+  gap: 0.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.3rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+}
+
+.nav-tab {
+  padding: 0.5rem 1rem;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s ease;
+}
+
+.nav-tab:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.nav-tab.active {
+  background: #3b82f6;
+  color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+}
+
+/* App Views */
+.app-view {
+  display: none;
+}
+
+.app-view.active {
+  display: block;
+}
+
+/* Arena Sub-Screens */
+.arena-screen {
+  display: none;
+  max-width: 1440px;
+  margin: 1.5rem auto;
+  padding: 0 1.5rem;
+}
+
+.arena-screen.active {
+  display: block;
+}
+
+/* ==========================================================================
+   SCREEN 1A: ARENA SETUP & PROFILE
+   ========================================================================== */
+
+.setup-container {
+  max-width: 680px;
+  margin: 2rem auto;
+}
+
+.setup-hero {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.setup-hero h2 {
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #f59e0b 0%, #ef4444 50%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.5rem;
+}
+
+.setup-hero p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.setup-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+}
+
+.profile-setup {
+  margin-bottom: 1.75rem;
+}
+
+.form-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.avatar-picker {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.avatar-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.avatar-option:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.avatar-option.selected {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.avatar-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.avatar-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.text-input, .select-input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  color: var(--text-main);
+  font-size: 0.95rem;
+  font-family: inherit;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.text-input:focus, .select-input:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.text-input.uppercase {
+  text-transform: uppercase;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.room-action-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+.subtab-btn {
+  flex: 1;
+  padding: 0.6rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.subtab-btn.active {
+  color: #38bdf8;
+  border-bottom-color: #38bdf8;
+}
+
+.room-form {
+  display: none;
+}
+
+.room-form.active {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-row label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.btn-large {
+  padding: 0.9rem 1.5rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border-radius: 12px;
+  justify-content: center;
+}
+
+/* ==========================================================================
+   SCREEN 1B: WAITING LOBBY
+   ========================================================================== */
+
+.lobby-container {
+  max-width: 1000px;
+  margin: 1rem auto;
+}
+
+.lobby-header-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.25rem 1.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.lobby-title-area {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.badge-status {
+  background: #3b82f6;
+  color: white;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.highlight-code {
+  font-family: 'JetBrains Mono', monospace;
+  color: #fbbf24;
+  letter-spacing: 0.05em;
+}
+
+.lobby-purse-badge {
+  text-align: right;
+}
+
+.lobby-purse-badge .label {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.lobby-purse-badge .value {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  font-size: 1.3rem;
+  color: #fbbf24;
+}
+
+.lobby-body-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 1.5rem;
+}
+
+.lobby-players-panel, .lobby-chat-panel {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.panel-header h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.min-notice {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.players-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  flex: 1;
+}
+
+.lobby-player-card {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  transition: all 0.2s ease;
+}
+
+.lobby-player-card.is-ready {
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.lobby-player-card.is-me {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.lobby-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.lobby-player-info {
+  flex: 1;
+}
+
+.player-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.you-badge {
+  font-size: 0.72rem;
+  color: #38bdf8;
+}
+
+.host-badge {
+  font-size: 0.7rem;
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.player-purse {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.ready-badge {
+  padding: 0.25rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.ready-badge.ready {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+.ready-badge.not-ready {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.lobby-controls-bar {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-ready {
+  background: #10b981;
+  color: white;
+  border: none;
+  font-weight: 700;
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.btn-ready.ready {
+  background: #ef4444;
+}
+
+.btn-start {
+  flex: 1;
+  font-weight: 800;
+  border-radius: 10px;
+}
+
+/* Lobby Chat */
+.chat-messages {
+  flex: 1;
+  min-height: 240px;
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: var(--bg-input);
+  border-radius: 10px;
+  margin-bottom: 0.75rem;
+}
+
+.chat-bubble {
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.chat-time {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-right: 0.35rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.chat-sender {
+  font-weight: 700;
+  color: #38bdf8;
+  margin-right: 0.35rem;
+}
+
+.chat-system-msg {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 0.25rem 0;
+}
+
+.chat-input-bar {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.chat-input-bar input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.85rem;
+  outline: none;
+}
+
+/* ==========================================================================
+   SCREEN 1C: LIVE AUCTION STAGE
+   ========================================================================== */
+
+.stage-container {
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.stage-top-bar {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.my-status-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.avatar-tiny {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #3b82f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chip-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.chip-purse {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  color: #fbbf24;
+  font-size: 1.1rem;
+}
+
+.my-team-progress-chip, .my-team-power-chip, .room-tag-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--bg-card);
+  padding: 0.4rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.chip-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.team-dots {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.team-dots .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.team-dots .dot.filled {
+  background: #10b981;
+  border-color: #34d399;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+}
+
+.chip-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+}
+
+.chip-val.power-num {
+  color: #38bdf8;
+  font-size: 1.1rem;
+}
+
+.stage-layout-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr 300px;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+/* Center Stage */
+.stage-center-arena {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Timer & Status Banner */
+.timer-banner {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.timer-widget {
+  width: 80px;
+  height: 80px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.timer-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.timer-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 8;
+}
+
+.timer-fill {
+  fill: none;
+  stroke: #10b981;
+  stroke-width: 8;
+  stroke-dasharray: 263.89;
+  stroke-dashoffset: 0;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.4s linear, stroke 0.3s ease;
+}
+
+.timer-number {
+  position: absolute;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #10b981;
+}
+
+.auction-status-text h3 {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.2rem;
+}
+
+.bid-hero-display {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.bid-hero-display .currency {
+  font-size: 1.6rem;
+}
+
+.bid-hero-display .amount {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #fbbf24;
+  letter-spacing: -0.02em;
+}
+
+.bid-hero-display .bidder {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-left: 0.5rem;
+}
+
+/* Active Pokemon Auction Card */
+.active-auction-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 1.75rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+}
+
+.active-auction-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+}
+
+.auction-card-badges {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.auction-dex-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.auction-rarity-tag {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.auction-hero-img-wrap {
+  width: 100%;
+  height: 240px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.auction-hero-img {
+  max-width: 220px;
+  max-height: 220px;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.6));
+  animation: floatPoke 4s ease-in-out infinite;
+}
+
+@keyframes floatPoke {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.auction-poke-name {
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin-bottom: 0.2rem;
+}
+
+.auction-poke-category {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.auction-stats-box {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 0.4rem;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.75rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stat-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.stat-cell .lbl {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.stat-cell .val {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.bst-cell {
+  background: rgba(59, 130, 246, 0.15);
+  border-radius: 6px;
+  padding: 0.15rem;
+}
+
+.bst-cell .val {
+  color: #38bdf8;
+}
+
+.pr-cell {
+  background: rgba(245, 158, 11, 0.15);
+  border-radius: 6px;
+  padding: 0.15rem;
+}
+
+.pr-cell .val {
+  color: #fbbf24;
+}
+
+/* Bidding Console */
+.bidding-console {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.quick-bid-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+.btn-quick-bid {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 0.65rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-quick-bid:hover:not(:disabled) {
+  background: var(--bg-card-hover);
+  border-color: #38bdf8;
+  color: #38bdf8;
+  transform: translateY(-2px);
+}
+
+.btn-quick-bid:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.custom-bid-row {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.input-with-label {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.currency-prefix {
+  position: absolute;
+  left: 0.85rem;
+  font-size: 1.1rem;
+}
+
+.bid-custom-input {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.5rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  color: var(--text-main);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  outline: none;
+}
+
+.bid-custom-input:focus {
+  border-color: #f59e0b;
+}
+
+.btn-bid-submit {
+  padding: 0.75rem 1.75rem;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #1e293b;
+  font-weight: 900;
+  font-size: 1rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+}
+
+.btn-bid-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.5);
+}
+
+.btn-bid-submit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.reserve-note {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* Left & Right Panels in Stage */
+.stage-panel {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.25rem;
+}
+
+.roster-slot-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.roster-slot {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  min-height: 56px;
+}
+
+.roster-slot.empty {
+  border-style: dashed;
+  opacity: 0.6;
+}
+
+.slot-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  width: 20px;
+}
+
+.empty-slot-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.roster-slot-img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.roster-slot-info {
+  flex: 1;
+}
+
+.roster-slot-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.roster-slot-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+}
+
+.opponents-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.opponent-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+}
+
+.opponent-card.leading {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.opponent-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.opponent-info {
+  flex: 1;
+}
+
+.opponent-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.lead-badge {
+  font-size: 0.65rem;
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.2);
+  padding: 0.05rem 0.3rem;
+  border-radius: 4px;
+}
+
+.full-badge {
+  font-size: 0.65rem;
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.2);
+  padding: 0.05rem 0.3rem;
+  border-radius: 4px;
+}
+
+.opponent-stats {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.stage-log {
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  background: var(--bg-input);
+  border-radius: 10px;
+  padding: 0.5rem;
+}
+
+.log-item {
+  font-size: 0.75rem;
+  line-height: 1.35;
+  padding: 0.2rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.log-bid { color: #f59e0b; }
+.log-won { color: #34d399; font-weight: 600; }
+.log-unsold { color: #f87171; }
+.log-info { color: #38bdf8; }
+
+/* Showcase Overlay */
+.showcase-overlay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(18, 23, 34, 0.95);
+  border: 2px solid #f59e0b;
+  border-radius: 20px;
+  padding: 2rem 3rem;
+  text-align: center;
+  box-shadow: 0 0 60px rgba(245, 158, 11, 0.5);
+  backdrop-filter: blur(12px);
+  z-index: 2000;
+  animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.5s ease;
+}
+
+.showcase-overlay.fade-out {
+  opacity: 0;
+}
+
+.showcase-content h2 {
+  font-size: 2rem;
+  font-weight: 900;
+  color: #fbbf24;
+  margin-bottom: 0.5rem;
+}
+
+.showcase-content p {
+  font-size: 1.1rem;
+  color: var(--text-main);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+@keyframes popIn {
+  from { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+  to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+/* ==========================================================================
+   SCREEN 1D: FINAL LEADERBOARD & VICTORY SCREEN
+   ========================================================================== */
+
+.results-container {
+  max-width: 1100px;
+  margin: 1.5rem auto;
+}
+
+.victory-banner {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.trophy-icon {
+  font-size: 4rem;
+  margin-bottom: 0.5rem;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.victory-banner h2 {
+  font-size: 2.2rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #ffd700 0%, #f59e0b 50%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.4rem;
+}
+
+.victory-banner p {
+  color: var(--text-secondary);
+}
+
+.podium-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+  align-items: end;
+}
+
+.podium-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.75rem 1.25rem;
+  text-align: center;
+  position: relative;
+}
+
+.podium-card.rank-1 {
+  border-color: #ffd700;
+  box-shadow: 0 0 32px rgba(255, 215, 0, 0.25);
+  order: 2;
+  transform: translateY(-15px);
+}
+
+.podium-card.rank-2 {
+  border-color: #c0c0c0;
+  order: 1;
+}
+
+.podium-card.rank-3 {
+  border-color: #cd7f32;
+  order: 3;
+}
+
+.podium-medal {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.podium-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  margin: 0 auto 0.75rem auto;
+}
+
+.podium-name {
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+}
+
+.podium-power {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2rem;
+  font-weight: 900;
+  color: #38bdf8;
+  margin-bottom: 0.5rem;
+}
+
+.podium-power .lbl {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.podium-stats {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.leaderboard-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.leaderboard-card h3 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.leaderboard-table th, .leaderboard-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.leaderboard-table th {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.rank-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  padding: 0.2rem 0.5rem;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+}
+
+.me-row {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+/* Team Showcase Drawer */
+.team-showcase-panel {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.team-showcase-panel h3 {
+  font-size: 1.15rem;
+  margin-bottom: 1rem;
+  color: #fbbf24;
+}
+
+.showcase-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1rem;
+}
+
+.showcase-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+  position: relative;
+}
+
+.showcase-img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin-bottom: 0.5rem;
+}
+
+.showcase-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 0.25rem;
+}
+
+.showcase-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.results-actions {
+  display: flex;
+  justify-content: center;
+}
+
+@media (max-width: 1024px) {
+  .stage-layout-grid {
+    grid-template-columns: 1fr;
+  }
+  .showcase-cards-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ==========================================================================
+   MULTI-ANIME EXPANSION & ADMIN STYLING
+   ========================================================================== */
+
+.anime-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.anime-badge.dragon_ball { background: rgba(239, 68, 68, 0.18); color: #f87171; border-color: rgba(239, 68, 68, 0.4); }
+.anime-badge.naruto { background: rgba(249, 115, 22, 0.18); color: #fb923c; border-color: rgba(249, 115, 22, 0.4); }
+.anime-badge.one_piece { background: rgba(234, 179, 8, 0.18); color: #facc15; border-color: rgba(234, 179, 8, 0.4); }
+.anime-badge.bleach { background: rgba(99, 102, 241, 0.18); color: #818cf8; border-color: rgba(99, 102, 241, 0.4); }
+.anime-badge.jujutsu_kaisen { background: rgba(168, 85, 247, 0.18); color: #c084fc; border-color: rgba(168, 85, 247, 0.4); }
+.anime-badge.demon_slayer { background: rgba(20, 184, 166, 0.18); color: #2dd4bf; border-color: rgba(20, 184, 166, 0.4); }
+.anime-badge.attack_on_titan { background: rgba(132, 204, 22, 0.18); color: #a3e635; border-color: rgba(132, 204, 22, 0.4); }
+.anime-badge.one_punch_man { background: rgba(244, 63, 94, 0.18); color: #fb7185; border-color: rgba(244, 63, 94, 0.4); }
+.anime-badge.solo_leveling { background: rgba(56, 189, 248, 0.18); color: #38bdf8; border-color: rgba(56, 189, 248, 0.4); }
+.anime-badge.pokemon { background: rgba(59, 130, 246, 0.18); color: #60a5fa; border-color: rgba(59, 130, 246, 0.4); }
+
+.form-pill {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  margin-top: 0.25rem;
+}
+
+.mode-selection-group {
+  margin-top: 1rem;
+  margin-bottom: 1.25rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+}
+
+.mode-options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.mode-radio-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.6rem 0.4rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  font-size: 0.8rem;
+}
+
+.mode-radio-btn:hover {
+  border-color: var(--accent-blue);
+  background: var(--bg-card-hover);
+}
+
+.mode-radio-btn.selected {
+  border-color: var(--accent-gold);
+  background: rgba(245, 158, 11, 0.12);
+  color: #fff;
+  font-weight: 700;
+}
+
+.mode-radio-btn .mode-icon {
+  font-size: 1.3rem;
+  margin-bottom: 0.25rem;
+}
+
+.franchise-checklist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  max-height: 140px;
+  overflow-y: auto;
+  margin-top: 0.6rem;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 8px;
+}
+
+.franchise-chip {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+  border-radius: 9999px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+
+.franchise-chip.active {
+  background: var(--accent-blue);
+  color: #fff;
+  border-color: var(--accent-cyan);
+}
+
+.admin-drawer {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  z-index: 2000;
+  justify-content: center;
+  align-items: center;
+}
+
+.admin-drawer.open {
+  display: flex;
+}
+
+.admin-card {
+  width: 90%;
+  max-width: 960px;
+  max-height: 85vh;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+}
+
+.admin-header {
+  padding: 1.25rem 1.5rem;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.admin-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}

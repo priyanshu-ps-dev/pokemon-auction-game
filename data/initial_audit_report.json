@@ -1,0 +1,398 @@
+[
+  {
+    "id": "fullmetal_alchemist_brotherhood",
+    "name": "Fullmetal Alchemist: Brotherhood",
+    "existing": 0,
+    "unique": 0,
+    "missing_img": 0,
+    "target": 50,
+    "needed": 50
+  },
+  {
+    "id": "black_clover",
+    "name": "Black Clover",
+    "existing": 1,
+    "unique": 1,
+    "missing_img": 1,
+    "target": 50,
+    "needed": 49
+  },
+  {
+    "id": "tokyo_ghoul",
+    "name": "Tokyo Ghoul",
+    "existing": 1,
+    "unique": 1,
+    "missing_img": 0,
+    "target": 50,
+    "needed": 49
+  },
+  {
+    "id": "hunter_x_hunter_2011",
+    "name": "Hunter x Hunter (2011)",
+    "existing": 1,
+    "unique": 1,
+    "missing_img": 0,
+    "target": 50,
+    "needed": 49
+  },
+  {
+    "id": "code_geass_lelouch_of_the_rebellion",
+    "name": "Code Geass: Lelouch of the Rebellion",
+    "existing": 1,
+    "unique": 1,
+    "missing_img": 0,
+    "target": 50,
+    "needed": 49
+  },
+  {
+    "id": "rezero_starting_life_in_another_world_",
+    "name": "Re:ZERO -Starting Life in Another World-",
+    "existing": 1,
+    "unique": 1,
+    "missing_img": 0,
+    "target": 50,
+    "needed": 49
+  },
+  {
+    "id": "mob_psycho_100",
+    "name": "Mob Psycho 100",
+    "existing": 1,
+    "unique": 1,
+    "missing_img": 0,
+    "target": 50,
+    "needed": 49
+  },
+  {
+    "id": "berserk",
+    "name": "Berserk",
+    "existing": 1,
+    "unique": 1,
+    "missing_img": 0,
+    "target": 50,
+    "needed": 49
+  },
+  {
+    "id": "the_apothecary_diaries",
+    "name": "The Apothecary Diaries",
+    "existing": 1,
+    "unique": 1,
+    "missing_img": 0,
+    "target": 50,
+    "needed": 49
+  },
+  {
+    "id": "frieren_beyond_journeys_end",
+    "name": "Frieren: Beyond Journey\u2019s End",
+    "existing": 1,
+    "unique": 1,
+    "missing_img": 0,
+    "target": 50,
+    "needed": 49
+  },
+  {
+    "id": "steinsgate",
+    "name": "Steins;Gate",
+    "existing": 1,
+    "unique": 1,
+    "missing_img": 0,
+    "target": 50,
+    "needed": 49
+  },
+  {
+    "id": "vinland_saga",
+    "name": "Vinland Saga",
+    "existing": 1,
+    "unique": 1,
+    "missing_img": 0,
+    "target": 50,
+    "needed": 49
+  },
+  {
+    "id": "rascal_does_not_dream_of_bunny_girl_senpai",
+    "name": "Rascal Does Not Dream of Bunny Girl Senpai",
+    "existing": 1,
+    "unique": 1,
+    "missing_img": 0,
+    "target": 50,
+    "needed": 49
+  },
+  {
+    "id": "violet_evergarden",
+    "name": "Violet Evergarden",
+    "existing": 1,
+    "unique": 1,
+    "missing_img": 0,
+    "target": 50,
+    "needed": 49
+  },
+  {
+    "id": "kaguya_sama_love_is_war",
+    "name": "Kaguya-sama: Love is War",
+    "existing": 1,
+    "unique": 1,
+    "missing_img": 0,
+    "target": 50,
+    "needed": 49
+  },
+  {
+    "id": "demon_slayer_kimetsu_no_yaiba",
+    "name": "Demon Slayer: Kimetsu no Yaiba",
+    "existing": 1,
+    "unique": 1,
+    "missing_img": 0,
+    "target": 50,
+    "needed": 49
+  },
+  {
+    "id": "fatezero",
+    "name": "Fate/Zero",
+    "existing": 1,
+    "unique": 1,
+    "missing_img": 0,
+    "target": 50,
+    "needed": 49
+  },
+  {
+    "id": "my_dress_up_darling",
+    "name": "My Dress-Up Darling",
+    "existing": 1,
+    "unique": 1,
+    "missing_img": 0,
+    "target": 50,
+    "needed": 49
+  },
+  {
+    "id": "jojos_bizarre_adventure_tv",
+    "name": "JoJo's Bizarre Adventure (TV)",
+    "existing": 1,
+    "unique": 1,
+    "missing_img": 0,
+    "target": 50,
+    "needed": 49
+  },
+  {
+    "id": "konosuba_gods_blessing_on_this_wonderful_world",
+    "name": "KONOSUBA -God's blessing on this wonderful world!",
+    "existing": 1,
+    "unique": 1,
+    "missing_img": 0,
+    "target": 50,
+    "needed": 49
+  },
+  {
+    "id": "bungo_stray_dogs",
+    "name": "Bungo Stray Dogs",
+    "existing": 1,
+    "unique": 1,
+    "missing_img": 0,
+    "target": 50,
+    "needed": 49
+  },
+  {
+    "id": "gintama",
+    "name": "Gintama",
+    "existing": 1,
+    "unique": 1,
+    "missing_img": 0,
+    "target": 50,
+    "needed": 49
+  },
+  {
+    "id": "the_quintessential_quintuplets",
+    "name": "The Quintessential Quintuplets",
+    "existing": 1,
+    "unique": 1,
+    "missing_img": 0,
+    "target": 50,
+    "needed": 49
+  },
+  {
+    "id": "darling_in_the_franxx",
+    "name": "DARLING in the FRANXX",
+    "existing": 1,
+    "unique": 1,
+    "missing_img": 0,
+    "target": 50,
+    "needed": 49
+  },
+  {
+    "id": "classroom_of_the_elite",
+    "name": "Classroom of the Elite",
+    "existing": 1,
+    "unique": 1,
+    "missing_img": 0,
+    "target": 50,
+    "needed": 49
+  },
+  {
+    "id": "hunter_x_hunter",
+    "name": "Hunter x Hunter",
+    "existing": 2,
+    "unique": 2,
+    "missing_img": 1,
+    "target": 50,
+    "needed": 48
+  },
+  {
+    "id": "solo_leveling",
+    "name": "Solo Leveling",
+    "existing": 2,
+    "unique": 2,
+    "missing_img": 2,
+    "target": 50,
+    "needed": 48
+  },
+  {
+    "id": "chainsaw_man",
+    "name": "Chainsaw Man",
+    "existing": 2,
+    "unique": 2,
+    "missing_img": 0,
+    "target": 50,
+    "needed": 48
+  },
+  {
+    "id": "death_note",
+    "name": "Death Note",
+    "existing": 2,
+    "unique": 2,
+    "missing_img": 0,
+    "target": 50,
+    "needed": 48
+  },
+  {
+    "id": "jojo",
+    "name": "JoJo's Bizarre Adventure",
+    "existing": 2,
+    "unique": 2,
+    "missing_img": 2,
+    "target": 50,
+    "needed": 48
+  },
+  {
+    "id": "fullmetal_alchemist",
+    "name": "Fullmetal Alchemist",
+    "existing": 2,
+    "unique": 2,
+    "missing_img": 1,
+    "target": 50,
+    "needed": 48
+  },
+  {
+    "id": "fairy_tail",
+    "name": "Fairy Tail",
+    "existing": 2,
+    "unique": 2,
+    "missing_img": 2,
+    "target": 50,
+    "needed": 48
+  },
+  {
+    "id": "haikyuu",
+    "name": "Haikyuu!!",
+    "existing": 2,
+    "unique": 2,
+    "missing_img": 2,
+    "target": 50,
+    "needed": 48
+  },
+  {
+    "id": "blue_lock",
+    "name": "Blue Lock",
+    "existing": 2,
+    "unique": 2,
+    "missing_img": 2,
+    "target": 50,
+    "needed": 48
+  },
+  {
+    "id": "demon_slayer",
+    "name": "Demon Slayer",
+    "existing": 3,
+    "unique": 3,
+    "missing_img": 3,
+    "target": 50,
+    "needed": 47
+  },
+  {
+    "id": "attack_on_titan",
+    "name": "Attack on Titan",
+    "existing": 3,
+    "unique": 3,
+    "missing_img": 1,
+    "target": 50,
+    "needed": 47
+  },
+  {
+    "id": "one_punch_man",
+    "name": "One Punch Man",
+    "existing": 3,
+    "unique": 3,
+    "missing_img": 3,
+    "target": 50,
+    "needed": 47
+  },
+  {
+    "id": "my_hero_academia",
+    "name": "My Hero Academia",
+    "existing": 3,
+    "unique": 3,
+    "missing_img": 2,
+    "target": 50,
+    "needed": 47
+  },
+  {
+    "id": "bleach",
+    "name": "Bleach",
+    "existing": 4,
+    "unique": 4,
+    "missing_img": 4,
+    "target": 50,
+    "needed": 46
+  },
+  {
+    "id": "jujutsu_kaisen",
+    "name": "Jujutsu Kaisen",
+    "existing": 5,
+    "unique": 5,
+    "missing_img": 4,
+    "target": 50,
+    "needed": 45
+  },
+  {
+    "id": "one_piece",
+    "name": "One Piece",
+    "existing": 11,
+    "unique": 11,
+    "missing_img": 10,
+    "target": 50,
+    "needed": 39
+  },
+  {
+    "id": "dragon_ball",
+    "name": "Dragon Ball",
+    "existing": 20,
+    "unique": 20,
+    "missing_img": 20,
+    "target": 50,
+    "needed": 30
+  },
+  {
+    "id": "naruto",
+    "name": "Naruto",
+    "existing": 20,
+    "unique": 20,
+    "missing_img": 17,
+    "target": 50,
+    "needed": 30
+  },
+  {
+    "id": "pokemon",
+    "name": "Pok\u00e9mon",
+    "existing": 1351,
+    "unique": 1340,
+    "missing_img": 0,
+    "target": 1351,
+    "needed": 11
+  }
+]

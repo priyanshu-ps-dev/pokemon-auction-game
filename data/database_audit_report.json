@@ -1,0 +1,317 @@
+{
+  "timestamp": "2026-11-22T20:43:44.898549",
+  "total_franchises": 31,
+  "total_characters": 3467,
+  "franchise_audit": [
+    {
+      "franchise_id": "pokemon",
+      "name": "Pokémon",
+      "total_records": 1351,
+      "unique_characters": 1351,
+      "verified_images": 1351,
+      "missing_images": 0,
+      "target": 1351,
+      "status": "REACHED TARGET"
+    },
+    {
+      "franchise_id": "fate",
+      "name": "Fate",
+      "total_records": 116,
+      "unique_characters": 116,
+      "verified_images": 116,
+      "missing_images": 0,
+      "target": 50,
+      "status": "REACHED TARGET"
+    },
+    {
+      "franchise_id": "haikyuu",
+      "name": "Haikyuu!!",
+      "total_records": 95,
+      "unique_characters": 95,
+      "verified_images": 95,
+      "missing_images": 0,
+      "target": 50,
+      "status": "REACHED TARGET"
+    },
+    {
+      "franchise_id": "vinland_saga",
+      "name": "Vinland Saga",
+      "total_records": 93,
+      "unique_characters": 93,
+      "verified_images": 93,
+      "missing_images": 0,
+      "target": 50,
+      "status": "REACHED TARGET"
+    },
+    {
+      "franchise_id": "dragon_ball",
+      "name": "Dragon Ball",
+      "total_records": 91,
+      "unique_characters": 91,
+      "verified_images": 91,
+      "missing_images": 0,
+      "target": 50,
+      "status": "REACHED TARGET"
+    },
+    {
+      "franchise_id": "jojo",
+      "name": "JoJo's Bizarre Adventure",
+      "total_records": 88,
+      "unique_characters": 88,
+      "verified_images": 88,
+      "missing_images": 0,
+      "target": 50,
+      "status": "REACHED TARGET"
+    },
+    {
+      "franchise_id": "one_piece",
+      "name": "One Piece",
+      "total_records": 81,
+      "unique_characters": 81,
+      "verified_images": 81,
+      "missing_images": 0,
+      "target": 50,
+      "status": "REACHED TARGET"
+    },
+    {
+      "franchise_id": "naruto",
+      "name": "Naruto",
+      "total_records": 81,
+      "unique_characters": 81,
+      "verified_images": 81,
+      "missing_images": 0,
+      "target": 50,
+      "status": "REACHED TARGET"
+    },
+    {
+      "franchise_id": "bleach",
+      "name": "Bleach",
+      "total_records": 77,
+      "unique_characters": 77,
+      "verified_images": 77,
+      "missing_images": 0,
+      "target": 50,
+      "status": "REACHED TARGET"
+    },
+    {
+      "franchise_id": "jujutsu_kaisen",
+      "name": "Jujutsu Kaisen",
+      "total_records": 77,
+      "unique_characters": 77,
+      "verified_images": 77,
+      "missing_images": 0,
+      "target": 50,
+      "status": "REACHED TARGET"
+    },
+    {
+      "franchise_id": "demon_slayer",
+      "name": "Demon Slayer",
+      "total_records": 76,
+      "unique_characters": 76,
+      "verified_images": 76,
+      "missing_images": 0,
+      "target": 50,
+      "status": "REACHED TARGET"
+    },
+    {
+      "franchise_id": "one_punch_man",
+      "name": "One Punch Man",
+      "total_records": 76,
+      "unique_characters": 76,
+      "verified_images": 76,
+      "missing_images": 0,
+      "target": 50,
+      "status": "REACHED TARGET"
+    },
+    {
+      "franchise_id": "attack_on_titan",
+      "name": "Attack on Titan",
+      "total_records": 75,
+      "unique_characters": 75,
+      "verified_images": 75,
+      "missing_images": 0,
+      "target": 50,
+      "status": "REACHED TARGET"
+    },
+    {
+      "franchise_id": "my_hero_academia",
+      "name": "My Hero Academia",
+      "total_records": 75,
+      "unique_characters": 75,
+      "verified_images": 75,
+      "missing_images": 0,
+      "target": 50,
+      "status": "REACHED TARGET"
+    },
+    {
+      "franchise_id": "black_clover",
+      "name": "Black Clover",
+      "total_records": 75,
+      "unique_characters": 75,
+      "verified_images": 75,
+      "missing_images": 0,
+      "target": 50,
+      "status": "REACHED TARGET"
+    },
+    {
+      "franchise_id": "fairy_tail",
+      "name": "Fairy Tail",
+      "total_records": 74,
+      "unique_characters": 74,
+      "verified_images": 74,
+      "missing_images": 0,
+      "target": 50,
+      "status": "REACHED TARGET"
+    },
+    {
+      "franchise_id": "fullmetal_alchemist",
+      "name": "Fullmetal Alchemist",
+      "total_records": 74,
+      "unique_characters": 74,
+      "verified_images": 74,
+      "missing_images": 0,
+      "target": 50,
+      "status": "REACHED TARGET"
+    },
+    {
+      "franchise_id": "hunter_x_hunter",
+      "name": "Hunter x Hunter",
+      "total_records": 73,
+      "unique_characters": 73,
+      "verified_images": 73,
+      "missing_images": 0,
+      "target": 50,
+      "status": "REACHED TARGET"
+    },
+    {
+      "franchise_id": "chainsaw_man",
+      "name": "Chainsaw Man",
+      "total_records": 70,
+      "unique_characters": 70,
+      "verified_images": 70,
+      "missing_images": 0,
+      "target": 50,
+      "status": "REACHED TARGET"
+    },
+    {
+      "franchise_id": "blue_lock",
+      "name": "Blue Lock",
+      "total_records": 70,
+      "unique_characters": 70,
+      "verified_images": 70,
+      "missing_images": 0,
+      "target": 50,
+      "status": "REACHED TARGET"
+    },
+    {
+      "franchise_id": "solo_leveling",
+      "name": "Solo Leveling",
+      "total_records": 67,
+      "unique_characters": 67,
+      "verified_images": 67,
+      "missing_images": 0,
+      "target": 50,
+      "status": "REACHED TARGET"
+    },
+    {
+      "franchise_id": "tokyo_ghoul",
+      "name": "Tokyo Ghoul",
+      "total_records": 63,
+      "unique_characters": 63,
+      "verified_images": 63,
+      "missing_images": 0,
+      "target": 50,
+      "status": "REACHED TARGET"
+    },
+    {
+      "franchise_id": "code_geass",
+      "name": "Code Geass",
+      "total_records": 62,
+      "unique_characters": 62,
+      "verified_images": 62,
+      "missing_images": 0,
+      "target": 50,
+      "status": "REACHED TARGET"
+    },
+    {
+      "franchise_id": "re_zero",
+      "name": "Re:ZERO",
+      "total_records": 61,
+      "unique_characters": 61,
+      "verified_images": 61,
+      "missing_images": 0,
+      "target": 50,
+      "status": "REACHED TARGET"
+    },
+    {
+      "franchise_id": "mob_psycho_100",
+      "name": "Mob Psycho 100",
+      "total_records": 59,
+      "unique_characters": 59,
+      "verified_images": 59,
+      "missing_images": 0,
+      "target": 50,
+      "status": "REACHED TARGET"
+    },
+    {
+      "franchise_id": "gintama",
+      "name": "Gintama",
+      "total_records": 49,
+      "unique_characters": 49,
+      "verified_images": 49,
+      "missing_images": 0,
+      "target": 50,
+      "status": "BELOW TARGET (49/50)"
+    },
+    {
+      "franchise_id": "death_note",
+      "name": "Death Note",
+      "total_records": 47,
+      "unique_characters": 47,
+      "verified_images": 47,
+      "missing_images": 0,
+      "target": 50,
+      "status": "BELOW TARGET (47/50)"
+    },
+    {
+      "franchise_id": "bungo_stray_dogs",
+      "name": "Bungo Stray Dogs",
+      "total_records": 46,
+      "unique_characters": 46,
+      "verified_images": 46,
+      "missing_images": 0,
+      "target": 50,
+      "status": "BELOW TARGET (46/50)"
+    },
+    {
+      "franchise_id": "berserk",
+      "name": "Berserk",
+      "total_records": 28,
+      "unique_characters": 28,
+      "verified_images": 28,
+      "missing_images": 0,
+      "target": 50,
+      "status": "BELOW TARGET (28/50)"
+    },
+    {
+      "franchise_id": "kaguya_sama",
+      "name": "Kaguya-sama: Love is War",
+      "total_records": 27,
+      "unique_characters": 27,
+      "verified_images": 27,
+      "missing_images": 0,
+      "target": 50,
+      "status": "BELOW TARGET (27/50)"
+    },
+    {
+      "franchise_id": "steins_gate",
+      "name": "Steins;Gate",
+      "total_records": 20,
+      "unique_characters": 20,
+      "verified_images": 20,
+      "missing_images": 0,
+      "target": 50,
+      "status": "BELOW TARGET (20/50)"
+    }
+  ]
+}
