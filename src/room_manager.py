@@ -57,6 +57,8 @@ def sanitize_character_for_auction(char: dict) -> dict:
     return {
         "id": char["id"],
         "name": char["name"],
+        "universe": char.get("universe", "pokemon" if char.get("anime_id") == "pokemon" else ("marvel" if char.get("anime_id") == "marvel" else "anime")),
+        "incarnation": char.get("incarnation", ""),
         "anime_id": char.get("anime_id", "pokemon"),
         "anime_name": char.get("anime_name", "Pokémon"),
         "current_form": char.get("current_form", "Base"),
@@ -399,8 +401,12 @@ class Room:
             p.rematch_vote = None
 
         self.status = "AUCTION"
+        if self.active_live_battle and hasattr(self.active_live_battle, "invalidate"):
+            self.active_live_battle.invalidate()
+        self.active_live_battle = None
         self.battle_results = None
         self.current_character_full = None
+        self.last_bid_record = None
         self.current_bid = 0
         self.highest_bidder_id = None
         self.skipped_player_ids.clear()

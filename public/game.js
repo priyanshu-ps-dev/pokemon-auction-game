@@ -207,6 +207,8 @@ function handleServerMessage(type, data) {
     case 'rematch_started':
       hideRematchModal();
       gameState.isWithdrawn = false;
+      gameState.currentMatchId = data.match_id || null;
+      resetBattleUI();
       const stageLog = document.getElementById('stage-log-list');
       if (stageLog) stageLog.innerHTML = '';
       addStageLog(`🔄 Rematch started! Match #${data.match_number}`, 'won');
@@ -264,13 +266,9 @@ function handleServerMessage(type, data) {
       break;
 
     case 'battle_started':
-      gameState.pendingBattleResults = null;
-      gameState.battleSkipped = false;
+      gameState.currentMatchId = data.match_id || gameState.currentMatchId;
+      resetBattleUI();
       switchArenaScreen('arena-battle');
-      const battleLog = document.getElementById('battle-event-log');
-      if (battleLog) battleLog.innerHTML = '';
-      const actionBanner = document.getElementById('battle-action-banner');
-      if (actionBanner) actionBanner.textContent = 'Simulating tournament battles...';
       break;
 
     case 'battle_progress':
@@ -281,10 +279,12 @@ function handleServerMessage(type, data) {
       break;
 
     case 'battle_results':
+      if (data.match_id && gameState.currentMatchId && data.match_id !== gameState.currentMatchId) break;
       gameState.pendingBattleResults = data;
       break;
 
     case 'battle_turn_prompt':
+      if (data.match_id && gameState.currentMatchId && data.match_id !== gameState.currentMatchId) break;
       renderInteractiveTurnPrompt(data);
       break;
 
@@ -301,6 +301,7 @@ function handleServerMessage(type, data) {
       break;
 
     case 'battle_turn_resolved':
+      if (data.match_id && gameState.currentMatchId && data.match_id !== gameState.currentMatchId) break;
       if (data.turn_entry) {
         applyResolvedInteractiveTurn(data.turn_entry, data.player_a_name, data.player_b_name);
       }
@@ -1424,11 +1425,14 @@ function inspectPlayerTeam(player) {
         : '';
 
       let statsLine = '';
-      if ('strength' in st || 'attack_power' in st) {
+      if ('combat_skill' in st || 'energy_projection' in st) {
+        statsLine = `STR: ${st.strength || 0} &bull; SPD: ${st.speed || 0} &bull; DUR: ${st.durability || 0}<br>INT: ${st.intelligence || 0} &bull; SKL: ${st.combat_skill || 0} &bull; ENG: ${st.energy_projection || 0}`;
+      } else if ('strength' in st || 'attack_power' in st) {
         statsLine = `STR: ${st.strength || 0} &bull; ATK: ${st.attack_power || 0} &bull; SPD: ${st.speed || 0}<br>DUR: ${st.durability || 0} &bull; DEF: ${st.defense || 0} &bull; BIQ: ${st.battle_iq || 0}`;
       } else {
         statsLine = `HP: ${st.hp || 0} &bull; ATK: ${st.attack || 0} &bull; DEF: ${st.defense || 0}<br>SPA: ${st.special_attack || 0} &bull; SPD: ${st.special_defense || 0} &bull; SPE: ${st.speed || 0}`;
       }
+      const attrHtml = p.attribution ? `<div style="font-size:0.62rem; color:#64748b; margin-top:0.25rem;">${escapeHtml(p.attribution)}</div>` : '';
 
       card.innerHTML = `
         <span class="card-tier-badge ${tierClass}">${p.power_tier || p.tier || 'A'}</span>
@@ -1446,6 +1450,7 @@ function inspectPlayerTeam(player) {
         <div style="font-size:0.68rem; color:#94a3b8; font-family:'JetBrains Mono'; text-align:left; background:rgba(0,0,0,0.3); padding:0.4rem; border-radius:6px; line-height:1.4;">
           ${statsLine}
         </div>
+        ${attrHtml}
       `;
       grid.appendChild(card);
     });
@@ -2484,8 +2489,61 @@ async function playBattleSequence(battleResults, finishData) {
 // ============================================================================
 let _battlePromptTimer = null;
 
+function resetBattleUI() {
+  if (_battlePromptTimer) {
+    clearInterval(_battlePromptTimer);
+    _battlePromptTimer = null;
+  }
+  gameState.pendingBattleResults = null;
+  gameState.battleSkipped = false;
+
+  const ctrlPanel = document.getElementById('battle-control-panel');
+  if (ctrlPanel) ctrlPanel.style.display = 'none';
+  for (const id of ['battle-event-log', 'battle-moves-grid', 'battle-switch-row', 'battle-transform-row', 'battle-badges-a', 'battle-badges-b', 'battle-team-a-dots', 'battle-team-b-dots']) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '';
+  }
+  const turnCounter = document.getElementById('battle-turn-counter');
+  if (turnCounter) turnCounter.textContent = 'Turn 0';
+  const matchCounter = document.getElementById('battle-match-counter');
+  if (matchCounter) matchCounter.textContent = 'Match 1 / 1';
+  const actionBanner = document.getElementById('battle-action-banner');
+  if (actionBanner) actionBanner.textContent = 'Preparing combatants...';
+
+  for (const side of ['a', 'b']) {
+    const card = document.getElementById(`battle-fighter-${side}`);
+    if (card) card.classList.remove('anim-faint', 'anim-switch', 'anim-hit', 'anim-attack-left', 'anim-attack-right', 'anim-transform', 'anim-elemental', 'anim-ranged', 'anim-status');
+    const nameEl = document.getElementById(`battle-char-${side}-name`);
+    if (nameEl) nameEl.textContent = 'Loading...';
+    const artEl = document.getElementById(`battle-art-${side}`);
+    if (artEl) artEl.src = '';
+    const hpFill = document.getElementById(`battle-hp-fill-${side}`);
+    if (hpFill) {
+      hpFill.style.width = '100%';
+      hpFill.classList.remove('hp-mid', 'hp-low');
+    }
+    const hpText = document.getElementById(`battle-hp-text-${side}`);
+    if (hpText) hpText.textContent = 'HP';
+    const statusEl = document.getElementById(`battle-status-${side}`);
+    if (statusEl) statusEl.style.display = 'none';
+  }
+}
+
 function renderInteractiveTurnPrompt(promptData) {
   switchArenaScreen('arena-battle');
+  if (promptData.match_id) gameState.currentMatchId = promptData.match_id;
+
+  // Immediately render active combatants for the current match (prevents stale previous-match UI!)
+  const mySide = promptData.side === 'b' ? 'b' : 'a';
+  const oppSide = mySide === 'a' ? 'b' : 'a';
+  const myTrainer = mySide === 'a' ? (promptData.player_a_name || gameState.myName) : (promptData.player_b_name || gameState.myName);
+  const oppTrainer = oppSide === 'a' ? (promptData.player_a_name || 'Opponent') : (promptData.player_b_name || 'Opponent');
+  if (promptData.your_active) {
+    _updateBattleFighterCard(mySide, promptData.your_active, myTrainer, null, null, promptData.your_remaining);
+  }
+  if (promptData.opponent_active) {
+    _updateBattleFighterCard(oppSide, promptData.opponent_active, oppTrainer, null, null, promptData.opponent_remaining);
+  }
   const panel = document.getElementById('battle-control-panel');
   const statusEl = document.getElementById('battle-turn-status');
   const timerEl = document.getElementById('battle-action-timer');
@@ -2517,7 +2575,7 @@ function renderInteractiveTurnPrompt(promptData) {
       btn.onclick = () => {
         gameState.ws.send(JSON.stringify({
           action: 'submit_battle_action',
-          data: { action_type: 'attack', move_id: m.id }
+          data: { action_type: 'attack', move_id: m.id, match_id: gameState.currentMatchId }
         }));
       };
       movesGrid.appendChild(btn);
@@ -2533,7 +2591,7 @@ function renderInteractiveTurnPrompt(promptData) {
       btn.onclick = () => {
         gameState.ws.send(JSON.stringify({
           action: 'submit_battle_action',
-          data: { action_type: 'switch', switch_index: sw.index }
+          data: { action_type: 'switch', switch_index: sw.index, match_id: gameState.currentMatchId }
         }));
       };
       switchRow.appendChild(btn);
@@ -2549,7 +2607,7 @@ function renderInteractiveTurnPrompt(promptData) {
       btn.onclick = () => {
         gameState.ws.send(JSON.stringify({
           action: 'submit_battle_action',
-          data: { action_type: 'transform', transformation_id: tf.id }
+          data: { action_type: 'transform', transformation_id: tf.id, match_id: gameState.currentMatchId }
         }));
       };
       transformRow.appendChild(btn);

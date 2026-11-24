@@ -248,23 +248,38 @@ async def run_room_auction_loop(room: Room):
             pa, pb = active_players[0], active_players[1]
             built_a = [battle_manager.build_combatant(c)[1] for c in pa.team]
             built_b = [battle_manager.build_combatant(c)[1] for c in pb.team]
+            current_match_id = room.match_id
+            images_map = {
+                str(c.get("id", "")): c.get("image", "")
+                for c in (pa.team + pb.team)
+            }
             live_sess = LiveBattleSession(
                 pa.session_id, built_a,
                 pb.session_id, built_b,
                 control_mode=room.battle_control_mode,
+                images_by_id=images_map,
+                match_id=current_match_id,
             )
             room.active_live_battle = live_sess
 
             async def _send_prompt(pid: str, prompt_data: dict):
+                if room.match_id != current_match_id or live_sess.is_invalidated:
+                    return
                 pl = room.players.get(pid)
                 if pl and pl.ws is not None:
                     try:
-                        await pl.ws.send(json.dumps({"type": "battle_turn_prompt", "data": prompt_data}, ensure_ascii=False))
+                        enriched = dict(prompt_data)
+                        enriched["player_a_name"] = pa.name
+                        enriched["player_b_name"] = pb.name
+                        await pl.ws.send(json.dumps({"type": "battle_turn_prompt", "data": enriched}, ensure_ascii=False))
                     except Exception:
                         pass
 
             async def _broadcast_turn(turn_entry: dict):
+                if room.match_id != current_match_id or live_sess.is_invalidated:
+                    return
                 await broadcast_to_room(room, "battle_turn_resolved", {
+                    "match_id": current_match_id,
                     "player_a_name": pa.name,
                     "player_b_name": pb.name,
                     "turn_entry": turn_entry,
@@ -272,20 +287,69 @@ async def run_room_auction_loop(room: Room):
 
             res = await live_sess.run_interactive(send_prompt=_send_prompt, broadcast_turn=_broadcast_turn)
             room.active_live_battle = None
-            battle_results = battle_manager.run_tournament_sync(
-                list(room.players.values()),
-                match_id=room.match_id,
-                tournament_format=room.tournament_format,
-            )
-            # Replace 1v1 match outcome with interactive result
-            if battle_results.get("matches"):
-                battle_results["matches"][0].update({
+            if live_sess.is_invalidated or room.match_id != current_match_id:
+                return
+
+            # Build authoritative battle_results directly from the interactive session outcome
+            a_wins = 1 if res.winner_id == pa.session_id else 0
+            b_wins = 1 if res.winner_id == pb.session_id else 0
+            draws = 1 if (res.is_draw or res.winner_id is None) else 0
+            standings = []
+            for p, w, l, hp in (
+                (pa, a_wins, b_wins, res.player_a_remaining_hp),
+                (pb, b_wins, a_wins, res.player_b_remaining_hp),
+            ):
+                standings.append({
+                    "session_id": p.session_id,
+                    "name": p.name,
+                    "avatar": p.avatar,
+                    "is_withdrawn": p.is_withdrawn,
+                    "wins": w,
+                    "losses": l,
+                    "draws": draws,
+                    "points": (w * 3) + draws,
+                    "remaining_hp_total": hp,
+                    "matches_played": 1,
+                    "team_count": len(p.team),
+                })
+            for wp in room.players.values():
+                if wp.is_withdrawn:
+                    standings.append({
+                        "session_id": wp.session_id,
+                        "name": wp.name,
+                        "avatar": wp.avatar,
+                        "is_withdrawn": True,
+                        "wins": 0, "losses": 0, "draws": 0, "points": 0,
+                        "remaining_hp_total": 0, "matches_played": 0, "team_count": len(wp.team),
+                    })
+            standings.sort(key=lambda s: (not s["is_withdrawn"], s["points"], s["wins"], s["remaining_hp_total"]), reverse=True)
+            for r_idx, s in enumerate(standings, start=1):
+                s["rank"] = r_idx
+
+            battle_results = {
+                "format": "direct_1v1",
+                "match_id": current_match_id,
+                "total_matches": 1,
+                "standings": standings,
+                "champion": standings[0] if standings else None,
+                "matches": [{
+                    "player_a_id": pa.session_id,
+                    "player_a_name": pa.name,
+                    "player_b_id": pb.session_id,
+                    "player_b_name": pb.name,
+                    "player_a_team": [{"id": str(c.get("id", "")), "name": c.get("name", ""), "image": c.get("image", "")} for c in pa.team],
+                    "player_b_team": [{"id": str(c.get("id", "")), "name": c.get("name", ""), "image": c.get("image", "")} for c in pb.team],
                     "winner_id": res.winner_id,
                     "is_draw": res.is_draw,
                     "reason": res.reason,
                     "turns_played": res.turns_played,
+                    "seed": res.seed,
+                    "player_a_remaining_hp": res.player_a_remaining_hp,
+                    "player_b_remaining_hp": res.player_b_remaining_hp,
                     "turn_log": res.turn_log,
-                })
+                }],
+                "bracket": None,
+            }
         else:
             battle_results = await battle_manager.run_tournament_async(
                 list(room.players.values()),
@@ -738,6 +802,8 @@ async def ws_handler(websocket: ServerConnection):
                         "room_state": room.to_state_dict()
                     })
                 elif all_accepted:
+                    if room.active_live_battle and hasattr(room.active_live_battle, "invalidate"):
+                        room.active_live_battle.invalidate()
                     old_task = room_auction_tasks.get(room.room_code)
                     if old_task and not old_task.done():
                         old_task.cancel()

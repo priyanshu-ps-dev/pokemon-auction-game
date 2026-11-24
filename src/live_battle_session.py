@@ -20,6 +20,7 @@ from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 from src.anime_battle_engine import AnimeBattleSimulator, AnimeCombatant
 from src.battle_ai import TacticalBattleAI
 from src.battle_engine import PokemonBattleSimulator, PokemonCombatant
+from src.marvel_battle_engine import MarvelBattleSimulator, MarvelCombatant
 from src.battle_interface import BattleAction, BattleResult
 from src.cross_universe_adapter import CrossUniverseBattleSimulator
 
@@ -37,6 +38,7 @@ class LiveBattleSession:
         seed: int = 42,
         turn_timeout_seconds: float = 20.0,
         images_by_id: Optional[Dict[str, str]] = None,
+        match_id: str = "",
     ):
         self.player_a_id = player_a_id
         self.player_b_id = player_b_id
@@ -46,6 +48,8 @@ class LiveBattleSession:
         self.turn_timeout_seconds = turn_timeout_seconds
         self.ai = TacticalBattleAI()
         self.images_by_id = images_by_id or {}
+        self.match_id = match_id
+        self.is_invalidated: bool = False
 
         self.teams: Dict[str, List[Any]] = {
             player_a_id: list(team_a),
@@ -65,9 +69,18 @@ class LiveBattleSession:
         elif sys_set == {"anime"}:
             self._engine_kind = "anime"
             self._anime_sim = AnimeBattleSimulator(player_a_id, team_a, player_b_id, team_b, seed=seed, ai_selector=self.ai)
+        elif sys_set == {"marvel"}:
+            self._engine_kind = "marvel"
+            self._marvel_sim = MarvelBattleSimulator(player_a_id, team_a, player_b_id, team_b, seed=seed, ai_selector=self.ai)
         else:
             self._engine_kind = "cross"
             self._cross_sim = CrossUniverseBattleSimulator(player_a_id, team_a, player_b_id, team_b, seed=seed, ai_selector=self.ai, images_by_id=self.images_by_id)
+
+    def invalidate(self):
+        """Invalidates this session so stale events or pending waits terminate immediately."""
+        self.is_invalidated = True
+        self.pending_actions.clear()
+        self.turn_ready_event.set()
 
     def is_human_controlled(self, pid: str) -> bool:
         if self.control_mode == "player_vs_player":
@@ -125,11 +138,15 @@ class LiveBattleSession:
         ]
 
         return {
+            "match_id": self.match_id,
             "turn": self.turn_number,
+            "side": "a" if pid == self.player_a_id else "b",
             "control_mode": self.control_mode,
             "timeout_seconds": self.turn_timeout_seconds,
             "your_active": active.to_summary_dict() if active else None,
             "opponent_active": opp.to_summary_dict() if opp else None,
+            "your_remaining": self.remaining_count(pid),
+            "opponent_remaining": self.remaining_count(opp_id),
             "available_moves": moves,
             "available_switches": switches,
             "available_transformations": transforms,
@@ -138,6 +155,11 @@ class LiveBattleSession:
 
     def submit_action(self, pid: str, raw_action: dict) -> Tuple[bool, str]:
         """Server-authoritative validation of a player's turn action."""
+        if self.is_invalidated:
+            return False, "This battle session has ended."
+        req_match_id = raw_action.get("match_id")
+        if req_match_id and self.match_id and str(req_match_id) != str(self.match_id):
+            return False, "Stale battle action from a previous match rejected."
         if not self.is_human_controlled(pid):
             return False, "This side is AI-controlled."
         if pid in self.pending_actions:
@@ -190,6 +212,8 @@ class LiveBattleSession:
             return BattleAction(action_type="pass")
         if isinstance(active, PokemonCombatant):
             return self.ai.choose_pokemon_action(active, self.teams[pid], opp, self.rng)
+        if isinstance(active, MarvelCombatant):
+            return self.ai.choose_marvel_action(active, opp, self.rng)
         return self.ai.choose_anime_action(active, opp, self.rng)
 
     def resolve_single_turn(self) -> Dict[str, Any]:
@@ -230,7 +254,7 @@ class LiveBattleSession:
                     new_mon = team[act.switch_index]
                     events.append(f"{pid} switched {mon.name} out for {new_mon.name}!")
                     action_details.append({"event_type": "switch", "side": side, "move_name": f"Switch -> {new_mon.name}"})
-            elif act.action_type == "transform" and act.transformation_id and isinstance(mon, AnimeCombatant):
+            elif act.action_type == "transform" and act.transformation_id and isinstance(mon, (AnimeCombatant, MarvelCombatant)):
                 ok, msg = mon.activate_transformation(act.transformation_id)
                 events.append(msg)
                 if ok:
@@ -246,6 +270,12 @@ class LiveBattleSession:
                         dmg, msg = self._anime_sim.resolve_attack(mon, opp, atk)
                         events.append(msg)
                         action_details.append({"event_type": "attack", "side": side, "target_side": target_side, "move_name": atk["name"], "category": atk.get("category", "special"), "damage": dmg})
+                elif self._engine_kind == "marvel":
+                    atk = next((a for a in mon.attacks if a["id"] == act.move_id), mon.attacks[0] if mon.attacks else None)
+                    if atk:
+                        dmg, msg = self._marvel_sim.resolve_attack(mon, opp, atk)
+                        events.append(msg)
+                        action_details.append({"event_type": "attack", "side": side, "target_side": target_side, "move_name": atk["name"], "category": atk.get("category", "physical"), "damage": dmg})
                 else:
                     if isinstance(mon, PokemonCombatant):
                         move = next((m for m in mon.moves if m["id"] == act.move_id), mon.moves[0] if mon.moves else None)
@@ -253,6 +283,11 @@ class LiveBattleSession:
                             dmg, msg = self._cross_sim._pokemon_vs_any_damage(mon, opp, move)
                             events.append(msg)
                             action_details.append({"event_type": "attack", "side": side, "target_side": target_side, "move_name": move["name"], "category": "elemental" if move.get("category") == "Special" else "physical", "damage": dmg})
+                    elif isinstance(mon, MarvelCombatant) and mon.attacks:
+                        atk = next((a for a in mon.attacks if a["id"] == act.move_id), mon.attacks[0])
+                        dmg, msg = self._cross_sim._marvel_vs_any_damage(mon, opp, atk)
+                        events.append(msg)
+                        action_details.append({"event_type": "attack", "side": side, "target_side": target_side, "move_name": atk["name"], "category": atk.get("category", "physical"), "damage": dmg})
                     elif isinstance(mon, AnimeCombatant) and mon.attacks:
                         atk = next((a for a in mon.attacks if a["id"] == act.move_id), mon.attacks[0])
                         dmg, msg = self._cross_sim._anime_vs_any_damage(mon, opp, atk)
@@ -266,6 +301,7 @@ class LiveBattleSession:
         cur_a = self.get_active(self.player_a_id)
         cur_b = self.get_active(self.player_b_id)
         turn_entry = {
+            "match_id": self.match_id,
             "turn": self.turn_number,
             "events": events,
             "action_details": action_details,
@@ -285,7 +321,8 @@ class LiveBattleSession:
     ) -> BattleResult:
         """Runs the full interactive battle loop asynchronously."""
         while (
-            self.turn_number < max_turns
+            not self.is_invalidated
+            and self.turn_number < max_turns
             and self.remaining_count(self.player_a_id) > 0
             and self.remaining_count(self.player_b_id) > 0
         ):
@@ -300,8 +337,10 @@ class LiveBattleSession:
                 except asyncio.TimeoutError:
                     pass  # Missing players automatically fall back to AI in resolve_single_turn()
 
+            if self.is_invalidated:
+                break
             turn_entry = self.resolve_single_turn()
-            if broadcast_turn:
+            if broadcast_turn and not self.is_invalidated:
                 await broadcast_turn(turn_entry)
 
         rem_a = self.remaining_count(self.player_a_id)

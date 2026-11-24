@@ -68,6 +68,20 @@ class CombatDataProvider:
             os.path.join(data_dir, "anime_transformations.json")
         ).get("transformations", {})
 
+        # Marvel datasets
+        self.marvel_combat_by_id: Dict[str, dict] = _load_json(
+            os.path.join(data_dir, "marvel_combat_database.json")
+        ).get("characters", {})
+        self.marvel_attacks_by_id: Dict[str, dict] = _load_json(
+            os.path.join(data_dir, "marvel_character_attacks.json")
+        ).get("attacks", {})
+        self.marvel_abilities_by_id: Dict[str, dict] = _load_json(
+            os.path.join(data_dir, "marvel_character_abilities.json")
+        ).get("abilities", {})
+        self.marvel_transformations_by_id: Dict[str, dict] = _load_json(
+            os.path.join(data_dir, "marvel_transformations.json")
+        ).get("transformations", {})
+
     def _resolve_pokemon_id(self, identifier: Union[int, str, dict]) -> Optional[int]:
         if isinstance(identifier, int):
             return identifier if identifier in self.pokemon_by_id else None
@@ -185,8 +199,33 @@ class CombatDataProvider:
                 "learnset_source": learnset.get("learnset_source", "none_available"),
             }
 
-        # Non-Pokémon anime character lookup
+        # Marvel character lookup
         cid = str(character_or_id.get("id") or character_or_id.get("character_id")) if isinstance(character_or_id, dict) else str(character_or_id)
+        if cid in self.marvel_combat_by_id:
+            mprof = self.marvel_combat_by_id[cid]
+            return {
+                "system": "marvel",
+                "character_id": cid,
+                "marvel_id": mprof.get("marvel_id"),
+                "name": mprof.get("name"),
+                "incarnation": mprof.get("incarnation"),
+                "anime_id": "marvel",
+                "anime_name": "Marvel Comics",
+                "image": mprof.get("image", ""),
+                "stats": mprof.get("stats", {}),
+                "attacks": [self.marvel_attacks_by_id[a] for a in mprof.get("attack_ids", []) if a in self.marvel_attacks_by_id],
+                "abilities": [self.marvel_abilities_by_id[ab] for ab in mprof.get("ability_ids", []) if ab in self.marvel_abilities_by_id],
+                "transformations": [self.marvel_transformations_by_id[t] for t in mprof.get("transformation_ids", []) if t in self.marvel_transformations_by_id],
+                "weaknesses": mprof.get("weaknesses"),
+                "resistances": mprof.get("resistances"),
+                "immunities": mprof.get("immunities"),
+                "combat_eligible": mprof.get("combat_eligible", False),
+                "verification_status": mprof.get("verification_status", "incomplete"),
+                "source": mprof.get("source"),
+                "attribution": mprof.get("attribution"),
+            }
+
+        # Non-Pokémon anime character lookup
         profile = self.anime_combat_by_id.get(cid)
         if not profile:
             return None

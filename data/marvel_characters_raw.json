@@ -1,0 +1,781 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "universe": "marvel",
+    "import_mode": "offline_documented_seed",
+    "attribution": "Data provided by Marvel. © 2024 Marvel",
+    "generated_at": "2026-11-24T11:27:15.330926+00:00",
+    "total_characters": 28,
+    "api_fetched": 0,
+    "duplicates_skipped": 0,
+    "errors": []
+  },
+  "characters": [
+    {
+      "id": "marvel_616_spider_man",
+      "marvel_id": 1009610,
+      "name": "Spider-Man (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "Peter Parker, bitten by a radioactive spider, gaining spider-sense and wall-crawling.",
+      "image": "/api/avatar/marvel_616_spider_man",
+      "aliases": [
+        "Peter Parker",
+        "Web-Head"
+      ],
+      "comics": [
+        "Amazing Fantasy #15",
+        "Amazing Spider-Man"
+      ],
+      "series": [
+        "The Amazing Spider-Man"
+      ],
+      "events": [
+        "Spider-Verse",
+        "Civil War"
+      ],
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": true
+    },
+    {
+      "id": "marvel_616_iron_man",
+      "marvel_id": 1009368,
+      "name": "Iron Man (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "Tony Stark, genius billionaire engineer piloting powered repulsor armor.",
+      "image": "/api/avatar/marvel_616_iron_man",
+      "aliases": [
+        "Tony Stark",
+        "Shellhead"
+      ],
+      "comics": [
+        "Tales of Suspense #39",
+        "Invincible Iron Man"
+      ],
+      "series": [
+        "Iron Man"
+      ],
+      "events": [
+        "Armor Wars",
+        "Civil War"
+      ],
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": true
+    },
+    {
+      "id": "marvel_616_captain_america",
+      "marvel_id": 1009220,
+      "name": "Captain America (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "Steve Rogers, enhanced by the Super-Soldier Serum and wielding a Vibranium shield.",
+      "image": "/api/avatar/marvel_616_captain_america",
+      "aliases": [
+        "Steve Rogers",
+        "Sentinel of Liberty"
+      ],
+      "comics": [
+        "Captain America Comics #1"
+      ],
+      "series": [
+        "Captain America"
+      ],
+      "events": [
+        "Secret Empire",
+        "Civil War"
+      ],
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": true
+    },
+    {
+      "id": "marvel_616_thor",
+      "marvel_id": 1009664,
+      "name": "Thor Odinson (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "Asgardian God of Thunder wielding the enchanted hammer Mjolnir.",
+      "image": "/api/avatar/marvel_616_thor",
+      "aliases": [
+        "Odinson",
+        "God of Thunder"
+      ],
+      "comics": [
+        "Journey into Mystery #83"
+      ],
+      "series": [
+        "Thor"
+      ],
+      "events": [
+        "War of the Realms",
+        "Fear Itself"
+      ],
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": true
+    },
+    {
+      "id": "marvel_616_hulk",
+      "marvel_id": 1009351,
+      "name": "Hulk (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "Bruce Banner, transformed by gamma radiation into a powerhouse whose strength scales with rage.",
+      "image": "/api/avatar/marvel_616_hulk",
+      "aliases": [
+        "Bruce Banner",
+        "Green Scar"
+      ],
+      "comics": [
+        "Incredible Hulk #1"
+      ],
+      "series": [
+        "The Incredible Hulk"
+      ],
+      "events": [
+        "World War Hulk",
+        "Planet Hulk"
+      ],
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": true
+    },
+    {
+      "id": "marvel_616_doctor_strange",
+      "marvel_id": 1009282,
+      "name": "Doctor Strange (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "Stephen Strange, Sorcerer Supreme of Earth wielding mystic arts and the Eye of Agamotto.",
+      "image": "/api/avatar/marvel_616_doctor_strange",
+      "aliases": [
+        "Stephen Strange",
+        "Sorcerer Supreme"
+      ],
+      "comics": [
+        "Strange Tales #110"
+      ],
+      "series": [
+        "Doctor Strange"
+      ],
+      "events": [
+        "Secret Wars",
+        "Damnation"
+      ],
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": true
+    },
+    {
+      "id": "marvel_616_scarlet_witch",
+      "marvel_id": 1009562,
+      "name": "Scarlet Witch (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "Wanda Maximoff, Nexus Being wielding Chaos Magic and probability manipulation.",
+      "image": "/api/avatar/marvel_616_scarlet_witch",
+      "aliases": [
+        "Wanda Maximoff"
+      ],
+      "comics": [
+        "X-Men #4"
+      ],
+      "series": [
+        "Scarlet Witch",
+        "Avengers"
+      ],
+      "events": [
+        "House of M",
+        "Avengers Disassembled"
+      ],
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": true
+    },
+    {
+      "id": "marvel_616_wolverine",
+      "marvel_id": 1009718,
+      "name": "Wolverine (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "Logan, mutant with an Adamantium-laced skeleton, retractable claws, and healing factor.",
+      "image": "/api/avatar/marvel_616_wolverine",
+      "aliases": [
+        "Logan",
+        "James Howlett",
+        "Weapon X"
+      ],
+      "comics": [
+        "Incredible Hulk #181"
+      ],
+      "series": [
+        "Wolverine",
+        "Uncanny X-Men"
+      ],
+      "events": [
+        "Old Man Logan",
+        "House of X"
+      ],
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": true
+    },
+    {
+      "id": "marvel_616_deadpool",
+      "marvel_id": 1009268,
+      "name": "Deadpool (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "Wade Wilson, mercenary with an accelerated healing factor and unpredictable martial skill.",
+      "image": "/api/avatar/marvel_616_deadpool",
+      "aliases": [
+        "Wade Wilson",
+        "Merc with a Mouth"
+      ],
+      "comics": [
+        "New Mutants #98"
+      ],
+      "series": [
+        "Deadpool"
+      ],
+      "events": [
+        "Deadpool Kills the Marvel Universe"
+      ],
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": true
+    },
+    {
+      "id": "marvel_616_captain_marvel",
+      "marvel_id": 1010338,
+      "name": "Captain Marvel (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "Carol Danvers, cosmic powerhouse capable of photon energy projection and Binary form.",
+      "image": "/api/avatar/marvel_616_captain_marvel",
+      "aliases": [
+        "Carol Danvers",
+        "Binary"
+      ],
+      "comics": [
+        "Marvel Super-Heroes #13"
+      ],
+      "series": [
+        "Captain Marvel"
+      ],
+      "events": [
+        "Civil War II",
+        "Empyre"
+      ],
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": true
+    },
+    {
+      "id": "marvel_616_black_panther",
+      "marvel_id": 1009187,
+      "name": "Black Panther (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "T'Challa, King of Wakanda enhanced by the Heart-Shaped Herb and Vibranium habit.",
+      "image": "/api/avatar/marvel_616_black_panther",
+      "aliases": [
+        "T'Challa",
+        "King of the Dead"
+      ],
+      "comics": [
+        "Fantastic Four #52"
+      ],
+      "series": [
+        "Black Panther"
+      ],
+      "events": [
+        "Secret Wars",
+        "Avengers vs. X-Men"
+      ],
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": true
+    },
+    {
+      "id": "marvel_616_ant_man",
+      "marvel_id": 1010802,
+      "name": "Ant-Man (Scott Lang, Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "Scott Lang, using Pym Particles to shrink or grow to Giant-Man scale.",
+      "image": "/api/avatar/marvel_616_ant_man",
+      "aliases": [
+        "Scott Lang"
+      ],
+      "comics": [
+        "Avengers #181"
+      ],
+      "series": [
+        "Ant-Man"
+      ],
+      "events": [
+        "Secret Empire"
+      ],
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": true
+    },
+    {
+      "id": "marvel_616_daredevil",
+      "marvel_id": 1009262,
+      "name": "Daredevil (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "Matt Murdock, blind martial artist with hyper-acute radar sense.",
+      "image": "/api/avatar/marvel_616_daredevil",
+      "aliases": [
+        "Matt Murdock",
+        "Man Without Fear"
+      ],
+      "comics": [
+        "Daredevil #1"
+      ],
+      "series": [
+        "Daredevil"
+      ],
+      "events": [
+        "Shadowland",
+        "Devil's Reign"
+      ],
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": true
+    },
+    {
+      "id": "marvel_616_vision",
+      "marvel_id": 1009697,
+      "name": "Vision (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "Synthezoid capable of density manipulation, intangibility, and solar-beam projection.",
+      "image": "/api/avatar/marvel_616_vision",
+      "aliases": [
+        "Victor Shade"
+      ],
+      "comics": [
+        "Avengers #57"
+      ],
+      "series": [
+        "The Vision",
+        "Avengers"
+      ],
+      "events": [
+        "Avengers: Age of Ultron (Comics)"
+      ],
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": true
+    },
+    {
+      "id": "marvel_616_thanos",
+      "marvel_id": 1009652,
+      "name": "Thanos (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "Mad Titan of Titan possessing immense cosmic strength, intellect, and energy manipulation.",
+      "image": "/api/avatar/marvel_616_thanos",
+      "aliases": [
+        "Mad Titan"
+      ],
+      "comics": [
+        "Iron Man #55"
+      ],
+      "series": [
+        "Infinity Gauntlet",
+        "Thanos"
+      ],
+      "events": [
+        "The Infinity Gauntlet",
+        "Infinity"
+      ],
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": true
+    },
+    {
+      "id": "marvel_616_loki",
+      "marvel_id": 1009407,
+      "name": "Loki Laufeyson (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "Asgardian God of Mischief, master sorcerer and illusionist.",
+      "image": "/api/avatar/marvel_616_loki",
+      "aliases": [
+        "God of Mischief"
+      ],
+      "comics": [
+        "Journey into Mystery #85"
+      ],
+      "series": [
+        "Loki: Agent of Asgard"
+      ],
+      "events": [
+        "Siege",
+        "War of the Realms"
+      ],
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": true
+    },
+    {
+      "id": "marvel_616_ultron",
+      "marvel_id": 1009685,
+      "name": "Ultron (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "Self-evolving Adamantium AI constructed by Hank Pym.",
+      "image": "/api/avatar/marvel_616_ultron",
+      "aliases": [
+        "Ultron-1",
+        "Crimson Cowl"
+      ],
+      "comics": [
+        "Avengers #54"
+      ],
+      "series": [
+        "Avengers"
+      ],
+      "events": [
+        "Age of Ultron",
+        "Annihilation: Conquest"
+      ],
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": true
+    },
+    {
+      "id": "marvel_616_doctor_doom",
+      "marvel_id": 1009281,
+      "name": "Doctor Doom (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "Victor Von Doom, ruler of Latveria combining supreme scientific armor and dark sorcery.",
+      "image": "/api/avatar/marvel_616_doctor_doom",
+      "aliases": [
+        "Victor Von Doom"
+      ],
+      "comics": [
+        "Fantastic Four #5"
+      ],
+      "series": [
+        "Fantastic Four",
+        "Infamous Iron Man"
+      ],
+      "events": [
+        "Secret Wars (2015)"
+      ],
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": true
+    },
+    {
+      "id": "marvel_616_magneto",
+      "marvel_id": 1009417,
+      "name": "Magneto (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "Max Eisenhardt, Omega-level mutant master of electromagnetism.",
+      "image": "/api/avatar/marvel_616_magneto",
+      "aliases": [
+        "Erik Lehnsherr",
+        "Master of Magnetism"
+      ],
+      "comics": [
+        "X-Men #1"
+      ],
+      "series": [
+        "Uncanny X-Men",
+        "X-Men Red"
+      ],
+      "events": [
+        "Fatal Attractions",
+        "House of M"
+      ],
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": true
+    },
+    {
+      "id": "marvel_616_green_goblin",
+      "marvel_id": 1014985,
+      "name": "Green Goblin (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "Norman Osborn, enhanced by the Goblin Formula with glider and pumpkin bombs.",
+      "image": "/api/avatar/marvel_616_green_goblin",
+      "aliases": [
+        "Norman Osborn"
+      ],
+      "comics": [
+        "Amazing Spider-Man #14"
+      ],
+      "series": [
+        "Amazing Spider-Man",
+        "Dark Avengers"
+      ],
+      "events": [
+        "Dark Reign"
+      ],
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": true
+    },
+    {
+      "id": "marvel_616_venom",
+      "marvel_id": 1009663,
+      "name": "Venom (Eddie Brock, Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "Eddie Brock bonded with the Klyntar Symbiote.",
+      "image": "/api/avatar/marvel_616_venom",
+      "aliases": [
+        "Eddie Brock",
+        "Lethal Protector"
+      ],
+      "comics": [
+        "Amazing Spider-Man #300"
+      ],
+      "series": [
+        "Venom"
+      ],
+      "events": [
+        "King in Black",
+        "Absolute Carnage"
+      ],
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": true
+    },
+    {
+      "id": "marvel_616_red_skull",
+      "marvel_id": 1009535,
+      "name": "Red Skull (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "Johann Schmidt, HYDRA mastermind wielding the Dust of Death.",
+      "image": "/api/avatar/marvel_616_red_skull",
+      "aliases": [
+        "Johann Schmidt"
+      ],
+      "comics": [
+        "Captain America Comics #7"
+      ],
+      "series": [
+        "Captain America"
+      ],
+      "events": [
+        "Axis"
+      ],
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": true
+    },
+    {
+      "id": "marvel_616_kang",
+      "marvel_id": 1009384,
+      "name": "Kang the Conqueror (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "Nathaniel Richards, 31st-century time-traveling conqueror in advanced battle armor.",
+      "image": "/api/avatar/marvel_616_kang",
+      "aliases": [
+        "Nathaniel Richards",
+        "Immortus"
+      ],
+      "comics": [
+        "Avengers #8"
+      ],
+      "series": [
+        "Avengers",
+        "Kang the Conqueror"
+      ],
+      "events": [
+        "Kang Dynasty"
+      ],
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": true
+    },
+    {
+      "id": "marvel_616_galactus",
+      "marvel_id": 1009312,
+      "name": "Galactus (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "Galan of Taa, Cosmic Entity wielding the Power Cosmic.",
+      "image": "/api/avatar/marvel_616_galactus",
+      "aliases": [
+        "Devourer of Worlds",
+        "Galan"
+      ],
+      "comics": [
+        "Fantastic Four #48"
+      ],
+      "series": [
+        "Fantastic Four",
+        "Silver Surfer"
+      ],
+      "events": [
+        "Annihilation"
+      ],
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": true
+    },
+    {
+      "id": "marvel_mcu_iron_man",
+      "marvel_id": 2009368,
+      "name": "Iron Man (MCU)",
+      "incarnation": "Earth-199999 (MCU)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "MCU Tony Stark piloting Mark LXXXV nanotech armor.",
+      "image": "/api/avatar/marvel_mcu_iron_man",
+      "aliases": [
+        "Tony Stark (MCU)"
+      ],
+      "comics": [],
+      "series": [
+        "Iron Man (2008)",
+        "Avengers: Endgame"
+      ],
+      "events": [
+        "Infinity Saga (MCU)"
+      ],
+      "source": "Marvel Cinematic Universe Official Canon",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": true
+    },
+    {
+      "id": "marvel_mcu_thanos",
+      "marvel_id": 2009652,
+      "name": "Thanos (MCU)",
+      "incarnation": "Earth-199999 (MCU)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "MCU Warlord of Titan wielding double-edged Uru sword and Infinity Gauntlet.",
+      "image": "/api/avatar/marvel_mcu_thanos",
+      "aliases": [
+        "Thanos (MCU)"
+      ],
+      "comics": [],
+      "series": [
+        "Avengers: Infinity War",
+        "Avengers: Endgame"
+      ],
+      "events": [
+        "Infinity Saga (MCU)"
+      ],
+      "source": "Marvel Cinematic Universe Official Canon",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": true
+    },
+    {
+      "id": "marvel_616_aunt_may",
+      "marvel_id": 1009490,
+      "name": "Aunt May (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "May Parker, Peter Parker's supportive aunt; civilian non-combatant.",
+      "image": "/api/avatar/marvel_616_aunt_may",
+      "aliases": [
+        "May Parker"
+      ],
+      "comics": [
+        "Amazing Fantasy #15"
+      ],
+      "series": [
+        "The Amazing Spider-Man"
+      ],
+      "events": [],
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": false
+    },
+    {
+      "id": "marvel_616_jjj",
+      "marvel_id": 1009372,
+      "name": "J. Jonah Jameson (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "description": "Editor-in-chief of the Daily Bugle; civilian non-combatant.",
+      "image": "/api/avatar/marvel_616_jjj",
+      "aliases": [
+        "J.J.J."
+      ],
+      "comics": [
+        "Amazing Spider-Man #1"
+      ],
+      "series": [
+        "The Amazing Spider-Man"
+      ],
+      "events": [],
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel",
+      "is_combat_capable": false
+    }
+  ]
+}
