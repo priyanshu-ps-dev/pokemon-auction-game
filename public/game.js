@@ -6,11 +6,14 @@
  * hidden stats during bidding, and dramatic final stats reveal.
  */
 
-// Global Game State
+// Global Game State (per-tab sessionStorage prevents multi-tab sessionId collisions while surviving F5 refresh)
+const _savedSessionId = sessionStorage.getItem('pkmn_auction_session_id') || ('sess_' + Math.random().toString(36).substring(2, 10));
+sessionStorage.setItem('pkmn_auction_session_id', _savedSessionId);
+
 const gameState = {
   ws: null,
-  sessionId: localStorage.getItem('pkmn_auction_session_id') || ('sess_' + Math.random().toString(36).substring(2, 10)),
-  roomCode: null,
+  sessionId: _savedSessionId,
+  roomCode: sessionStorage.getItem('pkmn_auction_room_code') || null,
   isHost: false,
   isWithdrawn: false,
   myName: localStorage.getItem('pkmn_auction_name') || 'Trainer Red',
@@ -19,8 +22,6 @@ const gameState = {
   roomState: null,
   timerInterval: null
 };
-
-localStorage.setItem('pkmn_auction_session_id', gameState.sessionId);
 
 // 12 Trainer Avatars
 const TRAINER_AVATARS = [
@@ -90,6 +91,15 @@ function connectWebSocket() {
 
   gameState.ws.onopen = () => {
     console.log('[WS] Connected to Auction Server');
+    const savedRoom = sessionStorage.getItem('pkmn_auction_room_code');
+    if (savedRoom) {
+      console.log(`[WS] Auto-rejoining room ${savedRoom} with session ${gameState.sessionId}`);
+      sendAction('join_room', {
+        room_code: savedRoom,
+        name: gameState.myName,
+        avatar: gameState.myAvatar
+      });
+    }
   };
 
   gameState.ws.onmessage = (event) => {
@@ -110,12 +120,32 @@ function connectWebSocket() {
 // Dispatch Incoming Server Messages
 function handleServerMessage(type, data) {
   switch (type) {
-    case 'room_joined':
+    case 'room_joined': {
       gameState.roomCode = data.room_code;
       gameState.isHost = data.is_host;
-      updateLobbyUI(data.room_state);
-      switchArenaScreen('arena-lobby');
+      gameState.roomState = data.room_state;
+      sessionStorage.setItem('pkmn_auction_room_code', data.room_code);
+      const rs = data.room_state || {};
+      const status = rs.status || 'LOBBY';
+      if (status === 'AUCTION' || status === 'SHOWCASE') {
+        switchArenaScreen('arena-stage');
+        updateStageUI(rs);
+        if (rs.current_pokemon) {
+          renderAuctionCard(rs.current_pokemon);
+        }
+        updateBidStatus(rs.current_bid || 0, rs.highest_bidder_id || null, rs.highest_bidder_name || null, null);
+        updateTimerDisplay(rs.timer_seconds_left != null ? rs.timer_seconds_left : 15);
+      } else if (status === 'BATTLE') {
+        switchArenaScreen('arena-battle');
+        updateStageUI(rs);
+      } else if (status === 'GAME_OVER') {
+        switchArenaScreen('arena-results');
+      } else {
+        updateLobbyUI(rs);
+        switchArenaScreen('arena-lobby');
+      }
       break;
+    }
 
     case 'room_state':
       gameState.roomState = data;
@@ -220,28 +250,50 @@ function handleServerMessage(type, data) {
       gameState.roomCode = null;
       gameState.isHost = false;
       gameState.isWithdrawn = false;
+      sessionStorage.removeItem('pkmn_auction_room_code');
       switchArenaScreen('arena-setup');
       break;
 
-    case 'auction_tick':
-      updateTimerDisplay(data.timer_seconds_left);
-      updateBidStatus(data.current_bid, data.highest_bidder_id, data.highest_bidder_name, data.highest_bidder_avatar);
-      if (gameState.roomState) {
+    case 'auction_tick': {
+      if (data.room_state) {
+        gameState.roomState = data.room_state;
+      } else if (gameState.roomState) {
         gameState.roomState.current_bid = data.current_bid;
         gameState.roomState.highest_bidder_id = data.highest_bidder_id;
         gameState.roomState.highest_bidder_name = data.highest_bidder_name;
+        gameState.roomState.timer_seconds_left = data.timer_seconds_left;
+      }
+      updateTimerDisplay(data.timer_seconds_left);
+      updateBidStatus(data.current_bid, data.highest_bidder_id, data.highest_bidder_name, data.highest_bidder_avatar);
+      if (gameState.roomState && Array.isArray(gameState.roomState.players)) {
+        const me = gameState.roomState.players.find(p => p.session_id === gameState.sessionId);
+        if (me) updateBidButtonStates(me, gameState.roomState);
       }
       if (data.timer_seconds_left <= 3 && data.timer_seconds_left > 0) {
         soundFX.tick();
       }
       break;
+    }
 
-    case 'bid_success':
+    case 'bid_success': {
       soundFX.bid();
+      if (data.room_state) {
+        gameState.roomState = data.room_state;
+      } else if (gameState.roomState) {
+        gameState.roomState.current_bid = data.current_bid;
+        gameState.roomState.highest_bidder_id = data.highest_bidder_id;
+        gameState.roomState.highest_bidder_name = data.highest_bidder_name;
+        gameState.roomState.timer_seconds_left = data.timer_seconds_left;
+      }
       updateBidStatus(data.current_bid, data.highest_bidder_id, data.highest_bidder_name, data.highest_bidder_avatar);
       updateTimerDisplay(data.timer_seconds_left);
+      if (gameState.roomState && Array.isArray(gameState.roomState.players)) {
+        const me = gameState.roomState.players.find(p => p.session_id === gameState.sessionId);
+        if (me) updateBidButtonStates(me, gameState.roomState);
+      }
       addStageLog(`₹ <strong>${data.highest_bidder_name}</strong> bid <strong>₹${data.current_bid.toLocaleString()}</strong>! Timer reset!`, 'bid');
       break;
+    }
 
     case 'bid_error':
       showBiddingError(data.message);

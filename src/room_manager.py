@@ -10,6 +10,7 @@ import asyncio
 import json
 import random
 import time
+import uuid
 from typing import Dict, List, Optional, Set, Any
 
 # Constants
@@ -220,6 +221,9 @@ class Room:
         self.skipped_player_ids: Set[str] = set()
         self.rematch_votes: Dict[str, bool] = {}
         self.skip_event: Optional[asyncio.Event] = None
+        self.auction_lock: asyncio.Lock = asyncio.Lock()
+        self.settled_rounds: Set[int] = set()
+        self.settlement_ledger: List[dict] = []
 
         # Fixed Dynamic Auction Pool (calculated when game starts)
         self.max_auction_characters: int = 16
@@ -414,6 +418,8 @@ class Room:
         self.consecutive_unsold_count = 0
         self.auction_history.clear()
         self.used_character_ids.clear()
+        self.settled_rounds.clear()
+        self.settlement_ledger.clear()
 
         room_manager.initialize_room_pool(self)
 
@@ -433,6 +439,95 @@ class Room:
 
     def get_player(self, session_id: str) -> Optional[Player]:
         return self.players.get(session_id) or self.spectators.get(session_id)
+
+    def settle_current_round(self, round_id: int) -> Optional[dict]:
+        """
+        Atomically and idempotently settles the given auction round.
+        Guarantees each round settles at most once, and purse deduction +
+        roster assignment happen together with an auditable ledger record.
+        Returns settlement dict if settled by this call, or None if already settled.
+        """
+        if round_id in self.settled_rounds:
+            return None
+        self.settled_rounds.add(round_id)
+
+        sanitized_char = self.current_character_sanitized
+        settlement_id = f"{self.match_id}_r{round_id}_{uuid.uuid4().hex[:8]}"
+
+        if (
+            self.highest_bidder_id
+            and self.highest_bidder_id in self.players
+            and self.current_character_full is not None
+        ):
+            winner = self.players[self.highest_bidder_id]
+            winning_bid = int(self.current_bid)
+            if not winner.is_team_full and winner.purse >= winning_bid and winning_bid > 0:
+                winner.purse -= winning_bid
+                winner.team.append(self.current_character_full)
+                self.consecutive_unsold_count = 0
+
+                tx = {
+                    "settlement_id": settlement_id,
+                    "room_code": self.room_code,
+                    "match_id": self.match_id,
+                    "round_id": round_id,
+                    "character_id": self.current_character_full.get("id"),
+                    "player_id": winner.session_id,
+                    "amount": winning_bid,
+                    "status": "SOLD",
+                    "timestamp": time.time(),
+                }
+                self.settlement_ledger.append(tx)
+                self.auction_history.append({
+                    "settlement_id": settlement_id,
+                    "round_id": round_id,
+                    "character": sanitized_char,
+                    "winner_id": winner.session_id,
+                    "winner_name": winner.name,
+                    "winning_bid": winning_bid,
+                    "status": "SOLD",
+                })
+                return {
+                    "status": "SOLD",
+                    "settlement_id": settlement_id,
+                    "round_id": round_id,
+                    "winner": winner,
+                    "winning_bid": winning_bid,
+                    "character": sanitized_char,
+                    "transaction": tx,
+                }
+
+        self.consecutive_unsold_count += 1
+        tx = {
+            "settlement_id": settlement_id,
+            "room_code": self.room_code,
+            "match_id": self.match_id,
+            "round_id": round_id,
+            "character_id": self.current_character_full.get("id") if self.current_character_full else None,
+            "player_id": None,
+            "amount": 0,
+            "status": "UNSOLD",
+            "timestamp": time.time(),
+        }
+        self.settlement_ledger.append(tx)
+        self.auction_history.append({
+            "settlement_id": settlement_id,
+            "round_id": round_id,
+            "character": sanitized_char,
+            "winner_id": None,
+            "winner_name": None,
+            "winning_bid": 0,
+            "status": "UNSOLD",
+        })
+        return {
+            "status": "UNSOLD",
+            "settlement_id": settlement_id,
+            "round_id": round_id,
+            "winner": None,
+            "winning_bid": 0,
+            "character": sanitized_char,
+            "transaction": tx,
+        }
 
     def calculate_max_bid_for_player(self, player: Player) -> int:
         """
