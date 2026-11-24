@@ -17,6 +17,7 @@ import json
 import asyncio
 import mimetypes
 import time
+from typing import Any
 from urllib.parse import urlparse, parse_qs
 
 from websockets.asyncio.server import serve, ServerConnection, Response
@@ -33,7 +34,12 @@ ANIME_DB_PATH = os.path.join(DATA_DIR, "anime_platform.db")
 # Import database manager & avatar generator
 from src.anime_database import AnimeDatabaseManager
 from src.avatar_generator import generate_character_svg
+from src.battle_manager import BattleManager
+from src.live_battle_session import LiveBattleSession
+from src.player_profiles import PlayerProfileStore
 anime_db = AnimeDatabaseManager(ANIME_JSON_PATH, ANIME_DB_PATH)
+battle_manager = BattleManager()
+profile_store = PlayerProfileStore()
 
 # Legacy compatibility cache
 with open(POKEMON_JSON_PATH, "r", encoding="utf-8") as f:
@@ -227,13 +233,98 @@ async def run_room_auction_loop(room: Room):
             await broadcast_to_room(room, "room_state", room.to_state_dict())
             await asyncio.sleep(2.5)
 
-        # 4. MATCH COMPLETED!
+        # 4. AUCTION COMPLETE -> BATTLE SIMULATION -> FINAL LEADERBOARD
+        room.status = "BATTLE"
+        await broadcast_to_room(room, "battle_started", {
+            "match_id": room.match_id,
+            "finish_reason": finish_reason,
+            "battle_control_mode": room.battle_control_mode,
+            "tournament_format": room.tournament_format,
+            "room_state": room.to_state_dict()
+        })
+
+        active_players = [p for p in room.players.values() if not p.is_withdrawn]
+        if room.battle_control_mode in ("player_vs_ai", "player_vs_player") and len(active_players) == 2:
+            pa, pb = active_players[0], active_players[1]
+            built_a = [battle_manager.build_combatant(c)[1] for c in pa.team]
+            built_b = [battle_manager.build_combatant(c)[1] for c in pb.team]
+            live_sess = LiveBattleSession(
+                pa.session_id, built_a,
+                pb.session_id, built_b,
+                control_mode=room.battle_control_mode,
+            )
+            room.active_live_battle = live_sess
+
+            async def _send_prompt(pid: str, prompt_data: dict):
+                pl = room.players.get(pid)
+                if pl and pl.ws is not None:
+                    try:
+                        await pl.ws.send(json.dumps({"type": "battle_turn_prompt", "data": prompt_data}, ensure_ascii=False))
+                    except Exception:
+                        pass
+
+            async def _broadcast_turn(turn_entry: dict):
+                await broadcast_to_room(room, "battle_turn_resolved", {
+                    "player_a_name": pa.name,
+                    "player_b_name": pb.name,
+                    "turn_entry": turn_entry,
+                })
+
+            res = await live_sess.run_interactive(send_prompt=_send_prompt, broadcast_turn=_broadcast_turn)
+            room.active_live_battle = None
+            battle_results = battle_manager.run_tournament_sync(
+                list(room.players.values()),
+                match_id=room.match_id,
+                tournament_format=room.tournament_format,
+            )
+            # Replace 1v1 match outcome with interactive result
+            if battle_results.get("matches"):
+                battle_results["matches"][0].update({
+                    "winner_id": res.winner_id,
+                    "is_draw": res.is_draw,
+                    "reason": res.reason,
+                    "turns_played": res.turns_played,
+                    "turn_log": res.turn_log,
+                })
+        else:
+            battle_results = await battle_manager.run_tournament_async(
+                list(room.players.values()),
+                match_id=room.match_id,
+                tournament_format=room.tournament_format
+            )
+
+        room.battle_results = battle_results
+        profile_store.record_tournament_results(battle_results)
+
+        for idx, m in enumerate(battle_results.get("matches", []), start=1):
+            await broadcast_to_room(room, "battle_progress", {
+                "match_index": idx,
+                "total_matches": battle_results.get("total_matches", 0),
+                "player_a_id": m["player_a_id"],
+                "player_a_name": m["player_a_name"],
+                "player_b_id": m["player_b_id"],
+                "player_b_name": m["player_b_name"],
+                "winner_id": m["winner_id"],
+                "is_draw": m["is_draw"],
+                "reason": m["reason"],
+                "turns_played": m["turns_played"]
+            })
+
+        await broadcast_to_room(room, "battle_results", {
+            "match_id": room.match_id,
+            "format": battle_results.get("format"),
+            "champion": battle_results.get("champion"),
+            "standings": battle_results.get("standings", []),
+            "total_matches": battle_results.get("total_matches", 0)
+        })
+
         room.status = "GAME_OVER"
-        leaderboard = room_manager.calculate_final_leaderboard(room)
+        leaderboard = room_manager.calculate_battle_leaderboard(room, battle_results)
 
         finish_data = {
             "leaderboard": leaderboard,
             "winner": leaderboard[0] if leaderboard else None,
+            "battle_results": battle_results,
             "room_state": room.to_state_dict(),
             "finish_reason": finish_reason
         }
@@ -272,6 +363,8 @@ async def ws_handler(websocket: ServerConnection):
                 anime_mode = data.get("anime_mode", "all")
                 selected_anime = data.get("selected_anime", [])
                 forms_mode = data.get("forms_mode", "SINGLE_BASE")
+                battle_control_mode = data.get("battle_control_mode", "ai_vs_ai")
+                tournament_format = data.get("tournament_format", "round_robin")
 
                 room = room_manager.create_room(
                     host_name, host_avatar, session_id,
@@ -280,7 +373,9 @@ async def ws_handler(websocket: ServerConnection):
                     min_bid=min_bid,
                     anime_mode=anime_mode,
                     selected_anime=selected_anime,
-                    forms_mode=forms_mode
+                    forms_mode=forms_mode,
+                    battle_control_mode=battle_control_mode,
+                    tournament_format=tournament_format
                 )
                 client_room_code = room.room_code
                 client_session_id = session_id
@@ -669,6 +764,23 @@ async def ws_handler(websocket: ServerConnection):
                         "room_state": room.to_state_dict()
                     })
 
+            # 11B. SUBMIT LIVE BATTLE ACTION
+            elif action == "submit_battle_action":
+                if not client_room_code or not client_session_id:
+                    continue
+                room = room_manager.rooms.get(client_room_code)
+                if not room or not room.active_live_battle:
+                    await websocket.send(json.dumps({
+                        "type": "battle_action_error",
+                        "data": {"message": "No interactive battle is currently active."}
+                    }))
+                    continue
+                ok, msg = room.active_live_battle.submit_action(client_session_id, data)
+                await websocket.send(json.dumps({
+                    "type": "battle_action_ack" if ok else "battle_action_error",
+                    "data": {"success": ok, "message": msg}
+                }))
+
             # 11. EXIT ROOM
             elif action == "exit_room":
                 if not client_room_code or not client_session_id:
@@ -913,6 +1025,14 @@ def process_http_request(connection, request):
     if path == "/api/admin/import/stop":
         success, msg = anime_db.import_manager.stop_job()
         return json_response(200, "OK", {"success": success, "message": msg})
+
+    # Player persistent profiles endpoint
+    if path.startswith("/api/profiles/") and len(path.split("/")) > 3:
+        player_id = path.split("/")[3]
+        prof = profile_store.get_profile(player_id)
+        if prof:
+            return json_response(200, "OK", prof)
+        return json_response(404, "Not Found", {"error": f"Profile {player_id} not found"})
 
     # Legacy Pokemon API endpoints
     if path == "/api/pokemon" or path.startswith("/api/pokemon/"):
