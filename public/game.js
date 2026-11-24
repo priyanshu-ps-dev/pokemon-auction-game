@@ -263,10 +263,62 @@ function handleServerMessage(type, data) {
       addStageLog(`📢 ${data.message}`, 'alert');
       break;
 
+    case 'battle_started':
+      gameState.pendingBattleResults = null;
+      gameState.battleSkipped = false;
+      switchArenaScreen('arena-battle');
+      const battleLog = document.getElementById('battle-event-log');
+      if (battleLog) battleLog.innerHTML = '';
+      const actionBanner = document.getElementById('battle-action-banner');
+      if (actionBanner) actionBanner.textContent = 'Simulating tournament battles...';
+      break;
+
+    case 'battle_progress':
+      if (!gameState.battleSkipped) {
+        const mc = document.getElementById('battle-match-counter');
+        if (mc) mc.textContent = `Match ${data.match_index} / ${data.total_matches}`;
+      }
+      break;
+
+    case 'battle_results':
+      gameState.pendingBattleResults = data;
+      break;
+
+    case 'battle_turn_prompt':
+      renderInteractiveTurnPrompt(data);
+      break;
+
+    case 'battle_action_ack':
+      {
+        const st = document.getElementById('battle-turn-status');
+        if (st) st.textContent = '✅ Action submitted! Waiting for opponent...';
+        document.querySelectorAll('.battle-move-btn, .battle-switch-btn, .battle-transform-btn').forEach(b => { b.disabled = true; });
+      }
+      break;
+
+    case 'battle_action_error':
+      alert(data.message || 'Invalid battle action.');
+      break;
+
+    case 'battle_turn_resolved':
+      if (data.turn_entry) {
+        applyResolvedInteractiveTurn(data.turn_entry, data.player_a_name, data.player_b_name);
+      }
+      break;
+
     case 'game_over':
-      soundFX.victory();
-      switchArenaScreen('arena-results');
-      renderLeaderboard(data.leaderboard);
+      {
+        const ctrlPanel = document.getElementById('battle-control-panel');
+        if (ctrlPanel) ctrlPanel.style.display = 'none';
+        const bResults = data.battle_results || gameState.pendingBattleResults;
+        if (bResults && bResults.matches && bResults.matches.length > 0 && !gameState.battleSkipped && gameState.roomState?.battle_control_mode === 'ai_vs_ai') {
+          playBattleSequence(bResults, data);
+        } else {
+          soundFX.victory();
+          switchArenaScreen('arena-results');
+          renderLeaderboard(data.leaderboard, bResults);
+        }
+      }
       break;
 
     case 'chat':
@@ -506,6 +558,9 @@ function setupEventListeners() {
       }
     }
 
+    const battleControlMode = document.getElementById('battle-control-select')?.value || 'ai_vs_ai';
+    const tournamentFormat = document.getElementById('tournament-format-select')?.value || 'round_robin';
+
     gameState.ws.send(JSON.stringify({
       action: 'create_room',
       data: {
@@ -516,7 +571,9 @@ function setupEventListeners() {
         min_bid: 10,
         anime_mode: selectedAnimeMode,
         selected_anime: selectedAnime,
-        forms_mode: formsMode
+        forms_mode: formsMode,
+        battle_control_mode: battleControlMode,
+        tournament_format: tournamentFormat
       }
     }));
   });
@@ -1193,13 +1250,24 @@ function addStageLog(htmlText, type) {
 }
 
 // Render Final Leaderboard (REVEAL ALL STATS DRAMATICALLY!)
-function renderLeaderboard(leaderboard) {
+function renderLeaderboard(leaderboard, battleResults = null) {
+  // 0. Champion Banner from Battle Results
+  const champBanner = document.getElementById('battle-champion-banner');
+  if (champBanner) {
+    if (battleResults && battleResults.champion) {
+      const ch = battleResults.champion;
+      champBanner.style.display = 'inline-block';
+      champBanner.textContent = `🏆 Champion: ${ch.name} (${ch.wins}W - ${ch.losses}L - ${ch.draws}D | ${ch.points} pts)`;
+    } else {
+      champBanner.style.display = 'none';
+    }
+  }
+
   // 1. Render Podium
   const podium = document.getElementById('podium-grid');
   podium.innerHTML = '';
 
   const top3 = leaderboard.slice(0, 3);
-  const places = ['1st', '2nd', '3rd'];
   const medals = ['🥇', '🥈', '🥉'];
 
   top3.forEach((p, idx) => {
@@ -1207,14 +1275,18 @@ function renderLeaderboard(leaderboard) {
     const pod = document.createElement('div');
     pod.className = `podium-card rank-${p.rank || (idx + 1)}`;
     const teamCount = p.pokemon_count || (p.team ? p.team.length : 0);
+    const hasBattle = typeof p.battle_wins === 'number';
+    const headline = hasBattle
+      ? `${p.battle_wins}W-${p.battle_losses}L-${p.battle_draws}D <span class="lbl">${p.battle_points} PTS</span>`
+      : `${p.team_power.toFixed(1)} <span class="lbl">TEAM POWER</span>`;
     pod.innerHTML = `
       <div class="podium-medal">${medals[idx] || '🏅'}</div>
       <div class="podium-avatar" style="background:${av.color};">${av.icon}</div>
       <h3 class="podium-name">${escapeHtml(p.name)}</h3>
-      <div class="podium-power">${p.team_power.toFixed(1)} <span class="lbl">TEAM POWER</span></div>
+      <div class="podium-power">${headline}</div>
       <div class="podium-stats">
         <span>Team: ${teamCount}/6</span> &bull; 
-        <span>BST: ${p.total_bst}</span> &bull; 
+        <span>Power: ${p.team_power.toFixed(1)}</span> &bull; 
         <span>HP: ${p.total_hp || 0}</span>
       </div>
       <div style="font-size:0.8rem; color:#94a3b8; margin-top:0.3rem;">
@@ -1232,6 +1304,10 @@ function renderLeaderboard(leaderboard) {
     const av = TRAINER_AVATARS.find(a => a.id === p.avatar) || TRAINER_AVATARS[0];
     const isMe = p.session_id === gameState.sessionId;
     const teamCount = p.pokemon_count || (p.team ? p.team.length : 0);
+    const recordText = typeof p.battle_wins === 'number'
+      ? `${p.battle_wins}W - ${p.battle_losses}L - ${p.battle_draws}D`
+      : '-';
+    const ptsText = typeof p.battle_points === 'number' ? p.battle_points : '-';
 
     const row = document.createElement('tr');
     row.className = isMe ? 'me-row' : '';
@@ -1244,10 +1320,10 @@ function renderLeaderboard(leaderboard) {
           ${p.is_withdrawn ? '<span style="color:#ef4444; font-size:0.75rem; font-weight:700;">(Withdrawn)</span>' : ''}
         </div>
       </td>
+      <td><strong>${recordText}</strong></td>
+      <td><strong style="color:#f59e0b;">${ptsText}</strong></td>
+      <td><span style="color:#10b981; font-weight:600;">${teamCount}/6</span></td>
       <td><strong style="color:#38bdf8; font-size:1.05rem;">${p.team_power.toFixed(1)}</strong></td>
-      <td><span style="color:#10b981; font-weight:600;">${teamCount}/6 Pokémon</span></td>
-      <td>${p.total_bst}</td>
-      <td>${p.total_hp || 0}</td>
       <td>₹${p.remaining_purse.toLocaleString()}</td>
       <td>
         <button class="btn btn-outline btn-sm inspect-team-btn" data-session="${p.session_id}">
@@ -1257,6 +1333,31 @@ function renderLeaderboard(leaderboard) {
     `;
     tbody.appendChild(row);
   });
+
+  // 3. Render Individual Battle Summaries
+  const matchesCard = document.getElementById('battle-matches-card');
+  const matchesGrid = document.getElementById('battle-matches-summary');
+  if (matchesCard && matchesGrid) {
+    if (battleResults && Array.isArray(battleResults.matches) && battleResults.matches.length > 0) {
+      matchesCard.style.display = 'block';
+      matchesGrid.innerHTML = battleResults.matches.map((m, idx) => {
+        const winnerName = m.is_draw
+          ? 'Draw'
+          : (m.winner_id === m.player_a_id ? m.player_a_name : m.player_b_name);
+        return `
+          <div class="battle-match-summary-card">
+            <div style="font-weight:800; color:#38bdf8; margin-bottom:0.25rem;">
+              Match ${idx + 1}: ${escapeHtml(m.player_a_name)} vs ${escapeHtml(m.player_b_name)}
+            </div>
+            <div>Winner: <strong style="color:#10b981;">${escapeHtml(winnerName)}</strong></div>
+            <div style="color:#94a3b8; font-size:0.8rem;">Turns: ${m.turns_played} &bull; ${escapeHtml(m.reason)}</div>
+          </div>
+        `;
+      }).join('');
+    } else {
+      matchesCard.style.display = 'none';
+    }
+  }
 
   // Attach inspect click handlers
   document.querySelectorAll('.inspect-team-btn').forEach(btn => {
@@ -2144,6 +2245,333 @@ const animeDatabaseModule = {
 };
 
 window.animeDatabaseModule = animeDatabaseModule;
+
+// ============================================================================
+// PHASE 3: FRONTEND BATTLE SEQUENCE PLAYBACK & ANIMATIONS
+// ============================================================================
+function _resolveBattleArt(snap, teamRoster) {
+  if (snap && snap.image) return snap.image;
+  if (snap && Array.isArray(teamRoster)) {
+    const found = teamRoster.find(c => c.id === snap.id || c.name === snap.name);
+    if (found && found.image) return found.image;
+  }
+  if (snap && snap.id && String(snap.id).startsWith('pkmn_')) {
+    const pid = String(snap.id).split('_')[1];
+    return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pid}.png`;
+  }
+  return snap ? `/api/avatar/${encodeURIComponent(snap.id || snap.name || 'default')}` : '';
+}
+
+function _updateBattleFighterCard(side, snap, trainerName, teamRoster, prevName, remainingCount) {
+  const card = document.getElementById(`battle-fighter-${side}`);
+  const trainerEl = document.getElementById(`battle-player-${side}-name`);
+  const artEl = document.getElementById(`battle-art-${side}`);
+  const nameEl = document.getElementById(`battle-char-${side}-name`);
+  const badgesEl = document.getElementById(`battle-badges-${side}`);
+  const hpFill = document.getElementById(`battle-hp-fill-${side}`);
+  const hpText = document.getElementById(`battle-hp-text-${side}`);
+  const statusEl = document.getElementById(`battle-status-${side}`);
+  const dotsEl = document.getElementById(`battle-team-${side}-dots`);
+
+  if (trainerEl) trainerEl.textContent = trainerName || 'Trainer';
+  if (dotsEl && Array.isArray(teamRoster)) {
+    const total = teamRoster.length;
+    const alive = typeof remainingCount === 'number' ? remainingCount : total;
+    dotsEl.innerHTML = Array.from({ length: total }, (_, i) =>
+      `<span class="dot ${i < alive ? '' : 'fainted'}"></span>`
+    ).join('');
+  }
+  if (!snap) return;
+
+  if (nameEl) nameEl.textContent = snap.name || 'Combatant';
+  if (artEl) artEl.src = _resolveBattleArt(snap, teamRoster);
+
+  if (badgesEl) {
+    const types = Array.isArray(snap.types) ? snap.types : [];
+    const sysTag = snap.system ? `<span class="badge">${escapeHtml(snap.system.toUpperCase())}</span>` : '';
+    const typeTags = types.map(t => `<span class="badge">${escapeHtml(t)}</span>`).join('');
+    badgesEl.innerHTML = sysTag + typeTags;
+  }
+
+  const maxHp = Math.max(1, snap.max_hp || 100);
+  const curHp = Math.max(0, snap.current_hp ?? maxHp);
+  const pct = Math.max(0, Math.min(100, Math.round((curHp / maxHp) * 100)));
+  if (hpFill) {
+    hpFill.style.width = `${pct}%`;
+    hpFill.classList.remove('hp-mid', 'hp-low');
+    if (pct <= 25) hpFill.classList.add('hp-low');
+    else if (pct <= 55) hpFill.classList.add('hp-mid');
+  }
+  if (hpText) hpText.textContent = `${curHp} / ${maxHp} HP (${pct}%)`;
+
+  if (statusEl) {
+    if (snap.status) {
+      statusEl.style.display = 'inline-block';
+      statusEl.textContent = snap.status;
+      _triggerBattleAnim(`battle-fighter-${side}`, 'anim-status');
+    } else {
+      statusEl.style.display = 'none';
+    }
+  }
+
+  if (card) {
+    card.classList.remove('anim-faint', 'anim-switch');
+    if (snap.fainted || curHp <= 0) {
+      card.classList.add('anim-faint');
+    } else if (prevName && prevName !== snap.name) {
+      card.classList.add('anim-switch');
+    }
+  }
+}
+
+function _showDamagePopup(side, dmg, isCrit, eff) {
+  const pop = document.getElementById(`battle-dmg-pop-${side}`);
+  if (!pop || !dmg) return;
+  let label = `-${dmg}`;
+  pop.classList.remove('crit', 'super', 'anim-dmg-float');
+  if (isCrit) {
+    label += ' CRIT!';
+    pop.classList.add('crit');
+  } else if (eff > 1.0) {
+    label += ' SUPER!';
+    pop.classList.add('super');
+  }
+  pop.textContent = label;
+  void pop.offsetWidth;
+  pop.classList.add('anim-dmg-float');
+}
+
+function _triggerBattleAnim(elementId, cls) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  el.classList.remove(cls);
+  void el.offsetWidth;
+  el.classList.add(cls);
+}
+
+async function playBattleSequence(battleResults, finishData) {
+  switchArenaScreen('arena-battle');
+  const formatBadge = document.getElementById('battle-format-badge');
+  const matchCounter = document.getElementById('battle-match-counter');
+  const turnCounter = document.getElementById('battle-turn-counter');
+  const actionBanner = document.getElementById('battle-action-banner');
+  const logEl = document.getElementById('battle-event-log');
+  const logCard = document.getElementById('battle-log-card');
+  const pauseBtn = document.getElementById('pause-battle-btn');
+  const speedBtn = document.getElementById('speed-battle-btn');
+  const toggleLogBtn = document.getElementById('toggle-battle-log-btn');
+  const skipMatchBtn = document.getElementById('skip-match-btn');
+  const skipBtn = document.getElementById('skip-battle-btn');
+
+  if (formatBadge) formatBadge.textContent = (battleResults.format || 'BATTLE').replace('_', ' ').toUpperCase();
+  if (logEl) logEl.innerHTML = '';
+
+  let isPaused = false;
+  let speedMult = 1;
+  let skipCurrentMatch = false;
+
+  const finishPlayback = () => {
+    soundFX.victory();
+    switchArenaScreen('arena-results');
+    renderLeaderboard(finishData.leaderboard, battleResults);
+  };
+
+  if (pauseBtn) {
+    pauseBtn.textContent = '⏸️ Pause';
+    pauseBtn.onclick = () => {
+      isPaused = !isPaused;
+      pauseBtn.textContent = isPaused ? '▶️ Resume' : '⏸️ Pause';
+    };
+  }
+  if (speedBtn) {
+    speedBtn.textContent = '⏩ 1x';
+    speedBtn.onclick = () => {
+      speedMult = speedMult === 1 ? 2 : (speedMult === 2 ? 4 : 1);
+      speedBtn.textContent = `⏩ ${speedMult}x`;
+    };
+  }
+  if (toggleLogBtn && logCard) {
+    toggleLogBtn.onclick = () => {
+      logCard.style.display = logCard.style.display === 'none' ? 'block' : 'none';
+    };
+  }
+  if (skipMatchBtn) {
+    skipMatchBtn.onclick = () => { skipCurrentMatch = true; };
+  }
+  if (skipBtn) {
+    skipBtn.onclick = () => {
+      gameState.battleSkipped = true;
+      finishPlayback();
+    };
+  }
+
+  const matches = battleResults.matches || [];
+  for (let mIdx = 0; mIdx < matches.length; mIdx++) {
+    if (gameState.battleSkipped) return;
+    skipCurrentMatch = false;
+    const match = matches[mIdx];
+    if (matchCounter) matchCounter.textContent = `Match ${mIdx + 1} / ${matches.length}`;
+
+    let prevA = null;
+    let prevB = null;
+    const turns = match.turn_log || [];
+
+    if (turns.length === 0) {
+      if (actionBanner) actionBanner.textContent = `${match.player_a_name} vs ${match.player_b_name}: ${match.reason}`;
+      if (logEl) {
+        const div = document.createElement('div');
+        div.className = 'battle-log-entry';
+        div.textContent = `Match ${mIdx + 1}: ${match.player_a_name} vs ${match.player_b_name} — ${match.reason}`;
+        logEl.prepend(div);
+      }
+      await new Promise(r => setTimeout(r, Math.round(600 / speedMult)));
+      continue;
+    }
+
+    const baseMs = turns.length > 20 ? 220 : 420;
+    for (let tIdx = 0; tIdx < turns.length; tIdx++) {
+      if (gameState.battleSkipped) return;
+      if (skipCurrentMatch) break;
+      while (isPaused && !gameState.battleSkipped && !skipCurrentMatch) {
+        await new Promise(r => setTimeout(r, 120));
+      }
+
+      const t = turns[tIdx];
+      if (turnCounter) turnCounter.textContent = `Turn ${t.turn}`;
+
+      _updateBattleFighterCard('a', t.active_a, match.player_a_name, match.player_a_team, prevA, t.remaining_a);
+      _updateBattleFighterCard('b', t.active_b, match.player_b_name, match.player_b_team, prevB, t.remaining_b);
+      prevA = t.active_a ? t.active_a.name : prevA;
+      prevB = t.active_b ? t.active_b.name : prevB;
+
+      const evText = (t.events || []).join(' • ');
+      if (actionBanner && evText) actionBanner.textContent = evText;
+
+      const details = t.action_details || [];
+      for (const d of details) {
+        if (d.event_type === 'transform') {
+          _triggerBattleAnim(`battle-fighter-${d.side}`, 'anim-transform');
+        } else if (d.event_type === 'attack') {
+          const atkCls = d.side === 'a' ? 'anim-attack-left' : 'anim-attack-right';
+          _triggerBattleAnim(`battle-fighter-${d.side}`, atkCls);
+          if (d.category === 'elemental') _triggerBattleAnim(`battle-fighter-${d.side}`, 'anim-elemental');
+          if (d.category === 'ranged') _triggerBattleAnim(`battle-fighter-${d.side}`, 'anim-ranged');
+          _triggerBattleAnim(`battle-fighter-${d.target_side}`, 'anim-hit');
+          _showDamagePopup(d.target_side, d.damage, d.is_crit, d.effectiveness || 1);
+        }
+      }
+
+      if (logEl && evText) {
+        const entry = document.createElement('div');
+        entry.className = 'battle-log-entry';
+        entry.textContent = `[M${mIdx + 1} T${t.turn}] ${evText}`;
+        logEl.prepend(entry);
+        if (logEl.children.length > 40) logEl.lastChild.remove();
+      }
+
+      await new Promise(r => setTimeout(r, Math.max(60, Math.round(baseMs / speedMult))));
+    }
+  }
+
+  if (!gameState.battleSkipped) {
+    await new Promise(r => setTimeout(r, 450));
+    finishPlayback();
+  }
+}
+
+// ============================================================================
+// PHASE 5: INTERACTIVE BATTLE CONTROL HANDLERS
+// ============================================================================
+let _battlePromptTimer = null;
+
+function renderInteractiveTurnPrompt(promptData) {
+  switchArenaScreen('arena-battle');
+  const panel = document.getElementById('battle-control-panel');
+  const statusEl = document.getElementById('battle-turn-status');
+  const timerEl = document.getElementById('battle-action-timer');
+  const movesGrid = document.getElementById('battle-moves-grid');
+  const switchRow = document.getElementById('battle-switch-row');
+  const transformRow = document.getElementById('battle-transform-row');
+  const turnCounter = document.getElementById('battle-turn-counter');
+
+  if (turnCounter) turnCounter.textContent = `Turn ${promptData.turn + 1}`;
+  if (panel) panel.style.display = 'block';
+  if (statusEl) statusEl.textContent = promptData.opponent_submitted ? '⚡ Opponent ready! Your Turn' : '⚔️ Your Turn — Select Action';
+
+  if (_battlePromptTimer) clearInterval(_battlePromptTimer);
+  let secs = Math.round(promptData.timeout_seconds || 20);
+  if (timerEl) timerEl.textContent = `⏱️ ${secs}s`;
+  _battlePromptTimer = setInterval(() => {
+    secs = Math.max(0, secs - 1);
+    if (timerEl) timerEl.textContent = `⏱️ ${secs}s`;
+    if (secs <= 0) clearInterval(_battlePromptTimer);
+  }, 1000);
+
+  if (movesGrid) {
+    movesGrid.innerHTML = '';
+    (promptData.available_moves || []).forEach(m => {
+      const btn = document.createElement('button');
+      btn.className = 'battle-move-btn';
+      const ppInfo = m.pp !== null && m.pp !== undefined ? `PP ${m.pp}/${m.max_pp || m.pp}` : m.category;
+      btn.innerHTML = `<strong>${escapeHtml(m.name)}</strong><div style="font-size:0.78rem; color:#94a3b8;">${escapeHtml(m.type)} &bull; ${escapeHtml(String(ppInfo))}</div>`;
+      btn.onclick = () => {
+        gameState.ws.send(JSON.stringify({
+          action: 'submit_battle_action',
+          data: { action_type: 'attack', move_id: m.id }
+        }));
+      };
+      movesGrid.appendChild(btn);
+    });
+  }
+
+  if (switchRow) {
+    switchRow.innerHTML = '';
+    (promptData.available_switches || []).forEach(sw => {
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-outline btn-sm battle-switch-btn';
+      btn.textContent = `🔄 ${sw.name} (${sw.current_hp}/${sw.max_hp})`;
+      btn.onclick = () => {
+        gameState.ws.send(JSON.stringify({
+          action: 'submit_battle_action',
+          data: { action_type: 'switch', switch_index: sw.index }
+        }));
+      };
+      switchRow.appendChild(btn);
+    });
+  }
+
+  if (transformRow) {
+    transformRow.innerHTML = '';
+    (promptData.available_transformations || []).forEach(tf => {
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-primary btn-sm battle-transform-btn';
+      btn.textContent = `✨ Transform: ${tf.name}`;
+      btn.onclick = () => {
+        gameState.ws.send(JSON.stringify({
+          action: 'submit_battle_action',
+          data: { action_type: 'transform', transformation_id: tf.id }
+        }));
+      };
+      transformRow.appendChild(btn);
+    });
+  }
+}
+
+function applyResolvedInteractiveTurn(t, nameA, nameB) {
+  if (_battlePromptTimer) clearInterval(_battlePromptTimer);
+  _updateBattleFighterCard('a', t.active_a, nameA, null, null, t.remaining_a);
+  _updateBattleFighterCard('b', t.active_b, nameB, null, null, t.remaining_b);
+  const actionBanner = document.getElementById('battle-action-banner');
+  const logEl = document.getElementById('battle-event-log');
+  const evText = (t.events || []).join(' • ');
+  if (actionBanner && evText) actionBanner.textContent = evText;
+  if (logEl && evText) {
+    const entry = document.createElement('div');
+    entry.className = 'battle-log-entry';
+    entry.textContent = `[T${t.turn}] ${evText}`;
+    logEl.prepend(entry);
+  }
+}
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', initArena);

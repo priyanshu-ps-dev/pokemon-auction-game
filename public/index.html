@@ -137,6 +137,25 @@
                   <option value="SEPARATE_ENTRIES">Transformations as Separate Entries (SSJ, Ultra Instinct, Gear 5, etc.)</option>
                 </select>
               </div>
+
+              <!-- Battle Control Mode & Championship Format -->
+              <div style="margin-top:0.85rem; padding-top:0.75rem; border-top:1px solid rgba(255,255,255,0.08); display:grid; grid-template-columns:1fr 1fr; gap:0.6rem;">
+                <div>
+                  <label for="battle-control-select" style="font-size:0.82rem; font-weight:600; color:#cbd5e1;">Battle Control Mode:</label>
+                  <select id="battle-control-select" class="select-input" style="margin-top:0.25rem;">
+                    <option value="ai_vs_ai" selected>AI vs AI (Auto Tournament)</option>
+                    <option value="player_vs_ai">Player vs AI (Interactive 1v1)</option>
+                    <option value="player_vs_player">Player vs Player (Live 1v1)</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="tournament-format-select" style="font-size:0.82rem; font-weight:600; color:#cbd5e1;">Tournament Format:</label>
+                  <select id="tournament-format-select" class="select-input" style="margin-top:0.25rem;">
+                    <option value="round_robin" selected>Round-Robin League</option>
+                    <option value="bracket">Championship Bracket</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
             <button id="create-room-btn" class="btn btn-primary btn-large">
@@ -381,13 +400,96 @@
       </div>
     </div>
 
-    <!-- SUB-SCREEN 1D: FINAL LEADERBOARD & VICTORY SCREEN -->
+    <!-- SUB-SCREEN 1D: BATTLE SIMULATION ARENA -->
+    <div id="arena-battle" class="arena-screen">
+      <div class="battle-container">
+        <div class="battle-top-bar">
+          <div class="battle-badge-group">
+            <span class="badge-status" id="battle-format-badge">TOURNAMENT</span>
+            <span class="battle-counter-pill" id="battle-match-counter">Match 1 / 1</span>
+            <span class="battle-counter-pill" id="battle-turn-counter">Turn 0</span>
+          </div>
+          <div class="battle-controls-group">
+            <button id="pause-battle-btn" class="btn btn-outline btn-sm">⏸️ Pause</button>
+            <button id="speed-battle-btn" class="btn btn-outline btn-sm">⏩ 1x</button>
+            <button id="toggle-battle-log-btn" class="btn btn-outline btn-sm">📜 Log</button>
+            <button id="skip-match-btn" class="btn btn-outline btn-sm">⏭️ Next Match</button>
+            <button id="skip-battle-btn" class="btn btn-primary btn-sm">⏩ Skip to Results</button>
+          </div>
+        </div>
+
+        <div class="battle-duel-grid">
+          <div class="battle-fighter-card" id="battle-fighter-a">
+            <div class="fighter-header-row">
+              <span class="fighter-avatar-pill" id="battle-avatar-a">🔴</span>
+              <span class="fighter-trainer" id="battle-player-a-name">Trainer A</span>
+              <span class="fighter-team-dots" id="battle-team-a-dots"></span>
+            </div>
+            <div class="fighter-art-wrap">
+              <img id="battle-art-a" src="" alt="Combatant A" class="fighter-art">
+              <div class="battle-dmg-pop" id="battle-dmg-pop-a"></div>
+            </div>
+            <div class="fighter-name" id="battle-char-a-name">Combatant A</div>
+            <div class="fighter-badges" id="battle-badges-a"></div>
+            <div class="battle-hp-wrap">
+              <div class="battle-hp-bar"><div class="battle-hp-fill" id="battle-hp-fill-a" style="width:100%;"></div></div>
+              <div class="battle-hp-text" id="battle-hp-text-a">100 / 100 HP (100%)</div>
+            </div>
+            <div class="fighter-status-tag" id="battle-status-a" style="display:none;"></div>
+          </div>
+
+          <div class="battle-center-col">
+            <div class="battle-vs-badge">⚔️ VS</div>
+            <div class="battle-action-banner" id="battle-action-banner">Preparing combatants...</div>
+          </div>
+
+          <div class="battle-fighter-card" id="battle-fighter-b">
+            <div class="fighter-header-row">
+              <span class="fighter-avatar-pill" id="battle-avatar-b">🔵</span>
+              <span class="fighter-trainer" id="battle-player-b-name">Trainer B</span>
+              <span class="fighter-team-dots" id="battle-team-b-dots"></span>
+            </div>
+            <div class="fighter-art-wrap">
+              <img id="battle-art-b" src="" alt="Combatant B" class="fighter-art">
+              <div class="battle-dmg-pop" id="battle-dmg-pop-b"></div>
+            </div>
+            <div class="fighter-name" id="battle-char-b-name">Combatant B</div>
+            <div class="fighter-badges" id="battle-badges-b"></div>
+            <div class="battle-hp-wrap">
+              <div class="battle-hp-bar"><div class="battle-hp-fill" id="battle-hp-fill-b" style="width:100%;"></div></div>
+              <div class="battle-hp-text" id="battle-hp-text-b">100 / 100 HP (100%)</div>
+            </div>
+            <div class="fighter-status-tag" id="battle-status-b" style="display:none;"></div>
+          </div>
+        </div>
+
+        <div class="battle-control-panel" id="battle-control-panel" style="display:none;">
+          <div class="battle-control-header">
+            <span id="battle-turn-status" class="battle-turn-status">Your Turn — Choose an Action</span>
+            <span id="battle-action-timer" class="battle-counter-pill">⏱️ 20s</span>
+          </div>
+          <div class="battle-moves-grid" id="battle-moves-grid"></div>
+          <div class="battle-secondary-actions">
+            <div class="battle-switch-row" id="battle-switch-row"></div>
+            <div class="battle-transform-row" id="battle-transform-row"></div>
+          </div>
+        </div>
+
+        <div class="battle-log-card" id="battle-log-card">
+          <h4>Live Battle Event Log</h4>
+          <div class="battle-event-log" id="battle-event-log"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUB-SCREEN 1E: FINAL LEADERBOARD & VICTORY SCREEN -->
     <div id="arena-results" class="arena-screen">
       <div class="results-container">
-        <div class="victory-banner">
+        <div class="victory-banner champion-pulse">
           <div class="trophy-icon">🏆</div>
-          <h2 id="victory-banner-title">MATCH CONCLUDED!</h2>
-          <p id="victory-banner-desc">Final tournament standings and complete Pokémon competitive stats revealed below:</p>
+          <h2 id="victory-banner-title">TOURNAMENT CONCLUDED!</h2>
+          <p id="victory-banner-desc">Champion determined by simulated battle results:</p>
+          <div id="battle-champion-banner" class="champion-banner" style="display:none;"></div>
         </div>
 
         <!-- Podium (Top 3) -->
@@ -403,10 +505,10 @@
               <tr>
                 <th>Rank</th>
                 <th>Trainer</th>
-                <th>Team Power</th>
+                <th>Record (W-L-D)</th>
+                <th>Battle Pts</th>
                 <th>Team Roster</th>
-                <th>Total BST</th>
-                <th>Total HP</th>
+                <th>Team Power</th>
                 <th>Remaining Purse</th>
                 <th>Action</th>
               </tr>
@@ -415,6 +517,12 @@
               <!-- Populated dynamically -->
             </tbody>
           </table>
+        </div>
+
+        <!-- Individual Battle Summaries -->
+        <div class="leaderboard-card" id="battle-matches-card" style="display:none; margin-top:1.2rem;">
+          <h3>Simulated Battle Summaries</h3>
+          <div class="battle-matches-grid" id="battle-matches-summary"></div>
         </div>
 
         <!-- Team Inspection Showcase Drawer (Visible when a player is selected) -->
