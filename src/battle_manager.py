@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from src.anime_battle_engine import AnimeBattleSimulator, AnimeCombatant
 from src.battle_ai import TacticalBattleAI
 from src.battle_engine import PokemonBattleSimulator, PokemonCombatant
+from src.marvel_battle_engine import MarvelBattleSimulator, MarvelCombatant
 from src.battle_interface import BattleResult
 from src.combat_data import CombatDataProvider
 from src.cross_universe_adapter import CrossUniverseBattleSimulator, CrossUniverseConfig
@@ -51,6 +52,8 @@ class BattleManager:
 
         if profile["system"] == "pokemon":
             return "pokemon", PokemonCombatant(profile)
+        if profile["system"] == "marvel":
+            return "marvel", MarvelCombatant(profile)
         return "anime", AnimeCombatant(profile)
 
     def simulate_1v1(
@@ -77,6 +80,14 @@ class BattleManager:
 
         if all_systems == {"anime"}:
             sim = AnimeBattleSimulator(
+                player_a_id, [c for _, c in built_a],
+                player_b_id, [c for _, c in built_b],
+                seed=seed, ai_selector=self.ai,
+            )
+            return sim.run()
+
+        if all_systems == {"marvel"}:
+            sim = MarvelBattleSimulator(
                 player_a_id, [c for _, c in built_a],
                 player_b_id, [c for _, c in built_b],
                 seed=seed, ai_selector=self.ai,

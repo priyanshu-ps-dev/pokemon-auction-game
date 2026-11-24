@@ -97,19 +97,39 @@
               <div class="mode-options-grid" id="mode-options-grid">
                 <div class="mode-radio-btn selected" data-mode="all">
                   <span class="mode-icon">🌐</span>
-                  <span>All Anime</span>
+                  <span>All Universes</span>
                 </div>
                 <div class="mode-radio-btn" data-mode="pokemon">
                   <span class="mode-icon">⚡</span>
                   <span>Pokémon Only</span>
                 </div>
+                <div class="mode-radio-btn" data-mode="anime_only">
+                  <span class="mode-icon">🍥</span>
+                  <span>Anime Only</span>
+                </div>
+                <div class="mode-radio-btn" data-mode="marvel">
+                  <span class="mode-icon">🛡️</span>
+                  <span>Marvel Only</span>
+                </div>
+                <div class="mode-radio-btn" data-mode="pokemon_anime">
+                  <span class="mode-icon">⚡🍥</span>
+                  <span>Pokémon + Anime</span>
+                </div>
+                <div class="mode-radio-btn" data-mode="pokemon_marvel">
+                  <span class="mode-icon">⚡🛡️</span>
+                  <span>Pokémon + Marvel</span>
+                </div>
+                <div class="mode-radio-btn" data-mode="anime_marvel">
+                  <span class="mode-icon">🍥🛡️</span>
+                  <span>Anime + Marvel</span>
+                </div>
                 <div class="mode-radio-btn" data-mode="single">
                   <span class="mode-icon">🎯</span>
-                  <span>Single Anime</span>
+                  <span>Single Franchise</span>
                 </div>
                 <div class="mode-radio-btn" data-mode="multiple">
                   <span class="mode-icon">⚔️</span>
-                  <span>Selected Anime</span>
+                  <span>Selected Franchises</span>
                 </div>
               </div>
 
@@ -620,6 +640,7 @@
 
         <div class="quick-toggles" id="anime-quick-franchises">
           <button class="toggle-btn active" data-franchise="">All Universes</button>
+          <button class="toggle-btn" data-franchise="marvel">Marvel Comics</button>
           <button class="toggle-btn" data-franchise="dragon_ball">Dragon Ball</button>
           <button class="toggle-btn" data-franchise="naruto">Naruto</button>
           <button class="toggle-btn" data-franchise="one_piece">One Piece</button>

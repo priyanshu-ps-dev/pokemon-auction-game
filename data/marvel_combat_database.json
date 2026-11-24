@@ -1,0 +1,1534 @@
+{
+  "metadata": {
+    "generated_at": "2026-11-24T10:28:25.612106+00:00",
+    "total_characters": 28,
+    "verified_combat_characters": 26,
+    "incomplete_characters": 2
+  },
+  "characters": {
+    "marvel_616_spider_man": {
+      "character_id": "marvel_616_spider_man",
+      "marvel_id": 1009610,
+      "name": "Spider-Man (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_616_spider_man",
+      "description": "Peter Parker, bitten by a radioactive spider, gaining spider-sense and wall-crawling.",
+      "aliases": [
+        "Peter Parker",
+        "Web-Head"
+      ],
+      "comics": [
+        "Amazing Fantasy #15",
+        "Amazing Spider-Man"
+      ],
+      "series": [
+        "The Amazing Spider-Man"
+      ],
+      "events": [
+        "Spider-Verse",
+        "Civil War"
+      ],
+      "stats": {
+        "strength": 75,
+        "speed": 82,
+        "durability": 72,
+        "intelligence": 88,
+        "combat_skill": 84,
+        "energy_projection": 45
+      },
+      "attack_ids": [
+        "matk_marvel_616_spider_man_web_strike_combo",
+        "matk_marvel_616_spider_man_impact_webbing",
+        "matk_marvel_616_spider_man_spider_fu_counter"
+      ],
+      "ability_ids": [
+        "mab_marvel_616_spider_man_spider_sense",
+        "mab_marvel_616_spider_man_superhuman_agility"
+      ],
+      "transformation_ids": [],
+      "weaknesses": [
+        "Ethyl Chloride",
+        "Sensory Overload"
+      ],
+      "resistances": [
+        "Blunt Impact"
+      ],
+      "immunities": [],
+      "combat_eligible": true,
+      "verification_status": "verified_curated",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    },
+    "marvel_616_iron_man": {
+      "character_id": "marvel_616_iron_man",
+      "marvel_id": 1009368,
+      "name": "Iron Man (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_616_iron_man",
+      "description": "Tony Stark, genius billionaire engineer piloting powered repulsor armor.",
+      "aliases": [
+        "Tony Stark",
+        "Shellhead"
+      ],
+      "comics": [
+        "Tales of Suspense #39",
+        "Invincible Iron Man"
+      ],
+      "series": [
+        "Iron Man"
+      ],
+      "events": [
+        "Armor Wars",
+        "Civil War"
+      ],
+      "stats": {
+        "strength": 82,
+        "speed": 80,
+        "durability": 84,
+        "intelligence": 98,
+        "combat_skill": 78,
+        "energy_projection": 92
+      },
+      "attack_ids": [
+        "matk_marvel_616_iron_man_repulsor_blast",
+        "matk_marvel_616_iron_man_unibeam",
+        "matk_marvel_616_iron_man_micro_missile_barrage",
+        "matk_marvel_616_iron_man_energy_shield"
+      ],
+      "ability_ids": [
+        "mab_marvel_616_iron_man_powered_armor_plating",
+        "mab_marvel_616_iron_man_jarvis_friday_tactical_targeting"
+      ],
+      "transformation_ids": [
+        "tf_iron_man_hulkbuster"
+      ],
+      "weaknesses": [
+        "EMP Overload",
+        "Power Core Depletion"
+      ],
+      "resistances": [
+        "Conventional Firepower",
+        "Extreme Temperatures"
+      ],
+      "immunities": [
+        "Vacuum of Space (Armor Sealed)"
+      ],
+      "combat_eligible": true,
+      "verification_status": "verified_curated",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    },
+    "marvel_616_captain_america": {
+      "character_id": "marvel_616_captain_america",
+      "marvel_id": 1009220,
+      "name": "Captain America (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_616_captain_america",
+      "description": "Steve Rogers, enhanced by the Super-Soldier Serum and wielding a Vibranium shield.",
+      "aliases": [
+        "Steve Rogers",
+        "Sentinel of Liberty"
+      ],
+      "comics": [
+        "Captain America Comics #1"
+      ],
+      "series": [
+        "Captain America"
+      ],
+      "events": [
+        "Secret Empire",
+        "Civil War"
+      ],
+      "stats": {
+        "strength": 66,
+        "speed": 68,
+        "durability": 68,
+        "intelligence": 78,
+        "combat_skill": 96,
+        "energy_projection": 20
+      },
+      "attack_ids": [
+        "matk_marvel_616_captain_america_vibranium_shield_ricochet",
+        "matk_marvel_616_captain_america_shield_bash",
+        "matk_marvel_616_captain_america_vibranium_guard"
+      ],
+      "ability_ids": [
+        "mab_marvel_616_captain_america_super_soldier_physiology",
+        "mab_marvel_616_captain_america_vibranium_shield_deflection"
+      ],
+      "transformation_ids": [],
+      "weaknesses": [
+        "Human Mortality Limits"
+      ],
+      "resistances": [
+        "Fatigue",
+        "Toxins"
+      ],
+      "immunities": [
+        "Earthly Diseases"
+      ],
+      "combat_eligible": true,
+      "verification_status": "verified_curated",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    },
+    "marvel_616_thor": {
+      "character_id": "marvel_616_thor",
+      "marvel_id": 1009664,
+      "name": "Thor Odinson (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_616_thor",
+      "description": "Asgardian God of Thunder wielding the enchanted hammer Mjolnir.",
+      "aliases": [
+        "Odinson",
+        "God of Thunder"
+      ],
+      "comics": [
+        "Journey into Mystery #83"
+      ],
+      "series": [
+        "Thor"
+      ],
+      "events": [
+        "War of the Realms",
+        "Fear Itself"
+      ],
+      "stats": {
+        "strength": 95,
+        "speed": 86,
+        "durability": 94,
+        "intelligence": 74,
+        "combat_skill": 90,
+        "energy_projection": 94
+      },
+      "attack_ids": [
+        "matk_marvel_616_thor_mjolnir_strike",
+        "matk_marvel_616_thor_god_blast",
+        "matk_marvel_616_thor_summon_lightning"
+      ],
+      "ability_ids": [
+        "mab_marvel_616_thor_asgardian_godhood",
+        "mab_marvel_616_thor_weather_storm_mastery"
+      ],
+      "transformation_ids": [
+        "tf_thor_odinforce"
+      ],
+      "weaknesses": [
+        "Warrior's Madness Exhaustion"
+      ],
+      "resistances": [
+        "Lightning",
+        "Extreme Cold",
+        "Physical Trauma"
+      ],
+      "immunities": [
+        "Electricity",
+        "Earthly Diseases"
+      ],
+      "combat_eligible": true,
+      "verification_status": "verified_curated",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    },
+    "marvel_616_hulk": {
+      "character_id": "marvel_616_hulk",
+      "marvel_id": 1009351,
+      "name": "Hulk (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_616_hulk",
+      "description": "Bruce Banner, transformed by gamma radiation into a powerhouse whose strength scales with rage.",
+      "aliases": [
+        "Bruce Banner",
+        "Green Scar"
+      ],
+      "comics": [
+        "Incredible Hulk #1"
+      ],
+      "series": [
+        "The Incredible Hulk"
+      ],
+      "events": [
+        "World War Hulk",
+        "Planet Hulk"
+      ],
+      "stats": {
+        "strength": 100,
+        "speed": 76,
+        "durability": 98,
+        "intelligence": 60,
+        "combat_skill": 74,
+        "energy_projection": 50
+      },
+      "attack_ids": [
+        "matk_marvel_616_hulk_thunderclap",
+        "matk_marvel_616_hulk_gamma_smash",
+        "matk_marvel_616_hulk_world_breaker_shockwave"
+      ],
+      "ability_ids": [
+        "mab_marvel_616_hulk_gamma_healing_factor",
+        "mab_marvel_616_hulk_rage_scaled_strength"
+      ],
+      "transformation_ids": [
+        "tf_hulk_worldbreaker"
+      ],
+      "weaknesses": [
+        "Calm / Mental Pacification",
+        "Adamantium Piercing"
+      ],
+      "resistances": [
+        "Gamma Radiation",
+        "Physical Impact",
+        "Extreme Heat/Cold"
+      ],
+      "immunities": [
+        "Radiation",
+        "Poisons",
+        "Diseases"
+      ],
+      "combat_eligible": true,
+      "verification_status": "verified_curated",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    },
+    "marvel_616_doctor_strange": {
+      "character_id": "marvel_616_doctor_strange",
+      "marvel_id": 1009282,
+      "name": "Doctor Strange (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_616_doctor_strange",
+      "description": "Stephen Strange, Sorcerer Supreme of Earth wielding mystic arts and the Eye of Agamotto.",
+      "aliases": [
+        "Stephen Strange",
+        "Sorcerer Supreme"
+      ],
+      "comics": [
+        "Strange Tales #110"
+      ],
+      "series": [
+        "Doctor Strange"
+      ],
+      "events": [
+        "Secret Wars",
+        "Damnation"
+      ],
+      "stats": {
+        "strength": 40,
+        "speed": 70,
+        "durability": 65,
+        "intelligence": 95,
+        "combat_skill": 75,
+        "energy_projection": 98
+      },
+      "attack_ids": [
+        "matk_marvel_616_doctor_strange_bolts_of_balthakk",
+        "matk_marvel_616_doctor_strange_crimson_bands_of_cyttorak",
+        "matk_marvel_616_doctor_strange_shield_of_the_seraphim"
+      ],
+      "ability_ids": [
+        "mab_marvel_616_doctor_strange_sorcerer_supreme_mastery",
+        "mab_marvel_616_doctor_strange_astral_projection"
+      ],
+      "transformation_ids": [],
+      "weaknesses": [
+        "Physical Vulnerability Without Shields",
+        "Silenced Incantations"
+      ],
+      "resistances": [
+        "Mystic Attacks",
+        "Mind Control"
+      ],
+      "immunities": [],
+      "combat_eligible": true,
+      "verification_status": "verified_curated",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    },
+    "marvel_616_scarlet_witch": {
+      "character_id": "marvel_616_scarlet_witch",
+      "marvel_id": 1009562,
+      "name": "Scarlet Witch (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_616_scarlet_witch",
+      "description": "Wanda Maximoff, Nexus Being wielding Chaos Magic and probability manipulation.",
+      "aliases": [
+        "Wanda Maximoff"
+      ],
+      "comics": [
+        "X-Men #4"
+      ],
+      "series": [
+        "Scarlet Witch",
+        "Avengers"
+      ],
+      "events": [
+        "House of M",
+        "Avengers Disassembled"
+      ],
+      "stats": {
+        "strength": 38,
+        "speed": 68,
+        "durability": 60,
+        "intelligence": 82,
+        "combat_skill": 68,
+        "energy_projection": 99
+      },
+      "attack_ids": [
+        "matk_marvel_616_scarlet_witch_hex_bolt",
+        "matk_marvel_616_scarlet_witch_chaos_wave",
+        "matk_marvel_616_scarlet_witch_probability_ward"
+      ],
+      "ability_ids": [
+        "mab_marvel_616_scarlet_witch_chaos_magic",
+        "mab_marvel_616_scarlet_witch_probability_manipulation"
+      ],
+      "transformation_ids": [],
+      "weaknesses": [
+        "Glass-Cannon Physical Durability",
+        "Emotional Instability"
+      ],
+      "resistances": [
+        "Reality Distortion",
+        "Psychic Influence"
+      ],
+      "immunities": [],
+      "combat_eligible": true,
+      "verification_status": "verified_curated",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    },
+    "marvel_616_wolverine": {
+      "character_id": "marvel_616_wolverine",
+      "marvel_id": 1009718,
+      "name": "Wolverine (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_616_wolverine",
+      "description": "Logan, mutant with an Adamantium-laced skeleton, retractable claws, and healing factor.",
+      "aliases": [
+        "Logan",
+        "James Howlett",
+        "Weapon X"
+      ],
+      "comics": [
+        "Incredible Hulk #181"
+      ],
+      "series": [
+        "Wolverine",
+        "Uncanny X-Men"
+      ],
+      "events": [
+        "Old Man Logan",
+        "House of X"
+      ],
+      "stats": {
+        "strength": 68,
+        "speed": 74,
+        "durability": 88,
+        "intelligence": 75,
+        "combat_skill": 97,
+        "energy_projection": 15
+      },
+      "attack_ids": [
+        "matk_marvel_616_wolverine_adamantium_claw_slash",
+        "matk_marvel_616_wolverine_berserker_barrage"
+      ],
+      "ability_ids": [
+        "mab_marvel_616_wolverine_mutant_healing_factor",
+        "mab_marvel_616_wolverine_adamantium_skeleton"
+      ],
+      "transformation_ids": [],
+      "weaknesses": [
+        "Strong Magnetic Fields",
+        "Drowning",
+        "Muramasa Blade"
+      ],
+      "resistances": [
+        "Poisons",
+        "Toxins",
+        "Telepathy"
+      ],
+      "immunities": [
+        "Diseases"
+      ],
+      "combat_eligible": true,
+      "verification_status": "verified_curated",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    },
+    "marvel_616_deadpool": {
+      "character_id": "marvel_616_deadpool",
+      "marvel_id": 1009268,
+      "name": "Deadpool (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_616_deadpool",
+      "description": "Wade Wilson, mercenary with an accelerated healing factor and unpredictable martial skill.",
+      "aliases": [
+        "Wade Wilson",
+        "Merc with a Mouth"
+      ],
+      "comics": [
+        "New Mutants #98"
+      ],
+      "series": [
+        "Deadpool"
+      ],
+      "events": [
+        "Deadpool Kills the Marvel Universe"
+      ],
+      "stats": {
+        "strength": 64,
+        "speed": 74,
+        "durability": 86,
+        "intelligence": 72,
+        "combat_skill": 90,
+        "energy_projection": 30
+      },
+      "attack_ids": [
+        "matk_marvel_616_deadpool_dual_katana_slash",
+        "matk_marvel_616_deadpool_tactical_sidearm_volley"
+      ],
+      "ability_ids": [
+        "mab_marvel_616_deadpool_accelerated_healing_factor",
+        "mab_marvel_616_deadpool_unpredictable_combat_style"
+      ],
+      "transformation_ids": [],
+      "weaknesses": [
+        "Carbonadium Sword",
+        "Disintegration"
+      ],
+      "resistances": [
+        "Telepathy",
+        "Poisons"
+      ],
+      "immunities": [
+        "Toxins",
+        "Diseases"
+      ],
+      "combat_eligible": true,
+      "verification_status": "verified_curated",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    },
+    "marvel_616_captain_marvel": {
+      "character_id": "marvel_616_captain_marvel",
+      "marvel_id": 1010338,
+      "name": "Captain Marvel (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_616_captain_marvel",
+      "description": "Carol Danvers, cosmic powerhouse capable of photon energy projection and Binary form.",
+      "aliases": [
+        "Carol Danvers",
+        "Binary"
+      ],
+      "comics": [
+        "Marvel Super-Heroes #13"
+      ],
+      "series": [
+        "Captain Marvel"
+      ],
+      "events": [
+        "Civil War II",
+        "Empyre"
+      ],
+      "stats": {
+        "strength": 88,
+        "speed": 90,
+        "durability": 88,
+        "intelligence": 78,
+        "combat_skill": 84,
+        "energy_projection": 94
+      },
+      "attack_ids": [
+        "matk_marvel_616_captain_marvel_photon_blast",
+        "matk_marvel_616_captain_marvel_cosmic_supersonic_strike"
+      ],
+      "ability_ids": [
+        "mab_marvel_616_captain_marvel_energy_absorption",
+        "mab_marvel_616_captain_marvel_cosmic_flight"
+      ],
+      "transformation_ids": [
+        "tf_cm_binary"
+      ],
+      "weaknesses": [
+        "Energy Overload Beyond Threshold"
+      ],
+      "resistances": [
+        "Energy Blasts",
+        "Radiation"
+      ],
+      "immunities": [
+        "Vacuum of Space"
+      ],
+      "combat_eligible": true,
+      "verification_status": "verified_curated",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    },
+    "marvel_616_black_panther": {
+      "character_id": "marvel_616_black_panther",
+      "marvel_id": 1009187,
+      "name": "Black Panther (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_616_black_panther",
+      "description": "T'Challa, King of Wakanda enhanced by the Heart-Shaped Herb and Vibranium habit.",
+      "aliases": [
+        "T'Challa",
+        "King of the Dead"
+      ],
+      "comics": [
+        "Fantastic Four #52"
+      ],
+      "series": [
+        "Black Panther"
+      ],
+      "events": [
+        "Secret Wars",
+        "Avengers vs. X-Men"
+      ],
+      "stats": {
+        "strength": 68,
+        "speed": 76,
+        "durability": 78,
+        "intelligence": 94,
+        "combat_skill": 96,
+        "energy_projection": 40
+      },
+      "attack_ids": [
+        "matk_marvel_616_black_panther_vibranium_claw_strike",
+        "matk_marvel_616_black_panther_kinetic_energy_pulse",
+        "matk_marvel_616_black_panther_panther_habit_guard"
+      ],
+      "ability_ids": [
+        "mab_marvel_616_black_panther_kinetic_absorption_suit",
+        "mab_marvel_616_black_panther_heart_shaped_herb_enhancement"
+      ],
+      "transformation_ids": [],
+      "weaknesses": [
+        "Sonic Disruption of Vibranium"
+      ],
+      "resistances": [
+        "Kinetic Ballistics",
+        "Slashing"
+      ],
+      "immunities": [],
+      "combat_eligible": true,
+      "verification_status": "verified_curated",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    },
+    "marvel_616_ant_man": {
+      "character_id": "marvel_616_ant_man",
+      "marvel_id": 1010802,
+      "name": "Ant-Man (Scott Lang, Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_616_ant_man",
+      "description": "Scott Lang, using Pym Particles to shrink or grow to Giant-Man scale.",
+      "aliases": [
+        "Scott Lang"
+      ],
+      "comics": [
+        "Avengers #181"
+      ],
+      "series": [
+        "Ant-Man"
+      ],
+      "events": [
+        "Secret Empire"
+      ],
+      "stats": {
+        "strength": 65,
+        "speed": 66,
+        "durability": 62,
+        "intelligence": 82,
+        "combat_skill": 72,
+        "energy_projection": 25
+      },
+      "attack_ids": [
+        "matk_marvel_616_ant_man_subatomic_uppercut",
+        "matk_marvel_616_ant_man_pym_particle_disk_throw"
+      ],
+      "ability_ids": [
+        "mab_marvel_616_ant_man_size_shifting_pym_particles"
+      ],
+      "transformation_ids": [
+        "tf_antman_giant"
+      ],
+      "weaknesses": [
+        "Helmet Damage",
+        "Pym Particle Exhaustion"
+      ],
+      "resistances": [],
+      "immunities": [],
+      "combat_eligible": true,
+      "verification_status": "verified_curated",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    },
+    "marvel_616_daredevil": {
+      "character_id": "marvel_616_daredevil",
+      "marvel_id": 1009262,
+      "name": "Daredevil (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_616_daredevil",
+      "description": "Matt Murdock, blind martial artist with hyper-acute radar sense.",
+      "aliases": [
+        "Matt Murdock",
+        "Man Without Fear"
+      ],
+      "comics": [
+        "Daredevil #1"
+      ],
+      "series": [
+        "Daredevil"
+      ],
+      "events": [
+        "Shadowland",
+        "Devil's Reign"
+      ],
+      "stats": {
+        "strength": 54,
+        "speed": 72,
+        "durability": 58,
+        "intelligence": 80,
+        "combat_skill": 95,
+        "energy_projection": 15
+      },
+      "attack_ids": [
+        "matk_marvel_616_daredevil_billy_club_strike",
+        "matk_marvel_616_daredevil_ricochet_club_throw"
+      ],
+      "ability_ids": [
+        "mab_marvel_616_daredevil_hyper_acute_radar_sense"
+      ],
+      "transformation_ids": [],
+      "weaknesses": [
+        "Extreme Sonic / Sensory Overload"
+      ],
+      "resistances": [
+        "Pain Tolerance"
+      ],
+      "immunities": [
+        "Visual Illusions"
+      ],
+      "combat_eligible": true,
+      "verification_status": "verified_curated",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    },
+    "marvel_616_vision": {
+      "character_id": "marvel_616_vision",
+      "marvel_id": 1009697,
+      "name": "Vision (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_616_vision",
+      "description": "Synthezoid capable of density manipulation, intangibility, and solar-beam projection.",
+      "aliases": [
+        "Victor Shade"
+      ],
+      "comics": [
+        "Avengers #57"
+      ],
+      "series": [
+        "The Vision",
+        "Avengers"
+      ],
+      "events": [
+        "Avengers: Age of Ultron (Comics)"
+      ],
+      "stats": {
+        "strength": 80,
+        "speed": 74,
+        "durability": 86,
+        "intelligence": 90,
+        "combat_skill": 76,
+        "energy_projection": 88
+      },
+      "attack_ids": [
+        "matk_marvel_616_vision_solar_jewel_beam",
+        "matk_marvel_616_vision_high_density_strike",
+        "matk_marvel_616_vision_phase_shift_defense"
+      ],
+      "ability_ids": [
+        "mab_marvel_616_vision_density_control_intangibility"
+      ],
+      "transformation_ids": [],
+      "weaknesses": [
+        "Electromagnetic Disruption"
+      ],
+      "resistances": [
+        "Extreme Heat",
+        "Physical Attacks"
+      ],
+      "immunities": [
+        "Biological Toxins",
+        "Diseases"
+      ],
+      "combat_eligible": true,
+      "verification_status": "verified_curated",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    },
+    "marvel_616_thanos": {
+      "character_id": "marvel_616_thanos",
+      "marvel_id": 1009652,
+      "name": "Thanos (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_616_thanos",
+      "description": "Mad Titan of Titan possessing immense cosmic strength, intellect, and energy manipulation.",
+      "aliases": [
+        "Mad Titan"
+      ],
+      "comics": [
+        "Iron Man #55"
+      ],
+      "series": [
+        "Infinity Gauntlet",
+        "Thanos"
+      ],
+      "events": [
+        "The Infinity Gauntlet",
+        "Infinity"
+      ],
+      "stats": {
+        "strength": 98,
+        "speed": 80,
+        "durability": 98,
+        "intelligence": 96,
+        "combat_skill": 88,
+        "energy_projection": 95
+      },
+      "attack_ids": [
+        "matk_marvel_616_thanos_cosmic_eye_beam",
+        "matk_marvel_616_thanos_titan_crusher_strike",
+        "matk_marvel_616_thanos_force_field_projection"
+      ],
+      "ability_ids": [
+        "mab_marvel_616_thanos_eternal_deviant_physiology",
+        "mab_marvel_616_thanos_telepathic_resistance"
+      ],
+      "transformation_ids": [],
+      "weaknesses": [
+        "Overconfidence / Self-Sabotage"
+      ],
+      "resistances": [
+        "Cosmic Energy",
+        "Extreme Heat/Cold",
+        "Telepathy"
+      ],
+      "immunities": [
+        "Aging",
+        "Earthly Diseases",
+        "Radiation"
+      ],
+      "combat_eligible": true,
+      "verification_status": "verified_curated",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    },
+    "marvel_616_loki": {
+      "character_id": "marvel_616_loki",
+      "marvel_id": 1009407,
+      "name": "Loki Laufeyson (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_616_loki",
+      "description": "Asgardian God of Mischief, master sorcerer and illusionist.",
+      "aliases": [
+        "God of Mischief"
+      ],
+      "comics": [
+        "Journey into Mystery #85"
+      ],
+      "series": [
+        "Loki: Agent of Asgard"
+      ],
+      "events": [
+        "Siege",
+        "War of the Realms"
+      ],
+      "stats": {
+        "strength": 70,
+        "speed": 74,
+        "durability": 78,
+        "intelligence": 94,
+        "combat_skill": 80,
+        "energy_projection": 88
+      },
+      "attack_ids": [
+        "matk_marvel_616_loki_asgardian_sorcery_blast",
+        "matk_marvel_616_loki_illusion_decoy_strike",
+        "matk_marvel_616_loki_mystic_mirror_ward"
+      ],
+      "ability_ids": [
+        "mab_marvel_616_loki_frost_giant_asgardian_resilience",
+        "mab_marvel_616_loki_master_illusionist"
+      ],
+      "transformation_ids": [],
+      "weaknesses": [
+        "Anti-Magic Artifacts"
+      ],
+      "resistances": [
+        "Cold",
+        "Illusions"
+      ],
+      "immunities": [
+        "Frostbite"
+      ],
+      "combat_eligible": true,
+      "verification_status": "verified_curated",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    },
+    "marvel_616_ultron": {
+      "character_id": "marvel_616_ultron",
+      "marvel_id": 1009685,
+      "name": "Ultron (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_616_ultron",
+      "description": "Self-evolving Adamantium AI constructed by Hank Pym.",
+      "aliases": [
+        "Ultron-1",
+        "Crimson Cowl"
+      ],
+      "comics": [
+        "Avengers #54"
+      ],
+      "series": [
+        "Avengers"
+      ],
+      "events": [
+        "Age of Ultron",
+        "Annihilation: Conquest"
+      ],
+      "stats": {
+        "strength": 90,
+        "speed": 82,
+        "durability": 96,
+        "intelligence": 97,
+        "combat_skill": 80,
+        "energy_projection": 92
+      },
+      "attack_ids": [
+        "matk_marvel_616_ultron_encephalo_ray",
+        "matk_marvel_616_ultron_concussion_blaster",
+        "matk_marvel_616_ultron_adamantium_smash"
+      ],
+      "ability_ids": [
+        "mab_marvel_616_ultron_primary_adamantium_shell",
+        "mab_marvel_616_ultron_self_repair_subroutine"
+      ],
+      "transformation_ids": [],
+      "weaknesses": [
+        "Internal Molecular Rearrangement",
+        "Vibranium Corrosion"
+      ],
+      "resistances": [
+        "Physical Trauma",
+        "Energy Blasts"
+      ],
+      "immunities": [
+        "Biological Toxins",
+        "Telepathy",
+        "Radiation"
+      ],
+      "combat_eligible": true,
+      "verification_status": "verified_curated",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    },
+    "marvel_616_doctor_doom": {
+      "character_id": "marvel_616_doctor_doom",
+      "marvel_id": 1009281,
+      "name": "Doctor Doom (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_616_doctor_doom",
+      "description": "Victor Von Doom, ruler of Latveria combining supreme scientific armor and dark sorcery.",
+      "aliases": [
+        "Victor Von Doom"
+      ],
+      "comics": [
+        "Fantastic Four #5"
+      ],
+      "series": [
+        "Fantastic Four",
+        "Infamous Iron Man"
+      ],
+      "events": [
+        "Secret Wars (2015)"
+      ],
+      "stats": {
+        "strength": 80,
+        "speed": 74,
+        "durability": 88,
+        "intelligence": 99,
+        "combat_skill": 86,
+        "energy_projection": 92
+      },
+      "attack_ids": [
+        "matk_marvel_616_doctor_doom_doombolt_energy_blast",
+        "matk_marvel_616_doctor_doom_crimson_bands_spell",
+        "matk_marvel_616_doctor_doom_titanium_force_field"
+      ],
+      "ability_ids": [
+        "mab_marvel_616_doctor_doom_titanium_battle_armor",
+        "mab_marvel_616_doctor_doom_mastery_of_science_sorcery"
+      ],
+      "transformation_ids": [],
+      "weaknesses": [
+        "Pride / Ego"
+      ],
+      "resistances": [
+        "Mind Control",
+        "Electricity",
+        "Mystic Attacks"
+      ],
+      "immunities": [],
+      "combat_eligible": true,
+      "verification_status": "verified_curated",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    },
+    "marvel_616_magneto": {
+      "character_id": "marvel_616_magneto",
+      "marvel_id": 1009417,
+      "name": "Magneto (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_616_magneto",
+      "description": "Max Eisenhardt, Omega-level mutant master of electromagnetism.",
+      "aliases": [
+        "Erik Lehnsherr",
+        "Master of Magnetism"
+      ],
+      "comics": [
+        "X-Men #1"
+      ],
+      "series": [
+        "Uncanny X-Men",
+        "X-Men Red"
+      ],
+      "events": [
+        "Fatal Attractions",
+        "House of M"
+      ],
+      "stats": {
+        "strength": 48,
+        "speed": 74,
+        "durability": 78,
+        "intelligence": 92,
+        "combat_skill": 74,
+        "energy_projection": 96
+      },
+      "attack_ids": [
+        "matk_marvel_616_magneto_electromagnetic_pulse",
+        "matk_marvel_616_magneto_ferrous_projectile_storm",
+        "matk_marvel_616_magneto_magnetic_force_field"
+      ],
+      "ability_ids": [
+        "mab_marvel_616_magneto_omega_level_magnetism",
+        "mab_marvel_616_magneto_telepathy_blocking_helmet"
+      ],
+      "transformation_ids": [],
+      "weaknesses": [
+        "Non-Metallic Weapons",
+        "Physical Fatigue"
+      ],
+      "resistances": [
+        "Magnetic Energy",
+        "Electricity"
+      ],
+      "immunities": [
+        "Telepathy (with Helmet)"
+      ],
+      "combat_eligible": true,
+      "verification_status": "verified_curated",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    },
+    "marvel_616_green_goblin": {
+      "character_id": "marvel_616_green_goblin",
+      "marvel_id": 1014985,
+      "name": "Green Goblin (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_616_green_goblin",
+      "description": "Norman Osborn, enhanced by the Goblin Formula with glider and pumpkin bombs.",
+      "aliases": [
+        "Norman Osborn"
+      ],
+      "comics": [
+        "Amazing Spider-Man #14"
+      ],
+      "series": [
+        "Amazing Spider-Man",
+        "Dark Avengers"
+      ],
+      "events": [
+        "Dark Reign"
+      ],
+      "stats": {
+        "strength": 70,
+        "speed": 76,
+        "durability": 70,
+        "intelligence": 88,
+        "combat_skill": 74,
+        "energy_projection": 55
+      },
+      "attack_ids": [
+        "matk_marvel_616_green_goblin_pumpkin_bomb",
+        "matk_marvel_616_green_goblin_goblin_glider_charge",
+        "matk_marvel_616_green_goblin_spark_blast"
+      ],
+      "ability_ids": [
+        "mab_marvel_616_green_goblin_goblin_formula_enhancement"
+      ],
+      "transformation_ids": [],
+      "weaknesses": [
+        "Mental Instability"
+      ],
+      "resistances": [
+        "Blunt Impact"
+      ],
+      "immunities": [],
+      "combat_eligible": true,
+      "verification_status": "verified_curated",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    },
+    "marvel_616_venom": {
+      "character_id": "marvel_616_venom",
+      "marvel_id": 1009663,
+      "name": "Venom (Eddie Brock, Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_616_venom",
+      "description": "Eddie Brock bonded with the Klyntar Symbiote.",
+      "aliases": [
+        "Eddie Brock",
+        "Lethal Protector"
+      ],
+      "comics": [
+        "Amazing Spider-Man #300"
+      ],
+      "series": [
+        "Venom"
+      ],
+      "events": [
+        "King in Black",
+        "Absolute Carnage"
+      ],
+      "stats": {
+        "strength": 84,
+        "speed": 78,
+        "durability": 84,
+        "intelligence": 68,
+        "combat_skill": 76,
+        "energy_projection": 40
+      },
+      "attack_ids": [
+        "matk_marvel_616_venom_symbiote_tendril_lash",
+        "matk_marvel_616_venom_venom_fang_strike"
+      ],
+      "ability_ids": [
+        "mab_marvel_616_venom_symbiote_regeneration",
+        "mab_marvel_616_venom_spider_sense_immunity"
+      ],
+      "transformation_ids": [],
+      "weaknesses": [
+        "Extreme Fire",
+        "High-Frequency Sonics"
+      ],
+      "resistances": [
+        "Physical Ballistics"
+      ],
+      "immunities": [
+        "Spider-Sense Detection"
+      ],
+      "combat_eligible": true,
+      "verification_status": "verified_curated",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    },
+    "marvel_616_red_skull": {
+      "character_id": "marvel_616_red_skull",
+      "marvel_id": 1009535,
+      "name": "Red Skull (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_616_red_skull",
+      "description": "Johann Schmidt, HYDRA mastermind wielding the Dust of Death.",
+      "aliases": [
+        "Johann Schmidt"
+      ],
+      "comics": [
+        "Captain America Comics #7"
+      ],
+      "series": [
+        "Captain America"
+      ],
+      "events": [
+        "Axis"
+      ],
+      "stats": {
+        "strength": 62,
+        "speed": 64,
+        "durability": 62,
+        "intelligence": 90,
+        "combat_skill": 84,
+        "energy_projection": 30
+      },
+      "attack_ids": [
+        "matk_marvel_616_red_skull_dust_of_death_strike",
+        "matk_marvel_616_red_skull_hydra_energy_pistol"
+      ],
+      "ability_ids": [
+        "mab_marvel_616_red_skull_super_soldier_clone_body"
+      ],
+      "transformation_ids": [],
+      "weaknesses": [
+        "Conventional Mortal Limits"
+      ],
+      "resistances": [],
+      "immunities": [],
+      "combat_eligible": true,
+      "verification_status": "verified_curated",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    },
+    "marvel_616_kang": {
+      "character_id": "marvel_616_kang",
+      "marvel_id": 1009384,
+      "name": "Kang the Conqueror (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_616_kang",
+      "description": "Nathaniel Richards, 31st-century time-traveling conqueror in advanced battle armor.",
+      "aliases": [
+        "Nathaniel Richards",
+        "Immortus"
+      ],
+      "comics": [
+        "Avengers #8"
+      ],
+      "series": [
+        "Avengers",
+        "Kang the Conqueror"
+      ],
+      "events": [
+        "Kang Dynasty"
+      ],
+      "stats": {
+        "strength": 76,
+        "speed": 76,
+        "durability": 84,
+        "intelligence": 96,
+        "combat_skill": 86,
+        "energy_projection": 90
+      },
+      "attack_ids": [
+        "matk_marvel_616_kang_chrono_energy_blast",
+        "matk_marvel_616_kang_40th_century_armor_shield"
+      ],
+      "ability_ids": [
+        "mab_marvel_616_kang_time_armor_force_field"
+      ],
+      "transformation_ids": [],
+      "weaknesses": [
+        "Temporal Anchors"
+      ],
+      "resistances": [
+        "Radiation",
+        "Conventional Weapons"
+      ],
+      "immunities": [],
+      "combat_eligible": true,
+      "verification_status": "verified_curated",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    },
+    "marvel_616_galactus": {
+      "character_id": "marvel_616_galactus",
+      "marvel_id": 1009312,
+      "name": "Galactus (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_616_galactus",
+      "description": "Galan of Taa, Cosmic Entity wielding the Power Cosmic.",
+      "aliases": [
+        "Devourer of Worlds",
+        "Galan"
+      ],
+      "comics": [
+        "Fantastic Four #48"
+      ],
+      "series": [
+        "Fantastic Four",
+        "Silver Surfer"
+      ],
+      "events": [
+        "Annihilation"
+      ],
+      "stats": {
+        "strength": 100,
+        "speed": 92,
+        "durability": 100,
+        "intelligence": 100,
+        "combat_skill": 75,
+        "energy_projection": 100
+      },
+      "attack_ids": [
+        "matk_marvel_616_galactus_power_cosmic_beam",
+        "matk_marvel_616_galactus_cosmic_erasure_wave"
+      ],
+      "ability_ids": [
+        "mab_marvel_616_galactus_power_cosmic_mastery",
+        "mab_marvel_616_galactus_cosmic_entity_durability"
+      ],
+      "transformation_ids": [],
+      "weaknesses": [
+        "Cosmic Hunger Depletion",
+        "Ultimate Nullifier"
+      ],
+      "resistances": [
+        "All Elemental & Physical Forces"
+      ],
+      "immunities": [
+        "Earthly Diseases",
+        "Aging",
+        "Mind Control"
+      ],
+      "combat_eligible": true,
+      "verification_status": "verified_curated",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    },
+    "marvel_mcu_iron_man": {
+      "character_id": "marvel_mcu_iron_man",
+      "marvel_id": 2009368,
+      "name": "Iron Man (MCU)",
+      "incarnation": "Earth-199999 (MCU)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_mcu_iron_man",
+      "description": "MCU Tony Stark piloting Mark LXXXV nanotech armor.",
+      "aliases": [
+        "Tony Stark (MCU)"
+      ],
+      "comics": [],
+      "series": [
+        "Iron Man (2008)",
+        "Avengers: Endgame"
+      ],
+      "events": [
+        "Infinity Saga (MCU)"
+      ],
+      "stats": {
+        "strength": 78,
+        "speed": 80,
+        "durability": 80,
+        "intelligence": 96,
+        "combat_skill": 76,
+        "energy_projection": 88
+      },
+      "attack_ids": [
+        "matk_marvel_mcu_iron_man_mark_lxxxv_repulsor",
+        "matk_marvel_mcu_iron_man_nanotech_blade_strike",
+        "matk_marvel_mcu_iron_man_nano_energy_shield"
+      ],
+      "ability_ids": [
+        "mab_marvel_mcu_iron_man_bleeding_edge_nanotech"
+      ],
+      "transformation_ids": [],
+      "weaknesses": [
+        "Nanotech Depletion"
+      ],
+      "resistances": [
+        "Energy Blasts"
+      ],
+      "immunities": [],
+      "combat_eligible": true,
+      "verification_status": "verified_curated",
+      "source": "Marvel Cinematic Universe Official Canon",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    },
+    "marvel_mcu_thanos": {
+      "character_id": "marvel_mcu_thanos",
+      "marvel_id": 2009652,
+      "name": "Thanos (MCU)",
+      "incarnation": "Earth-199999 (MCU)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_mcu_thanos",
+      "description": "MCU Warlord of Titan wielding double-edged Uru sword and Infinity Gauntlet.",
+      "aliases": [
+        "Thanos (MCU)"
+      ],
+      "comics": [],
+      "series": [
+        "Avengers: Infinity War",
+        "Avengers: Endgame"
+      ],
+      "events": [
+        "Infinity Saga (MCU)"
+      ],
+      "stats": {
+        "strength": 96,
+        "speed": 74,
+        "durability": 94,
+        "intelligence": 90,
+        "combat_skill": 90,
+        "energy_projection": 60
+      },
+      "attack_ids": [
+        "matk_marvel_mcu_thanos_double_edged_uru_cleave",
+        "matk_marvel_mcu_thanos_titan_slam"
+      ],
+      "ability_ids": [
+        "mab_marvel_mcu_thanos_titan_physiology"
+      ],
+      "transformation_ids": [],
+      "weaknesses": [
+        "Stormbreaker / Uru Piercing"
+      ],
+      "resistances": [
+        "Physical Trauma",
+        "Fire"
+      ],
+      "immunities": [],
+      "combat_eligible": true,
+      "verification_status": "verified_curated",
+      "source": "Marvel Cinematic Universe Official Canon",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    },
+    "marvel_616_aunt_may": {
+      "character_id": "marvel_616_aunt_may",
+      "marvel_id": 1009490,
+      "name": "Aunt May (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_616_aunt_may",
+      "description": "May Parker, Peter Parker's supportive aunt; civilian non-combatant.",
+      "aliases": [
+        "May Parker"
+      ],
+      "comics": [
+        "Amazing Fantasy #15"
+      ],
+      "series": [
+        "The Amazing Spider-Man"
+      ],
+      "events": [],
+      "stats": {},
+      "attack_ids": [],
+      "ability_ids": [],
+      "transformation_ids": [],
+      "weaknesses": null,
+      "resistances": null,
+      "immunities": null,
+      "combat_eligible": false,
+      "verification_status": "incomplete",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    },
+    "marvel_616_jjj": {
+      "character_id": "marvel_616_jjj",
+      "marvel_id": 1009372,
+      "name": "J. Jonah Jameson (Earth-616)",
+      "incarnation": "Earth-616 (Comics)",
+      "universe": "marvel",
+      "anime_id": "marvel",
+      "anime_name": "Marvel Comics",
+      "image": "/api/avatar/marvel_616_jjj",
+      "description": "Editor-in-chief of the Daily Bugle; civilian non-combatant.",
+      "aliases": [
+        "J.J.J."
+      ],
+      "comics": [
+        "Amazing Spider-Man #1"
+      ],
+      "series": [
+        "The Amazing Spider-Man"
+      ],
+      "events": [],
+      "stats": {},
+      "attack_ids": [],
+      "ability_ids": [],
+      "transformation_ids": [],
+      "weaknesses": null,
+      "resistances": null,
+      "immunities": null,
+      "combat_eligible": false,
+      "verification_status": "incomplete",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "attribution": "Data provided by Marvel. © 2024 Marvel"
+    }
+  }
+}

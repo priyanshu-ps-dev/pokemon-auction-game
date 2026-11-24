@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from src.anime_battle_engine import AnimeCombatant, CATEGORY_BASE_POWER
 from src.battle_engine import LEVEL, PokemonCombatant, get_type_effectiveness
+from src.marvel_battle_engine import MarvelCombatant, MARVEL_CATEGORY_POWER
 from src.battle_interface import BaseCombatant, BattleResult
 
 
@@ -23,8 +24,10 @@ class CrossUniverseConfig:
     """Explicit, configurable normalization parameters for cross-universe combat."""
     anime_hp_scale: float = 1.0
     pokemon_hp_scale: float = 1.0
+    marvel_hp_scale: float = 1.0
     pokemon_cross_damage_scale: float = 0.65
     anime_cross_damage_scale: float = 1.35
+    marvel_cross_damage_scale: float = 1.30
     cross_damage_scale: Optional[float] = None
     max_turns: int = 150
 
@@ -81,7 +84,7 @@ class CrossUniverseBattleSimulator:
     def _is_eligible(self, c: BaseCombatant) -> bool:
         if c.is_fainted:
             return False
-        if isinstance(c, AnimeCombatant) and not c.has_verified_combat_data:
+        if isinstance(c, (AnimeCombatant, MarvelCombatant)) and not c.has_verified_combat_data:
             return False
         return True
 
@@ -135,11 +138,16 @@ class CrossUniverseBattleSimulator:
             atk_stat = attacker.get_stat("attack") if category == "Physical" else attacker.get_stat("special_attack")
             def_stat = defender.get_stat("defense") if category == "Physical" else defender.get_stat("special_defense")
             dmg = max(1, int(((((2 * LEVEL / 5 + 2) * power * (atk_stat / max(1.0, def_stat))) / 50) + 2) * stab * type_mult * crit_mult * roll))
-        else:
+        elif isinstance(defender, AnimeCombatant):
             # Cross-universe: Pokémon attacking AnimeCombatant (do NOT apply Pokémon type chart to anime)
             atk_stat = attacker.get_stat("attack") if category == "Physical" else attacker.get_stat("special_attack")
             # Normalize anime defense (1..100) into Level 50 defense range (~55..170)
             norm_def = 40.0 + defender.defense_stat * 1.2
+            dmg = max(1, int((((((2 * LEVEL / 5 + 2) * power * (atk_stat / norm_def)) / 50) + 2) * stab * crit_mult * roll) * self.config.pokemon_cross_damage_scale))
+        else:
+            # Cross-universe: Pokémon attacking MarvelCombatant
+            atk_stat = attacker.get_stat("attack") if category == "Physical" else attacker.get_stat("special_attack")
+            norm_def = 40.0 + defender.durability_stat * 1.2
             dmg = max(1, int((((((2 * LEVEL / 5 + 2) * power * (atk_stat / norm_def)) / 50) + 2) * stab * crit_mult * roll) * self.config.pokemon_cross_damage_scale))
 
         actual = defender.take_damage(dmg)
@@ -168,6 +176,8 @@ class CrossUniverseBattleSimulator:
 
         if isinstance(defender, AnimeCombatant):
             def_val = max(20.0, defender.defense_stat)
+        elif isinstance(defender, MarvelCombatant):
+            def_val = max(20.0, defender.durability_stat)
         else:
             # Cross-universe: normalize Pokémon Level 50 defense (~55..170) to anime scale (~35..110)
             raw_def = defender.get_stat("defense") if cat == "physical" else defender.get_stat("special_defense")
@@ -175,6 +185,35 @@ class CrossUniverseBattleSimulator:
 
         roll = self.rng.uniform(0.90, 1.05)
         raw_dmg = ((base_power * (atk_val / def_val)) * 0.45 + 10) * roll * self.config.anime_cross_damage_scale
+        actual = defender.take_damage(max(5, int(raw_dmg)))
+        return actual, f"{attacker.name} used {attack['name']} for {actual} damage!"
+
+    def _marvel_vs_any_damage(
+        self,
+        attacker: MarvelCombatant,
+        defender: BaseCombatant,
+        attack: dict,
+    ) -> Tuple[int, str]:
+        cat = attack.get("category", "physical")
+        if cat == "defensive":
+            attacker.shield_turns = 2
+            return 0, f"{attacker.name} raised {attack['name']} (defensive shield)!"
+        if cat == "healing":
+            healed = attacker.heal(max(15, int(attacker.max_hp * 0.25)))
+            return 0, f"{attacker.name} used {attack['name']} and recovered {healed} HP!"
+
+        base_power = MARVEL_CATEGORY_POWER.get(cat, 68)
+        off_stat = attacker.strength_stat if cat == "physical" else max(attacker.energy_stat, attacker.combat_skill * 0.85)
+        if isinstance(defender, MarvelCombatant):
+            def_val = max(20.0, defender.durability_stat)
+        elif isinstance(defender, AnimeCombatant):
+            def_val = max(20.0, defender.defense_stat)
+        else:
+            raw_def = defender.get_stat("defense") if cat == "physical" else defender.get_stat("special_defense")
+            def_val = max(25.0, raw_def * 0.65)
+
+        roll = self.rng.uniform(0.90, 1.05)
+        raw_dmg = ((base_power * (off_stat / def_val)) * 0.42 + 10) * roll * self.config.marvel_cross_damage_scale
         actual = defender.take_damage(max(5, int(raw_dmg)))
         return actual, f"{attacker.name} used {attack['name']} for {actual} damage!"
 
@@ -231,6 +270,23 @@ class CrossUniverseBattleSimulator:
                     dmg, msg = self._anime_vs_any_damage(attacker, defender, atk)
                     events.append(msg)
                     action_details.append({"event_type": "attack", "side": side, "target_side": target_side, "move_name": atk["name"], "category": atk.get("category", "special"), "damage": dmg})
+                elif isinstance(attacker, MarvelCombatant) and self.ai_selector:
+                    dec = self.ai_selector.choose_marvel_action(attacker, defender, self.rng)
+                    if dec.action_type == "transform" and dec.transformation_id:
+                        ok, msg = attacker.activate_transformation(dec.transformation_id)
+                        events.append(msg)
+                        if ok:
+                            action_details.append({"event_type": "transform", "side": side, "move_name": attacker.active_transformation or "Transform"})
+                        continue
+                    atk = next((a for a in attacker.attacks if a["id"] == dec.move_id), attacker.attacks[0])
+                    dmg, msg = self._marvel_vs_any_damage(attacker, defender, atk)
+                    events.append(msg)
+                    action_details.append({"event_type": "attack", "side": side, "target_side": target_side, "move_name": atk["name"], "category": atk.get("category", "physical"), "damage": dmg})
+                elif isinstance(attacker, MarvelCombatant):
+                    atk = attacker.attacks[0]
+                    dmg, msg = self._marvel_vs_any_damage(attacker, defender, atk)
+                    events.append(msg)
+                    action_details.append({"event_type": "attack", "side": side, "target_side": target_side, "move_name": atk["name"], "category": atk.get("category", "physical"), "damage": dmg})
                 else:
                     moves = attacker.get_available_moves()
                     if moves:

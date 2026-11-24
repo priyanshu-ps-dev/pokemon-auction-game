@@ -1,0 +1,698 @@
+{
+  "metadata": {
+    "generated_at": "2026-11-24T10:28:25.612106+00:00",
+    "total_attacks": 69
+  },
+  "attacks": {
+    "matk_marvel_616_spider_man_web_strike_combo": {
+      "id": "matk_marvel_616_spider_man_web_strike_combo",
+      "character_id": "marvel_616_spider_man",
+      "universe": "marvel",
+      "name": "Web-Strike Combo",
+      "category": "physical",
+      "range": "melee",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_spider_man_impact_webbing": {
+      "id": "matk_marvel_616_spider_man_impact_webbing",
+      "character_id": "marvel_616_spider_man",
+      "universe": "marvel",
+      "name": "Impact Webbing",
+      "category": "ranged",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_spider_man_spider_fu_counter": {
+      "id": "matk_marvel_616_spider_man_spider_fu_counter",
+      "character_id": "marvel_616_spider_man",
+      "universe": "marvel",
+      "name": "Spider-Fu Counter",
+      "category": "physical",
+      "range": "melee",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_iron_man_repulsor_blast": {
+      "id": "matk_marvel_616_iron_man_repulsor_blast",
+      "character_id": "marvel_616_iron_man",
+      "universe": "marvel",
+      "name": "Repulsor Blast",
+      "category": "energy",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_iron_man_unibeam": {
+      "id": "matk_marvel_616_iron_man_unibeam",
+      "character_id": "marvel_616_iron_man",
+      "universe": "marvel",
+      "name": "Unibeam",
+      "category": "energy",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_iron_man_micro_missile_barrage": {
+      "id": "matk_marvel_616_iron_man_micro_missile_barrage",
+      "character_id": "marvel_616_iron_man",
+      "universe": "marvel",
+      "name": "Micro-Missile Barrage",
+      "category": "ranged",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_iron_man_energy_shield": {
+      "id": "matk_marvel_616_iron_man_energy_shield",
+      "character_id": "marvel_616_iron_man",
+      "universe": "marvel",
+      "name": "Energy Shield",
+      "category": "defensive",
+      "range": "self",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_captain_america_vibranium_shield_ricochet": {
+      "id": "matk_marvel_616_captain_america_vibranium_shield_ricochet",
+      "character_id": "marvel_616_captain_america",
+      "universe": "marvel",
+      "name": "Vibranium Shield Ricochet",
+      "category": "ranged",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_captain_america_shield_bash": {
+      "id": "matk_marvel_616_captain_america_shield_bash",
+      "character_id": "marvel_616_captain_america",
+      "universe": "marvel",
+      "name": "Shield Bash",
+      "category": "physical",
+      "range": "melee",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_captain_america_vibranium_guard": {
+      "id": "matk_marvel_616_captain_america_vibranium_guard",
+      "character_id": "marvel_616_captain_america",
+      "universe": "marvel",
+      "name": "Vibranium Guard",
+      "category": "defensive",
+      "range": "self",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_thor_mjolnir_strike": {
+      "id": "matk_marvel_616_thor_mjolnir_strike",
+      "character_id": "marvel_616_thor",
+      "universe": "marvel",
+      "name": "Mjolnir Strike",
+      "category": "physical",
+      "range": "melee",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_thor_god_blast": {
+      "id": "matk_marvel_616_thor_god_blast",
+      "character_id": "marvel_616_thor",
+      "universe": "marvel",
+      "name": "God Blast",
+      "category": "energy",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_thor_summon_lightning": {
+      "id": "matk_marvel_616_thor_summon_lightning",
+      "character_id": "marvel_616_thor",
+      "universe": "marvel",
+      "name": "Summon Lightning",
+      "category": "elemental",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_hulk_thunderclap": {
+      "id": "matk_marvel_616_hulk_thunderclap",
+      "character_id": "marvel_616_hulk",
+      "universe": "marvel",
+      "name": "Thunderclap",
+      "category": "physical",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_hulk_gamma_smash": {
+      "id": "matk_marvel_616_hulk_gamma_smash",
+      "character_id": "marvel_616_hulk",
+      "universe": "marvel",
+      "name": "Gamma Smash",
+      "category": "physical",
+      "range": "melee",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_hulk_world_breaker_shockwave": {
+      "id": "matk_marvel_616_hulk_world_breaker_shockwave",
+      "character_id": "marvel_616_hulk",
+      "universe": "marvel",
+      "name": "World Breaker Shockwave",
+      "category": "energy",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_doctor_strange_bolts_of_balthakk": {
+      "id": "matk_marvel_616_doctor_strange_bolts_of_balthakk",
+      "character_id": "marvel_616_doctor_strange",
+      "universe": "marvel",
+      "name": "Bolts of Balthakk",
+      "category": "magical",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_doctor_strange_crimson_bands_of_cyttorak": {
+      "id": "matk_marvel_616_doctor_strange_crimson_bands_of_cyttorak",
+      "character_id": "marvel_616_doctor_strange",
+      "universe": "marvel",
+      "name": "Crimson Bands of Cyttorak",
+      "category": "magical",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_doctor_strange_shield_of_the_seraphim": {
+      "id": "matk_marvel_616_doctor_strange_shield_of_the_seraphim",
+      "character_id": "marvel_616_doctor_strange",
+      "universe": "marvel",
+      "name": "Shield of the Seraphim",
+      "category": "defensive",
+      "range": "self",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_scarlet_witch_hex_bolt": {
+      "id": "matk_marvel_616_scarlet_witch_hex_bolt",
+      "character_id": "marvel_616_scarlet_witch",
+      "universe": "marvel",
+      "name": "Hex Bolt",
+      "category": "magical",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_scarlet_witch_chaos_wave": {
+      "id": "matk_marvel_616_scarlet_witch_chaos_wave",
+      "character_id": "marvel_616_scarlet_witch",
+      "universe": "marvel",
+      "name": "Chaos Wave",
+      "category": "energy",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_scarlet_witch_probability_ward": {
+      "id": "matk_marvel_616_scarlet_witch_probability_ward",
+      "character_id": "marvel_616_scarlet_witch",
+      "universe": "marvel",
+      "name": "Probability Ward",
+      "category": "defensive",
+      "range": "self",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_wolverine_adamantium_claw_slash": {
+      "id": "matk_marvel_616_wolverine_adamantium_claw_slash",
+      "character_id": "marvel_616_wolverine",
+      "universe": "marvel",
+      "name": "Adamantium Claw Slash",
+      "category": "physical",
+      "range": "melee",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_wolverine_berserker_barrage": {
+      "id": "matk_marvel_616_wolverine_berserker_barrage",
+      "character_id": "marvel_616_wolverine",
+      "universe": "marvel",
+      "name": "Berserker Barrage",
+      "category": "physical",
+      "range": "melee",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_deadpool_dual_katana_slash": {
+      "id": "matk_marvel_616_deadpool_dual_katana_slash",
+      "character_id": "marvel_616_deadpool",
+      "universe": "marvel",
+      "name": "Dual Katana Slash",
+      "category": "physical",
+      "range": "melee",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_deadpool_tactical_sidearm_volley": {
+      "id": "matk_marvel_616_deadpool_tactical_sidearm_volley",
+      "character_id": "marvel_616_deadpool",
+      "universe": "marvel",
+      "name": "Tactical Sidearm Volley",
+      "category": "ranged",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_captain_marvel_photon_blast": {
+      "id": "matk_marvel_616_captain_marvel_photon_blast",
+      "character_id": "marvel_616_captain_marvel",
+      "universe": "marvel",
+      "name": "Photon Blast",
+      "category": "energy",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_captain_marvel_cosmic_supersonic_strike": {
+      "id": "matk_marvel_616_captain_marvel_cosmic_supersonic_strike",
+      "character_id": "marvel_616_captain_marvel",
+      "universe": "marvel",
+      "name": "Cosmic Supersonic Strike",
+      "category": "physical",
+      "range": "melee",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_black_panther_vibranium_claw_strike": {
+      "id": "matk_marvel_616_black_panther_vibranium_claw_strike",
+      "character_id": "marvel_616_black_panther",
+      "universe": "marvel",
+      "name": "Vibranium Claw Strike",
+      "category": "physical",
+      "range": "melee",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_black_panther_kinetic_energy_pulse": {
+      "id": "matk_marvel_616_black_panther_kinetic_energy_pulse",
+      "character_id": "marvel_616_black_panther",
+      "universe": "marvel",
+      "name": "Kinetic Energy Pulse",
+      "category": "energy",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_black_panther_panther_habit_guard": {
+      "id": "matk_marvel_616_black_panther_panther_habit_guard",
+      "character_id": "marvel_616_black_panther",
+      "universe": "marvel",
+      "name": "Panther Habit Guard",
+      "category": "defensive",
+      "range": "self",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_ant_man_subatomic_uppercut": {
+      "id": "matk_marvel_616_ant_man_subatomic_uppercut",
+      "character_id": "marvel_616_ant_man",
+      "universe": "marvel",
+      "name": "Subatomic Uppercut",
+      "category": "physical",
+      "range": "melee",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_ant_man_pym_particle_disk_throw": {
+      "id": "matk_marvel_616_ant_man_pym_particle_disk_throw",
+      "character_id": "marvel_616_ant_man",
+      "universe": "marvel",
+      "name": "Pym Particle Disk Throw",
+      "category": "ranged",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_daredevil_billy_club_strike": {
+      "id": "matk_marvel_616_daredevil_billy_club_strike",
+      "character_id": "marvel_616_daredevil",
+      "universe": "marvel",
+      "name": "Billy Club Strike",
+      "category": "physical",
+      "range": "melee",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_daredevil_ricochet_club_throw": {
+      "id": "matk_marvel_616_daredevil_ricochet_club_throw",
+      "character_id": "marvel_616_daredevil",
+      "universe": "marvel",
+      "name": "Ricochet Club Throw",
+      "category": "ranged",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_vision_solar_jewel_beam": {
+      "id": "matk_marvel_616_vision_solar_jewel_beam",
+      "character_id": "marvel_616_vision",
+      "universe": "marvel",
+      "name": "Solar Jewel Beam",
+      "category": "energy",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_vision_high_density_strike": {
+      "id": "matk_marvel_616_vision_high_density_strike",
+      "character_id": "marvel_616_vision",
+      "universe": "marvel",
+      "name": "High-Density Strike",
+      "category": "physical",
+      "range": "melee",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_vision_phase_shift_defense": {
+      "id": "matk_marvel_616_vision_phase_shift_defense",
+      "character_id": "marvel_616_vision",
+      "universe": "marvel",
+      "name": "Phase Shift Defense",
+      "category": "defensive",
+      "range": "self",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_thanos_cosmic_eye_beam": {
+      "id": "matk_marvel_616_thanos_cosmic_eye_beam",
+      "character_id": "marvel_616_thanos",
+      "universe": "marvel",
+      "name": "Cosmic Eye Beam",
+      "category": "energy",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_thanos_titan_crusher_strike": {
+      "id": "matk_marvel_616_thanos_titan_crusher_strike",
+      "character_id": "marvel_616_thanos",
+      "universe": "marvel",
+      "name": "Titan Crusher Strike",
+      "category": "physical",
+      "range": "melee",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_thanos_force_field_projection": {
+      "id": "matk_marvel_616_thanos_force_field_projection",
+      "character_id": "marvel_616_thanos",
+      "universe": "marvel",
+      "name": "Force Field Projection",
+      "category": "defensive",
+      "range": "self",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_loki_asgardian_sorcery_blast": {
+      "id": "matk_marvel_616_loki_asgardian_sorcery_blast",
+      "character_id": "marvel_616_loki",
+      "universe": "marvel",
+      "name": "Asgardian Sorcery Blast",
+      "category": "magical",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_loki_illusion_decoy_strike": {
+      "id": "matk_marvel_616_loki_illusion_decoy_strike",
+      "character_id": "marvel_616_loki",
+      "universe": "marvel",
+      "name": "Illusion Decoy Strike",
+      "category": "psychic",
+      "range": "melee",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_loki_mystic_mirror_ward": {
+      "id": "matk_marvel_616_loki_mystic_mirror_ward",
+      "character_id": "marvel_616_loki",
+      "universe": "marvel",
+      "name": "Mystic Mirror Ward",
+      "category": "defensive",
+      "range": "self",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_ultron_encephalo_ray": {
+      "id": "matk_marvel_616_ultron_encephalo_ray",
+      "character_id": "marvel_616_ultron",
+      "universe": "marvel",
+      "name": "Encephalo-Ray",
+      "category": "energy",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_ultron_concussion_blaster": {
+      "id": "matk_marvel_616_ultron_concussion_blaster",
+      "character_id": "marvel_616_ultron",
+      "universe": "marvel",
+      "name": "Concussion Blaster",
+      "category": "energy",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_ultron_adamantium_smash": {
+      "id": "matk_marvel_616_ultron_adamantium_smash",
+      "character_id": "marvel_616_ultron",
+      "universe": "marvel",
+      "name": "Adamantium Smash",
+      "category": "physical",
+      "range": "melee",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_doctor_doom_doombolt_energy_blast": {
+      "id": "matk_marvel_616_doctor_doom_doombolt_energy_blast",
+      "character_id": "marvel_616_doctor_doom",
+      "universe": "marvel",
+      "name": "Doombolt Energy Blast",
+      "category": "energy",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_doctor_doom_crimson_bands_spell": {
+      "id": "matk_marvel_616_doctor_doom_crimson_bands_spell",
+      "character_id": "marvel_616_doctor_doom",
+      "universe": "marvel",
+      "name": "Crimson Bands Spell",
+      "category": "magical",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_doctor_doom_titanium_force_field": {
+      "id": "matk_marvel_616_doctor_doom_titanium_force_field",
+      "character_id": "marvel_616_doctor_doom",
+      "universe": "marvel",
+      "name": "Titanium Force Field",
+      "category": "defensive",
+      "range": "self",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_magneto_electromagnetic_pulse": {
+      "id": "matk_marvel_616_magneto_electromagnetic_pulse",
+      "character_id": "marvel_616_magneto",
+      "universe": "marvel",
+      "name": "Electromagnetic Pulse",
+      "category": "energy",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_magneto_ferrous_projectile_storm": {
+      "id": "matk_marvel_616_magneto_ferrous_projectile_storm",
+      "character_id": "marvel_616_magneto",
+      "universe": "marvel",
+      "name": "Ferrous Projectile Storm",
+      "category": "ranged",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_magneto_magnetic_force_field": {
+      "id": "matk_marvel_616_magneto_magnetic_force_field",
+      "character_id": "marvel_616_magneto",
+      "universe": "marvel",
+      "name": "Magnetic Force Field",
+      "category": "defensive",
+      "range": "self",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_green_goblin_pumpkin_bomb": {
+      "id": "matk_marvel_616_green_goblin_pumpkin_bomb",
+      "character_id": "marvel_616_green_goblin",
+      "universe": "marvel",
+      "name": "Pumpkin Bomb",
+      "category": "ranged",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_green_goblin_goblin_glider_charge": {
+      "id": "matk_marvel_616_green_goblin_goblin_glider_charge",
+      "character_id": "marvel_616_green_goblin",
+      "universe": "marvel",
+      "name": "Goblin Glider Charge",
+      "category": "physical",
+      "range": "melee",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_green_goblin_spark_blast": {
+      "id": "matk_marvel_616_green_goblin_spark_blast",
+      "character_id": "marvel_616_green_goblin",
+      "universe": "marvel",
+      "name": "Spark Blast",
+      "category": "energy",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_venom_symbiote_tendril_lash": {
+      "id": "matk_marvel_616_venom_symbiote_tendril_lash",
+      "character_id": "marvel_616_venom",
+      "universe": "marvel",
+      "name": "Symbiote Tendril Lash",
+      "category": "physical",
+      "range": "melee",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_venom_venom_fang_strike": {
+      "id": "matk_marvel_616_venom_venom_fang_strike",
+      "character_id": "marvel_616_venom",
+      "universe": "marvel",
+      "name": "Venom Fang Strike",
+      "category": "physical",
+      "range": "melee",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_red_skull_dust_of_death_strike": {
+      "id": "matk_marvel_616_red_skull_dust_of_death_strike",
+      "character_id": "marvel_616_red_skull",
+      "universe": "marvel",
+      "name": "Dust of Death Strike",
+      "category": "physical",
+      "range": "melee",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_red_skull_hydra_energy_pistol": {
+      "id": "matk_marvel_616_red_skull_hydra_energy_pistol",
+      "character_id": "marvel_616_red_skull",
+      "universe": "marvel",
+      "name": "HYDRA Energy Pistol",
+      "category": "ranged",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_kang_chrono_energy_blast": {
+      "id": "matk_marvel_616_kang_chrono_energy_blast",
+      "character_id": "marvel_616_kang",
+      "universe": "marvel",
+      "name": "Chrono-Energy Blast",
+      "category": "energy",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_kang_40th_century_armor_shield": {
+      "id": "matk_marvel_616_kang_40th_century_armor_shield",
+      "character_id": "marvel_616_kang",
+      "universe": "marvel",
+      "name": "40th-Century Armor Shield",
+      "category": "defensive",
+      "range": "self",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_galactus_power_cosmic_beam": {
+      "id": "matk_marvel_616_galactus_power_cosmic_beam",
+      "character_id": "marvel_616_galactus",
+      "universe": "marvel",
+      "name": "Power Cosmic Beam",
+      "category": "energy",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_616_galactus_cosmic_erasure_wave": {
+      "id": "matk_marvel_616_galactus_cosmic_erasure_wave",
+      "character_id": "marvel_616_galactus",
+      "universe": "marvel",
+      "name": "Cosmic Erasure Wave",
+      "category": "energy",
+      "range": "ranged",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_mcu_iron_man_mark_lxxxv_repulsor": {
+      "id": "matk_marvel_mcu_iron_man_mark_lxxxv_repulsor",
+      "character_id": "marvel_mcu_iron_man",
+      "universe": "marvel",
+      "name": "Mark LXXXV Repulsor",
+      "category": "energy",
+      "range": "ranged",
+      "source": "Marvel Cinematic Universe Official Canon",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_mcu_iron_man_nanotech_blade_strike": {
+      "id": "matk_marvel_mcu_iron_man_nanotech_blade_strike",
+      "character_id": "marvel_mcu_iron_man",
+      "universe": "marvel",
+      "name": "Nanotech Blade Strike",
+      "category": "physical",
+      "range": "melee",
+      "source": "Marvel Cinematic Universe Official Canon",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_mcu_iron_man_nano_energy_shield": {
+      "id": "matk_marvel_mcu_iron_man_nano_energy_shield",
+      "character_id": "marvel_mcu_iron_man",
+      "universe": "marvel",
+      "name": "Nano Energy Shield",
+      "category": "defensive",
+      "range": "self",
+      "source": "Marvel Cinematic Universe Official Canon",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_mcu_thanos_double_edged_uru_cleave": {
+      "id": "matk_marvel_mcu_thanos_double_edged_uru_cleave",
+      "character_id": "marvel_mcu_thanos",
+      "universe": "marvel",
+      "name": "Double-Edged Uru Cleave",
+      "category": "physical",
+      "range": "melee",
+      "source": "Marvel Cinematic Universe Official Canon",
+      "verification_status": "verified_curated"
+    },
+    "matk_marvel_mcu_thanos_titan_slam": {
+      "id": "matk_marvel_mcu_thanos_titan_slam",
+      "character_id": "marvel_mcu_thanos",
+      "universe": "marvel",
+      "name": "Titan Slam",
+      "category": "physical",
+      "range": "melee",
+      "source": "Marvel Cinematic Universe Official Canon",
+      "verification_status": "verified_curated"
+    }
+  }
+}

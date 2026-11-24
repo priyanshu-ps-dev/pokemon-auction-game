@@ -10,7 +10,8 @@ from typing import List, Optional
 
 from src.battle_engine import PokemonCombatant, get_type_effectiveness
 from src.anime_battle_engine import AnimeCombatant, CATEGORY_BASE_POWER
-from src.battle_interface import BattleAction
+from src.marvel_battle_engine import MarvelCombatant, MARVEL_CATEGORY_POWER
+from src.battle_interface import BaseCombatant, BattleAction
 
 
 class TacticalBattleAI:
@@ -133,6 +134,37 @@ class TacticalBattleAI:
                 s = 40.0 if hp_ratio > 0.6 else 10.0
             else:
                 s = float(CATEGORY_BASE_POWER.get(cat, 60))
+            scored.append((s, atk))
+
+        best = max(s for s, _ in scored)
+        top = [a for s, a in scored if s >= best * 0.85]
+        chosen = rng.choice(top)
+        return BattleAction(action_type="attack", move_id=chosen["id"])
+
+    def choose_marvel_action(
+        self,
+        active: MarvelCombatant,
+        opponent: BaseCombatant,
+        rng: random.Random,
+    ) -> BattleAction:
+        transforms = active.get_available_transformations()
+        if transforms and active.current_hp <= active.max_hp * 0.75:
+            return BattleAction(action_type="transform", transformation_id=transforms[0]["id"])
+
+        attacks = active.get_available_moves()
+        if not attacks:
+            return BattleAction(action_type="pass")
+
+        hp_ratio = active.current_hp / max(1, active.max_hp)
+        scored = []
+        for atk in attacks:
+            cat = atk.get("category", "physical")
+            if cat == "healing":
+                s = 90.0 if hp_ratio < 0.45 else 10.0
+            elif cat == "defensive":
+                s = 60.0 if active.shield_turns == 0 and hp_ratio < 0.65 else 10.0
+            else:
+                s = float(MARVEL_CATEGORY_POWER.get(cat, 68))
             scored.append((s, atk))
 
         best = max(s for s, _ in scored)
