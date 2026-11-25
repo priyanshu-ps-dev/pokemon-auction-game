@@ -378,17 +378,65 @@ function handleServerMessage(type, data) {
       appendChatMessage(data);
       break;
 
+    case 'avatar_library_updated':
+      applyLocalAvatarManifest(data);
+      break;
+
+    case 'avatar_admin_result':
+      showAvatarAdminStatus(data.message || '', !!data.success);
+      if (data.action === 'upload' && data.success) {
+        const fileInp = document.getElementById('avatar-upload-files');
+        const nameInp = document.getElementById('avatar-upload-name');
+        const strip = document.getElementById('avatar-upload-preview-strip');
+        if (fileInp) fileInp.value = '';
+        if (nameInp) nameInp.value = '';
+        if (strip) strip.innerHTML = '';
+      }
+      break;
+
     case 'error':
-      alert(data.message);
+      if (window.AuctionTicketUI && window.AuctionTicketUI.isOpen()) {
+        window.AuctionTicketUI.handleServerError(data.message);
+      } else {
+        alert(data.message);
+      }
       break;
   }
 }
 
 // Screen Switcher
+function updateStageBackgroundVideo() {
+  // Single unified background video (#landing-bg-video: /assets/landing-video.mp4)
+}
+
 function switchArenaScreen(screenId) {
   document.querySelectorAll('.arena-screen').forEach(s => s.classList.remove('active'));
   const target = document.getElementById(screenId);
   if (target) target.classList.add('active');
+
+  // Close landing modals when transitioning screens
+  ['profile-modal-backdrop', 'create-room-modal-backdrop', 'join-room-modal-backdrop'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+  if (window.AuctionTicketUI && screenId !== 'arena-setup') {
+    window.AuctionTicketUI.closeAll();
+  }
+
+  // Dim background video slightly during active lobby/stage/results
+  document.body.classList.toggle('in-arena-match', screenId !== 'arena-setup');
+  updateStageBackgroundVideo(screenId, gameState.roomState);
+}
+
+// Helper to open/close HUD modals
+function openHudModal(backdropId) {
+  const el = document.getElementById(backdropId);
+  if (el) el.classList.add('active');
+}
+
+function closeHudModal(backdropId) {
+  const el = document.getElementById(backdropId);
+  if (el) el.classList.remove('active');
 }
 
 // Initialize Multiplayer Arena UI
@@ -396,43 +444,51 @@ function initArena() {
   connectWebSocket();
   setupAvatarPicker();
   setupEventListeners();
+  initStageCharacterDex();
+
+  // Ensure background video autoplays cleanly
+  const bgVideo = document.getElementById('landing-bg-video');
+  if (bgVideo) {
+    bgVideo.muted = true;
+    bgVideo.play().catch(() => {});
+  }
 
   // Load sound setting
   const soundBtn = document.getElementById('sound-toggle-btn');
-  soundBtn.addEventListener('click', () => {
-    gameState.soundEnabled = !gameState.soundEnabled;
-    soundBtn.textContent = gameState.soundEnabled ? '🔊 Sound On' : '🔇 Muted';
-    soundBtn.classList.toggle('active', gameState.soundEnabled);
-  });
-
-  // Top Nav Tab Switcher (Arena vs Anime Database vs Pokédex)
-  const tabArenaBtn = document.getElementById('tab-arena-btn');
-  const tabAnimeBtn = document.getElementById('tab-anime-btn');
-  const tabPokedexBtn = document.getElementById('tab-pokedex-btn');
-  const viewArena = document.getElementById('view-arena');
-  const viewAnime = document.getElementById('view-anime');
-  const viewPokedex = document.getElementById('view-pokedex');
-
-  function switchTab(activeBtn, activeView) {
-    [tabArenaBtn, tabAnimeBtn, tabPokedexBtn].forEach(b => { if (b) b.classList.remove('active'); });
-    [viewArena, viewAnime, viewPokedex].forEach(v => { if (v) v.classList.remove('active'); });
-    if (activeBtn) activeBtn.classList.add('active');
-    if (activeView) activeView.classList.add('active');
-  }
-
-  if (tabArenaBtn) {
-    tabArenaBtn.addEventListener('click', () => switchTab(tabArenaBtn, viewArena));
-  }
-  if (tabAnimeBtn) {
-    tabAnimeBtn.addEventListener('click', () => {
-      switchTab(tabAnimeBtn, viewAnime);
-      if (window.animeDatabaseModule && !window.animeDatabaseModule.initialized) {
-        window.animeDatabaseModule.init();
+  if (soundBtn) {
+    soundBtn.addEventListener('click', () => {
+      gameState.soundEnabled = !gameState.soundEnabled;
+      const labelEl = soundBtn.querySelector('.hud-sound-label');
+      if (labelEl) {
+        labelEl.textContent = gameState.soundEnabled ? 'SOUND ON' : 'SOUND OFF';
+      } else {
+        soundBtn.textContent = gameState.soundEnabled ? 'SOUND ON' : 'SOUND OFF';
       }
+      soundBtn.classList.toggle('active', gameState.soundEnabled);
+      soundBtn.classList.toggle('is-muted', !gameState.soundEnabled);
     });
   }
-  if (tabPokedexBtn) {
-    tabPokedexBtn.addEventListener('click', () => switchTab(tabPokedexBtn, viewPokedex));
+
+  // Mobile HUD nav toggle
+  const mobileToggle = document.getElementById('hud-mobile-toggle');
+  const hudNavItems = document.getElementById('hud-nav-items');
+  if (mobileToggle && hudNavItems) {
+    mobileToggle.addEventListener('click', () => {
+      const isOpen = hudNavItems.classList.toggle('mobile-open');
+      mobileToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+  }
+
+  // Top Nav Tab Switcher (Multiplayer Arena)
+  const tabArenaBtn = document.getElementById('tab-arena-btn');
+  const viewArena = document.getElementById('view-arena');
+  if (tabArenaBtn && viewArena) {
+    tabArenaBtn.addEventListener('click', () => {
+      document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
+      viewArena.classList.add('active');
+      tabArenaBtn.classList.add('active');
+      if (hudNavItems) hudNavItems.classList.remove('mobile-open');
+    });
   }
 
   // Check URL parameters for direct room invitation (?room=CODE)
@@ -440,79 +496,617 @@ function initArena() {
   const inviteCode = urlParams.get('room');
   if (inviteCode) {
     const code = inviteCode.trim().toUpperCase();
-    const subtabJoinBtn = document.getElementById('subtab-join-btn');
-    const subtabCreateBtn = document.getElementById('subtab-create-btn');
-    const formJoin = document.getElementById('form-join-room');
-    const formCreate = document.getElementById('form-create-room');
-    const roomInput = document.getElementById('room-code-input');
-
-    if (subtabJoinBtn && formJoin) {
-      subtabJoinBtn.classList.add('active');
-      if (subtabCreateBtn) subtabCreateBtn.classList.remove('active');
-      formJoin.classList.add('active');
-      if (formCreate) formCreate.classList.remove('active');
-    }
-    if (roomInput) {
-      roomInput.value = code;
-    }
-    const heroP = document.querySelector('.setup-hero p');
-    if (heroP) {
-      heroP.innerHTML = `You've been invited to join Auction Room <strong style="color:#38bdf8; font-size:1.1rem; letter-spacing:1px;">${escapeHtml(code)}</strong>! Choose your Trainer name and join the arena.`;
+    if (window.AuctionTicketUI) {
+      window.AuctionTicketUI.openJoin(code);
     }
   }
 }
 
-// Avatar Picker
-function setupAvatarPicker() {
-  const container = document.getElementById('avatar-picker');
+// ============================================================================
+// UNIVERSAL LOCAL ANIME AVATAR LIBRARY (Zero External APIs)
+// ============================================================================
+const avatarLibraryState = {
+  characters: [],
+  categories: [],
+  activeCategory: 'ALL',
+  searchQuery: '',
+  pendingAvatar: gameState.myAvatar || 'red',
+  visibleCount: 48,
+  pageSize: 48,
+  adminMode: false,
+  replaceTargetId: null,
+  loaded: false
+};
+
+function isCustomAvatarPath(val) {
+  return typeof val === 'string' && (val.startsWith('/assets/avatars/') || val.startsWith('assets/avatars/'));
+}
+
+function resolveAvatarInfo(avatarVal) {
+  if (isCustomAvatarPath(avatarVal)) {
+    const norm = avatarVal.startsWith('/') ? avatarVal : '/' + avatarVal;
+    const found = avatarLibraryState.characters.find(c => c.image === norm);
+    if (found) {
+      return {
+        isCustom: true,
+        id: found.id,
+        name: found.name,
+        anime: found.anime,
+        image: found.image,
+        fallback: TRAINER_AVATARS[0]
+      };
+    }
+    // Even if manifest hasn't loaded yet, derive readable fallback from path
+    const parts = norm.split('/');
+    const fileStem = (parts[parts.length - 1] || 'Avatar').replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ');
+    return {
+      isCustom: true,
+      id: norm,
+      name: fileStem,
+      anime: 'Anime Character',
+      image: norm,
+      fallback: TRAINER_AVATARS[0]
+    };
+  }
+  const trainer = TRAINER_AVATARS.find(a => a.id === avatarVal) || TRAINER_AVATARS[0];
+  return {
+    isCustom: false,
+    id: trainer.id,
+    name: trainer.name,
+    anime: 'Default Trainer',
+    color: trainer.color,
+    icon: trainer.icon,
+    fallback: trainer
+  };
+}
+
+function renderAvatarBadgeHtml(avatarVal, wrapperClass, altName = 'Avatar') {
+  const info = resolveAvatarInfo(avatarVal);
+  if (info.isCustom) {
+    return `
+      <div class="${wrapperClass} custom-avatar-wrap">
+        <img src="${escapeHtml(info.image)}" alt="${escapeHtml(altName || info.name)}" class="avatar-portrait-img" loading="lazy"
+          onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+        <div class="avatar-fallback-circle" style="display:none; background:${info.fallback.color};">${info.fallback.icon}</div>
+      </div>
+    `;
+  }
+  return `<div class="${wrapperClass}" style="background:${info.color};">${info.icon}</div>`;
+}
+
+function renderAvatarInlineHtml(avatarVal, altName = 'Avatar') {
+  const info = resolveAvatarInfo(avatarVal);
+  if (info.isCustom) {
+    return `
+      <span class="avatar-inline-wrap">
+        <img src="${escapeHtml(info.image)}" alt="${escapeHtml(altName || info.name)}" class="avatar-inline-img" loading="lazy"
+          onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline';">
+        <span style="display:none;">${info.fallback.icon}</span>
+      </span>
+    `;
+  }
+  return `<span style="font-size:1.2rem;">${info.icon}</span>`;
+}
+
+async function loadLocalAvatarManifest() {
+  try {
+    const res = await fetch('/assets/avatars/manifest.json?t=' + Date.now());
+    if (!res.ok) throw new Error('Manifest load failed');
+    const data = await res.json();
+    applyLocalAvatarManifest(data);
+  } catch (err) {
+    console.warn('[AvatarLibrary] Using default 12 trainers:', err);
+    applyLocalAvatarManifest({ characters: [], categories: [] });
+  }
+}
+
+function applyLocalAvatarManifest(data) {
+  avatarLibraryState.characters = Array.isArray(data.characters) ? data.characters : [];
+  avatarLibraryState.categories = Array.isArray(data.categories) ? data.categories : [];
+  avatarLibraryState.loaded = true;
+
+  const badge = document.getElementById('avatar-lib-total-badge');
+  if (badge) {
+    badge.textContent = `${avatarLibraryState.characters.length} Custom • ${TRAINER_AVATARS.length} Default`;
+  }
+  const adminCount = document.getElementById('avatar-admin-count');
+  if (adminCount) {
+    adminCount.textContent = String(avatarLibraryState.characters.length);
+  }
+
+  renderAvatarCategoryFilters();
+  renderAvatarLibraryGrid();
+  updateAvatarPreview(avatarLibraryState.pendingAvatar);
+  renderAvatarAdminList();
+}
+
+function renderAvatarCategoryFilters() {
+  const container = document.getElementById('avatar-category-filters');
+  if (!container) return;
   container.innerHTML = '';
 
-  TRAINER_AVATARS.forEach(av => {
-    const chip = document.createElement('div');
-    chip.className = `avatar-option ${av.id === gameState.myAvatar ? 'selected' : ''}`;
-    chip.dataset.avatarId = av.id;
-    chip.innerHTML = `
-      <div class="avatar-circle" style="background:${av.color};">${av.icon}</div>
-      <span class="avatar-label">${av.name}</span>
-    `;
-    chip.addEventListener('click', () => {
-      document.querySelectorAll('.avatar-option').forEach(c => c.classList.remove('selected'));
-      chip.classList.add('selected');
-      gameState.myAvatar = av.id;
-      localStorage.setItem('pkmn_auction_avatar', av.id);
-    });
-    container.appendChild(chip);
+  const totalCount = avatarLibraryState.characters.length + TRAINER_AVATARS.length;
+  const pills = [
+    { key: 'ALL', label: `ALL CHARACTERS (${totalCount})` }
+  ];
+
+  // Only show populated anime categories
+  avatarLibraryState.categories.forEach(cat => {
+    if (cat.count > 0) {
+      pills.push({ key: cat.name, label: `${cat.name.toUpperCase()} (${cat.count})` });
+    }
   });
+
+  pills.push({ key: 'DEFAULT', label: `DEFAULT TRAINERS (${TRAINER_AVATARS.length})` });
+
+  pills.forEach(p => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `avatar-cat-pill ${avatarLibraryState.activeCategory === p.key ? 'active' : ''}`;
+    btn.textContent = p.label;
+    btn.addEventListener('click', () => {
+      avatarLibraryState.activeCategory = p.key;
+      avatarLibraryState.visibleCount = avatarLibraryState.pageSize;
+      renderAvatarCategoryFilters();
+      renderAvatarLibraryGrid();
+    });
+    container.appendChild(btn);
+  });
+}
+
+function getFilteredAvatarEntries() {
+  const q = avatarLibraryState.searchQuery.trim().toLowerCase();
+  const cat = avatarLibraryState.activeCategory;
+  const entries = [];
+
+  if (cat !== 'DEFAULT') {
+    avatarLibraryState.characters.forEach(ch => {
+      if (cat !== 'ALL' && ch.anime !== cat) return;
+      if (q && !ch.name.toLowerCase().includes(q) && !ch.anime.toLowerCase().includes(q)) return;
+      entries.push({
+        isCustom: true,
+        value: ch.image,
+        id: ch.id,
+        name: ch.name,
+        anime: ch.anime,
+        image: ch.image
+      });
+    });
+  }
+
+  if (cat === 'ALL' || cat === 'DEFAULT') {
+    TRAINER_AVATARS.forEach(tr => {
+      if (q && !tr.name.toLowerCase().includes(q) && !'default trainer pokemon'.includes(q)) return;
+      entries.push({
+        isCustom: false,
+        value: tr.id,
+        id: tr.id,
+        name: tr.name,
+        anime: 'Default Trainer',
+        color: tr.color,
+        icon: tr.icon
+      });
+    });
+  }
+
+  return entries;
+}
+
+function renderAvatarLibraryGrid() {
+  const grid = document.getElementById('avatar-library-grid');
+  const loadMoreWrap = document.getElementById('avatar-load-more-wrap');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  const entries = getFilteredAvatarEntries();
+  if (entries.length === 0) {
+    grid.innerHTML = `
+      <div class="avatar-empty-state">
+        <div class="avatar-empty-icon">🔍</div>
+        <h4>No matching anime character found</h4>
+        <p>Try a different name or import local character portraits into <code>public/assets/avatars/</code>.</p>
+      </div>
+    `;
+    if (loadMoreWrap) loadMoreWrap.style.display = 'none';
+    return;
+  }
+
+  const slice = entries.slice(0, avatarLibraryState.visibleCount);
+  slice.forEach(item => {
+    const isSelected = avatarLibraryState.pendingAvatar === item.value;
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = `avatar-lib-card ${isSelected ? 'selected' : ''}`;
+    card.dataset.avatarVal = item.value;
+
+    const mediaHtml = item.isCustom
+      ? `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}" class="avatar-lib-thumb" loading="lazy"
+           onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+         <div class="avatar-lib-fallback" style="display:none; background:#1e293b;">⚡</div>`
+      : `<div class="avatar-lib-trainer-box" style="background:${item.color};">${item.icon}</div>`;
+
+    card.innerHTML = `
+      <div class="avatar-lib-media">
+        ${mediaHtml}
+        <span class="avatar-lib-check" aria-hidden="true">✓</span>
+      </div>
+      <div class="avatar-lib-info">
+        <div class="avatar-lib-name" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</div>
+        <div class="avatar-lib-franchise">${escapeHtml(item.anime)}</div>
+      </div>
+    `;
+
+    card.addEventListener('click', () => {
+      avatarLibraryState.pendingAvatar = item.value;
+      grid.querySelectorAll('.avatar-lib-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      updateAvatarPreview(item.value);
+    });
+
+    grid.appendChild(card);
+  });
+
+  if (loadMoreWrap) {
+    loadMoreWrap.style.display = entries.length > avatarLibraryState.visibleCount ? 'flex' : 'none';
+  }
+}
+
+function updateAvatarPreview(avatarVal) {
+  const frame = document.getElementById('preview-avatar-media');
+  const nameEl = document.getElementById('preview-char-name');
+  const animeEl = document.getElementById('preview-char-anime');
+  const statusEl = document.getElementById('preview-char-status');
+  if (!frame || !nameEl || !animeEl) return;
+
+  const info = resolveAvatarInfo(avatarVal);
+  if (info.isCustom) {
+    frame.innerHTML = `
+      <img src="${escapeHtml(info.image)}" alt="${escapeHtml(info.name)}" class="avatar-preview-img"
+        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+      <div class="avatar-preview-fallback" style="display:none; background:${info.fallback.color};">${info.fallback.icon}</div>
+    `;
+  } else {
+    frame.innerHTML = `<div class="avatar-preview-trainer" style="background:${info.color};">${info.icon}</div>`;
+  }
+
+  nameEl.textContent = info.name;
+  animeEl.textContent = info.anime;
+  if (statusEl) {
+    const isActive = avatarVal === gameState.myAvatar;
+    statusEl.textContent = isActive ? 'ACTIVE IDENTITY' : 'SELECTED — CLICK CONFIRM';
+    statusEl.classList.toggle('is-active', isActive);
+  }
+}
+
+function showAvatarAdminStatus(msg, isSuccess) {
+  const box = document.getElementById('avatar-admin-status');
+  if (!box) return;
+  box.textContent = msg;
+  box.className = `avatar-admin-status ${isSuccess ? 'is-success' : 'is-error'}`;
+  box.style.display = 'block';
+}
+
+function renderAvatarAdminList() {
+  const list = document.getElementById('avatar-admin-list');
+  if (!list) return;
+  const searchEl = document.getElementById('avatar-admin-search');
+  const q = searchEl ? searchEl.value.trim().toLowerCase() : '';
+  const items = avatarLibraryState.characters.filter(c =>
+    !q || c.name.toLowerCase().includes(q) || c.anime.toLowerCase().includes(q)
+  );
+
+  if (items.length === 0) {
+    list.innerHTML = '<div class="avatar-admin-empty">No imported portraits yet. Upload images on the left or place files into <code>public/assets/avatars/&lt;franchise&gt;/</code>.</div>';
+    return;
+  }
+
+  list.innerHTML = '';
+  items.slice(0, 100).forEach(ch => {
+    const row = document.createElement('div');
+    row.className = 'avatar-admin-row';
+    row.innerHTML = `
+      <img src="${escapeHtml(ch.image)}" alt="${escapeHtml(ch.name)}" class="avatar-admin-thumb" loading="lazy"
+        onerror="this.src='/api/avatar/${escapeHtml(ch.id)}'">
+      <div class="avatar-admin-meta">
+        <div class="avatar-admin-name">${escapeHtml(ch.name)}</div>
+        <div class="avatar-admin-anime">${escapeHtml(ch.anime)}</div>
+      </div>
+      <div class="avatar-admin-row-actions">
+        <button type="button" class="avatar-mini-btn" data-action="edit" title="Edit Name / Category">✏️</button>
+        <button type="button" class="avatar-mini-btn" data-action="replace" title="Replace Portrait">🖼️</button>
+        <button type="button" class="avatar-mini-btn danger" data-action="delete" title="Remove">🗑️</button>
+      </div>
+    `;
+
+    row.querySelector('[data-action="edit"]').addEventListener('click', () => {
+      const newName = prompt('Edit Character Name:', ch.name);
+      if (newName === null) return;
+      const newAnime = prompt('Edit Anime Franchise (e.g. One Piece, Naruto, Pokémon, Dragon Ball, Bleach, Jujutsu Kaisen, Demon Slayer):', ch.anime);
+      if (newAnime === null) return;
+      if (gameState.ws && gameState.ws.readyState === WebSocket.OPEN) {
+        gameState.ws.send(JSON.stringify({
+          action: 'avatar_admin_edit',
+          data: { id: ch.id, name: newName.trim(), anime: newAnime.trim() }
+        }));
+      }
+    });
+
+    row.querySelector('[data-action="replace"]').addEventListener('click', () => {
+      avatarLibraryState.replaceTargetId = ch.id;
+      const replaceInp = document.getElementById('avatar-replace-file-input');
+      if (replaceInp) replaceInp.click();
+    });
+
+    row.querySelector('[data-action="delete"]').addEventListener('click', () => {
+      if (!confirm(`Remove "${ch.name}" from the local avatar library?`)) return;
+      if (gameState.ws && gameState.ws.readyState === WebSocket.OPEN) {
+        gameState.ws.send(JSON.stringify({
+          action: 'avatar_admin_delete',
+          data: { id: ch.id }
+        }));
+      }
+    });
+
+    list.appendChild(row);
+  });
+}
+
+function readFileAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error(`Failed to read ${file.name}`));
+    reader.readAsDataURL(file);
+  });
+}
+
+// Avatar Picker & Library Initialization
+function setupAvatarPicker() {
+  loadLocalAvatarManifest();
+
+  const searchInput = document.getElementById('avatar-search-input');
+  const searchClear = document.getElementById('avatar-search-clear');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      avatarLibraryState.searchQuery = e.target.value;
+      avatarLibraryState.visibleCount = avatarLibraryState.pageSize;
+      if (searchClear) searchClear.style.display = e.target.value ? 'inline-flex' : 'none';
+      renderAvatarLibraryGrid();
+    });
+  }
+  if (searchClear && searchInput) {
+    searchClear.addEventListener('click', () => {
+      searchInput.value = '';
+      avatarLibraryState.searchQuery = '';
+      searchClear.style.display = 'none';
+      renderAvatarLibraryGrid();
+    });
+  }
+
+  const loadMoreBtn = document.getElementById('avatar-load-more-btn');
+  if (loadMoreBtn) {
+    loadMoreBtn.addEventListener('click', () => {
+      avatarLibraryState.visibleCount += avatarLibraryState.pageSize;
+      renderAvatarLibraryGrid();
+    });
+  }
+
+  const toggleAdminBtn = document.getElementById('toggle-avatar-admin-btn');
+  const browserView = document.getElementById('avatar-browser-view');
+  const adminView = document.getElementById('avatar-admin-view');
+  if (toggleAdminBtn && browserView && adminView) {
+    toggleAdminBtn.addEventListener('click', () => {
+      avatarLibraryState.adminMode = !avatarLibraryState.adminMode;
+      browserView.style.display = avatarLibraryState.adminMode ? 'none' : 'block';
+      adminView.style.display = avatarLibraryState.adminMode ? 'block' : 'none';
+      toggleAdminBtn.innerHTML = avatarLibraryState.adminMode ? '<span>← BACK TO CHARACTERS</span>' : '<span>⚙️ MANAGE / IMPORT</span>';
+    });
+  }
+
+  const uploadFilesInp = document.getElementById('avatar-upload-files');
+  const previewStrip = document.getElementById('avatar-upload-preview-strip');
+  if (uploadFilesInp && previewStrip) {
+    uploadFilesInp.addEventListener('change', async () => {
+      previewStrip.innerHTML = '';
+      const files = Array.from(uploadFilesInp.files || []).slice(0, 12);
+      for (const file of files) {
+        try {
+          const url = await readFileAsDataURL(file);
+          const img = document.createElement('img');
+          img.src = url;
+          img.alt = file.name;
+          img.className = 'avatar-upload-preview-thumb';
+          previewStrip.appendChild(img);
+        } catch (e) {}
+      }
+    });
+  }
+
+  const uploadSubmitBtn = document.getElementById('avatar-upload-submit-btn');
+  if (uploadSubmitBtn && uploadFilesInp) {
+    uploadSubmitBtn.addEventListener('click', async () => {
+      const files = Array.from(uploadFilesInp.files || []);
+      if (files.length === 0) {
+        showAvatarAdminStatus('Please select one or more PNG/JPG/WEBP portrait images.', false);
+        return;
+      }
+      const franchise = document.getElementById('avatar-upload-franchise')?.value || 'other-anime';
+      const customName = (document.getElementById('avatar-upload-name')?.value || '').trim();
+      const items = [];
+      for (const file of files) {
+        const dataUrl = await readFileAsDataURL(file);
+        const derivedName = (files.length === 1 && customName)
+          ? customName
+          : file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        items.push({
+          name: derivedName,
+          anime: franchise,
+          filename: file.name,
+          image_data: dataUrl
+        });
+      }
+      if (gameState.ws && gameState.ws.readyState === WebSocket.OPEN) {
+        gameState.ws.send(JSON.stringify({ action: 'avatar_admin_upload', data: { items } }));
+      } else {
+        showAvatarAdminStatus('WebSocket not connected. Refresh and try again.', false);
+      }
+    });
+  }
+
+  const rescanBtn = document.getElementById('avatar-rescan-btn');
+  if (rescanBtn) {
+    rescanBtn.addEventListener('click', () => loadLocalAvatarManifest());
+  }
+
+  const adminSearch = document.getElementById('avatar-admin-search');
+  if (adminSearch) {
+    adminSearch.addEventListener('input', () => renderAvatarAdminList());
+  }
+
+  const replaceInp = document.getElementById('avatar-replace-file-input');
+  if (replaceInp) {
+    replaceInp.addEventListener('change', async () => {
+      const file = replaceInp.files?.[0];
+      if (!file || !avatarLibraryState.replaceTargetId) return;
+      const dataUrl = await readFileAsDataURL(file);
+      if (gameState.ws && gameState.ws.readyState === WebSocket.OPEN) {
+        gameState.ws.send(JSON.stringify({
+          action: 'avatar_admin_replace',
+          data: { id: avatarLibraryState.replaceTargetId, filename: file.name, image_data: dataUrl }
+        }));
+      }
+      replaceInp.value = '';
+      avatarLibraryState.replaceTargetId = null;
+    });
+  }
 }
 
 // Attach User Interactions
 function setupEventListeners() {
   const nameInput = document.getElementById('player-name-input');
-  nameInput.value = gameState.myName;
-  nameInput.addEventListener('input', (e) => {
-    gameState.myName = e.target.value.trim() || 'Trainer Red';
-    localStorage.setItem('pkmn_auction_name', gameState.myName);
+  if (nameInput) {
+    nameInput.value = gameState.myName;
+    nameInput.addEventListener('input', (e) => {
+      gameState.myName = e.target.value.trim() || 'Trainer Red';
+      localStorage.setItem('pkmn_auction_name', gameState.myName);
+    });
+  }
+
+  // Landing Page HUD Modal Triggers
+  const navProfileBtn = document.getElementById('nav-profile-btn');
+  const openCreateBtn = document.getElementById('open-create-modal-btn');
+  const openJoinBtn = document.getElementById('open-join-modal-btn');
+  const saveProfileBtn = document.getElementById('save-profile-btn');
+  const hudNavItems = document.getElementById('hud-nav-items');
+
+  if (navProfileBtn) {
+    navProfileBtn.addEventListener('click', () => {
+      avatarLibraryState.pendingAvatar = gameState.myAvatar || 'red';
+      avatarLibraryState.adminMode = false;
+      const bv = document.getElementById('avatar-browser-view');
+      const av = document.getElementById('avatar-admin-view');
+      const tb = document.getElementById('toggle-avatar-admin-btn');
+      if (bv) bv.style.display = 'block';
+      if (av) av.style.display = 'none';
+      if (tb) tb.innerHTML = '<span>⚙️ MANAGE / IMPORT</span>';
+      loadLocalAvatarManifest();
+      openHudModal('profile-modal-backdrop');
+      if (hudNavItems) hudNavItems.classList.remove('mobile-open');
+    });
+  }
+  if (saveProfileBtn) {
+    saveProfileBtn.addEventListener('click', () => {
+      if (nameInput) {
+        gameState.myName = nameInput.value.trim() || 'Trainer Red';
+        localStorage.setItem('pkmn_auction_name', gameState.myName);
+      }
+      if (avatarLibraryState.pendingAvatar) {
+        gameState.myAvatar = avatarLibraryState.pendingAvatar;
+        localStorage.setItem('pkmn_auction_avatar', gameState.myAvatar);
+      }
+      if (gameState.ws && gameState.ws.readyState === WebSocket.OPEN) {
+        gameState.ws.send(JSON.stringify({
+          action: 'update_profile',
+          data: { name: gameState.myName, avatar: gameState.myAvatar }
+        }));
+      }
+      closeHudModal('profile-modal-backdrop');
+    });
+  }
+  const cancelProfileBtn = document.getElementById('cancel-profile-btn');
+  if (cancelProfileBtn) {
+    cancelProfileBtn.addEventListener('click', () => {
+      avatarLibraryState.pendingAvatar = gameState.myAvatar;
+      closeHudModal('profile-modal-backdrop');
+    });
+  }
+  if (openCreateBtn) {
+    openCreateBtn.addEventListener('click', () => {
+      if (window.AuctionTicketUI) {
+        window.AuctionTicketUI.openCreate();
+      } else {
+        openHudModal('create-room-modal-backdrop');
+      }
+    });
+  }
+  if (openJoinBtn) {
+    openJoinBtn.addEventListener('click', () => {
+      if (window.AuctionTicketUI) {
+        window.AuctionTicketUI.openJoin();
+      } else {
+        openHudModal('join-room-modal-backdrop');
+      }
+    });
+  }
+
+  // Close buttons and backdrop clicks for HUD modals
+  const modalMappings = [
+    ['profile-modal-backdrop', 'profile-modal-close-btn'],
+    ['create-room-modal-backdrop', 'create-modal-close-btn'],
+    ['join-room-modal-backdrop', 'join-modal-close-btn']
+  ];
+  modalMappings.forEach(([backdropId, closeBtnId]) => {
+    const backdrop = document.getElementById(backdropId);
+    const closeBtn = document.getElementById(closeBtnId);
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => closeHudModal(backdropId));
+    }
+    if (backdrop) {
+      backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) closeHudModal(backdropId);
+      });
+    }
   });
 
-  // Sub-tabs: Create Room vs Join Room
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      modalMappings.forEach(([backdropId]) => closeHudModal(backdropId));
+      const metricsBackdrop = document.getElementById('metrics-modal-backdrop');
+      if (metricsBackdrop) metricsBackdrop.classList.remove('active');
+    }
+  });
+
+  // Legacy sub-tabs (if present)
   const createSubTab = document.getElementById('subtab-create-btn');
   const joinSubTab = document.getElementById('subtab-join-btn');
   const formCreate = document.getElementById('form-create-room');
   const formJoin = document.getElementById('form-join-room');
 
-  createSubTab.addEventListener('click', () => {
-    createSubTab.classList.add('active');
-    joinSubTab.classList.remove('active');
-    formCreate.classList.add('active');
-    formJoin.classList.remove('active');
-  });
+  if (createSubTab && joinSubTab && formCreate && formJoin) {
+    createSubTab.addEventListener('click', () => {
+      createSubTab.classList.add('active');
+      joinSubTab.classList.remove('active');
+      formCreate.classList.add('active');
+      formJoin.classList.remove('active');
+    });
 
-  joinSubTab.addEventListener('click', () => {
-    joinSubTab.classList.add('active');
-    createSubTab.classList.remove('active');
-    formJoin.classList.add('active');
-    formCreate.classList.remove('active');
-  });
+    joinSubTab.addEventListener('click', () => {
+      joinSubTab.classList.add('active');
+      createSubTab.classList.remove('active');
+      formJoin.classList.add('active');
+      formCreate.classList.remove('active');
+    });
+  }
 
   // Multi-Anime Mode Selection State
   let selectedAnimeMode = 'all';
@@ -537,14 +1131,24 @@ function setupEventListeners() {
   fetch('/api/anime')
     .then(r => r.json())
     .then(franchises => {
+      if (window.AuctionTicketUI) {
+        window.AuctionTicketUI.setFranchises(franchises);
+      }
       const select = document.getElementById('single-anime-select');
       const chipsList = document.getElementById('franchise-chips-list');
       const adminFilter = document.getElementById('admin-franchise-filter');
+      const dexSideFilter = document.getElementById('dex-side-franchise');
 
       if (select) select.innerHTML = '';
       if (chipsList) chipsList.innerHTML = '';
 
       franchises.forEach(f => {
+        if (dexSideFilter) {
+          const opt = document.createElement('option');
+          opt.value = f.id;
+          opt.textContent = f.name;
+          dexSideFilter.appendChild(opt);
+        }
         if (select) {
           const opt = document.createElement('option');
           opt.value = f.id;
@@ -594,25 +1198,14 @@ function setupEventListeners() {
     });
   }
 
-  // Create Room Click
-  document.getElementById('create-room-btn').addEventListener('click', () => {
-    const purse = parseInt(document.getElementById('starting-purse-select').value, 10);
-    const formsMode = document.getElementById('forms-mode-select') ? document.getElementById('forms-mode-select').value : 'SINGLE_BASE';
-
-    let selectedAnime = [];
-    if (selectedAnimeMode === 'single') {
-      const selVal = document.getElementById('single-anime-select').value;
-      if (selVal) selectedAnime = [selVal];
-    } else if (selectedAnimeMode === 'multiple') {
-      selectedAnime = Array.from(selectedAnimeFranchises);
-      if (selectedAnime.length === 0) {
-        alert('Please select at least one franchise for Selected Anime mode.');
-        return;
-      }
+  // Ticket-driven Create Room & Join Room bridges (preserving exact WebSocket payload)
+  window.triggerCreateRoomFromTicket = (cfg) => {
+    if (!gameState.ws || gameState.ws.readyState !== WebSocket.OPEN) {
+      alert('Connecting to server... Please try again in a moment.');
+      return;
     }
-
-    const battleControlMode = document.getElementById('battle-control-select')?.value || 'ai_vs_ai';
-    const tournamentFormat = document.getElementById('tournament-format-select')?.value || 'round_robin';
+    const battleControlMode = (cfg && cfg.battle_control_mode) || document.getElementById('battle-control-select')?.value || 'ai_vs_ai';
+    const tournamentFormat = (cfg && cfg.tournament_format) || document.getElementById('tournament-format-select')?.value || 'round_robin';
 
     gameState.ws.send(JSON.stringify({
       action: 'create_room',
@@ -620,31 +1213,71 @@ function setupEventListeners() {
         name: gameState.myName,
         avatar: gameState.myAvatar,
         session_id: gameState.sessionId,
-        starting_purse: purse,
+        starting_purse: cfg.starting_purse || 500,
         min_bid: 10,
-        anime_mode: selectedAnimeMode,
-        selected_anime: selectedAnime,
-        forms_mode: formsMode,
+        anime_mode: cfg.anime_mode || selectedAnimeMode || 'all',
+        selected_anime: cfg.selected_anime || Array.from(selectedAnimeFranchises),
+        forms_mode: cfg.forms_mode || 'SINGLE_BASE',
         battle_control_mode: battleControlMode,
         tournament_format: tournamentFormat
       }
     }));
-  });
+  };
 
-  // Join Room Click
-  document.getElementById('join-room-btn').addEventListener('click', () => {
-    const code = document.getElementById('room-code-input').value.trim().toUpperCase();
-    if (!code) return alert('Please enter a room code');
+  window.triggerJoinRoomFromTicket = (code) => {
+    const cleanCode = String(code || '').trim().toUpperCase();
+    if (!cleanCode) return alert('Please enter a room code');
+    if (!gameState.ws || gameState.ws.readyState !== WebSocket.OPEN) {
+      alert('Connecting to server... Please try again in a moment.');
+      return;
+    }
     gameState.ws.send(JSON.stringify({
       action: 'join_room',
       data: {
-        room_code: code,
+        room_code: cleanCode,
         name: gameState.myName,
         avatar: gameState.myAvatar,
         session_id: gameState.sessionId
       }
     }));
-  });
+  };
+
+  // Legacy Create Room Click (if present)
+  const createRoomBtn = document.getElementById('create-room-btn');
+  if (createRoomBtn) {
+    createRoomBtn.addEventListener('click', () => {
+      const purse = parseInt(document.getElementById('starting-purse-select').value, 10);
+      const formsMode = document.getElementById('forms-mode-select') ? document.getElementById('forms-mode-select').value : 'SINGLE_BASE';
+
+      let selectedAnime = [];
+      if (selectedAnimeMode === 'single') {
+        const selVal = document.getElementById('single-anime-select').value;
+        if (selVal) selectedAnime = [selVal];
+      } else if (selectedAnimeMode === 'multiple') {
+        selectedAnime = Array.from(selectedAnimeFranchises);
+        if (selectedAnime.length === 0) {
+          alert('Please select at least one franchise for Selected Anime mode.');
+          return;
+        }
+      }
+
+      window.triggerCreateRoomFromTicket({
+        starting_purse: purse,
+        anime_mode: selectedAnimeMode,
+        selected_anime: selectedAnime,
+        forms_mode: formsMode
+      });
+    });
+  }
+
+  // Legacy Join Room Click (if present)
+  const joinRoomBtn = document.getElementById('join-room-btn');
+  if (joinRoomBtn) {
+    joinRoomBtn.addEventListener('click', () => {
+      const code = document.getElementById('room-code-input').value.trim().toUpperCase();
+      window.triggerJoinRoomFromTicket(code);
+    });
+  }
 
   // Copy Room Code Button
   document.getElementById('copy-code-btn').addEventListener('click', () => {
@@ -687,9 +1320,11 @@ function setupEventListeners() {
     gameState.ws.send(JSON.stringify({ action: 'start_game' }));
   });
 
-  // Dynamic Quick Bid Buttons (Auto-fills the custom bid input box)
+  // Dynamic Quick Bid Buttons (Auto-fills the custom bid input box + cyan selection glow)
   document.querySelectorAll('.btn-quick-bid').forEach(btn => {
     btn.addEventListener('click', () => {
+      document.querySelectorAll('.btn-quick-bid').forEach(b => b.classList.remove('is-selected'));
+      btn.classList.add('is-selected');
       const amount = parseInt(btn.dataset.amount, 10);
       const input = document.getElementById('custom-bid-input');
       if (amount > 0 && input) {
@@ -899,6 +1534,7 @@ function appendChatMessage(msg) {
   div.className = 'chat-bubble';
   div.innerHTML = `
     <span class="chat-time">${msg.time}</span>
+    ${renderAvatarInlineHtml(msg.sender_avatar, msg.sender_name)}
     <span class="chat-sender">${escapeHtml(msg.sender_name)}:</span>
     <span class="chat-text">${escapeHtml(msg.text)}</span>
   `;
@@ -939,13 +1575,17 @@ function updateLobbyUI(roomState) {
   if (me) {
     gameState.isHost = me.is_host;
     const readyBtn = document.getElementById('ready-toggle-btn');
-    readyBtn.textContent = me.is_ready ? '❌ Unready' : '✅ Mark Ready';
-    readyBtn.classList.toggle('ready', me.is_ready);
+    if (readyBtn) {
+      readyBtn.innerHTML = me.is_ready
+        ? `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg><span>UNREADY</span>`
+        : `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg><span>MARK READY</span>`;
+      readyBtn.classList.toggle('ready', me.is_ready);
+    }
   }
 
   const startBtn = document.getElementById('start-game-btn');
   if (gameState.isHost) {
-    startBtn.style.display = 'inline-block';
+    startBtn.style.display = 'inline-flex';
     startBtn.disabled = roomState.players.length < 2;
     startBtn.title = roomState.players.length < 2 ? 'Need at least 2 players to start' : 'Start the auction';
   } else {
@@ -953,16 +1593,15 @@ function updateLobbyUI(roomState) {
   }
 
   roomState.players.forEach(p => {
-    const av = TRAINER_AVATARS.find(a => a.id === p.avatar) || TRAINER_AVATARS[0];
     const isMe = p.session_id === gameState.sessionId;
 
     const card = document.createElement('div');
     card.className = `lobby-player-card ${p.is_ready ? 'is-ready' : ''} ${isMe ? 'is-me' : ''}`;
     card.innerHTML = `
-      <div class="lobby-avatar" style="background:${av.color};">${av.icon}</div>
+      ${renderAvatarBadgeHtml(p.avatar, 'lobby-avatar', p.name)}
       <div class="lobby-player-info">
         <div class="player-name">
-          ${escapeHtml(p.name)} ${isMe ? '<span class="you-badge">(You)</span>' : ''}
+          <span>${escapeHtml(p.name)}</span> ${isMe ? '<span class="you-badge">(You)</span>' : ''}
           ${p.is_host ? '<span class="host-badge">👑 HOST</span>' : ''}
         </div>
         <div class="player-purse">Purse: ₹${p.purse.toLocaleString()}</div>
@@ -973,23 +1612,48 @@ function updateLobbyUI(roomState) {
     `;
     list.appendChild(card);
   });
+
+  // Render subtle empty slots up to 4 visible rows (dynamically shrinks as players join)
+  const emptyCount = Math.max(0, 4 - roomState.players.length);
+  for (let i = 0; i < emptyCount; i++) {
+    const emptySlot = document.createElement('div');
+    emptySlot.className = 'lobby-empty-slot';
+    emptySlot.innerHTML = `
+      <span class="lobby-empty-plus" aria-hidden="true">+</span>
+      <span class="lobby-empty-text">Waiting for player...</span>
+    `;
+    list.appendChild(emptySlot);
+  }
 }
 
 // Update Stage UI
 function updateStageUI(roomState) {
   gameState.roomState = roomState;
+  const stageEl = document.getElementById('arena-stage');
+  if (stageEl && stageEl.classList.contains('active')) {
+    updateStageBackgroundVideo('arena-stage', roomState);
+  }
   document.getElementById('stage-room-code').textContent = roomState.room_code;
 
   const poolDisplay = document.getElementById('stage-pool-display');
+  const round = roomState.auction_pokemon_count || 1;
+  const maxPool = roomState.max_auction_pokemon || 16;
+  const remaining = Math.max(0, maxPool - round);
   if (poolDisplay) {
-    const round = roomState.auction_pokemon_count || 1;
-    const maxPool = roomState.max_auction_pokemon || 16;
     poolDisplay.textContent = `${round} / ${maxPool}`;
   }
+  const bidPoolDone = document.getElementById('bid-pool-done');
+  const bidPoolLeft = document.getElementById('bid-pool-left');
+  if (bidPoolDone) bidPoolDone.textContent = `LOT ${round} / ${maxPool}`;
+  if (bidPoolLeft) bidPoolLeft.textContent = `${remaining} LEFT`;
 
   const me = roomState.players.find(p => p.session_id === gameState.sessionId);
   if (me) {
-    // Update my profile bar with carry-over purse
+    // Update my profile bar with carry-over purse and avatar
+    const barWrap = document.getElementById('my-bar-avatar-wrap');
+    if (barWrap) {
+      barWrap.innerHTML = renderAvatarBadgeHtml(me.avatar, 'avatar-tiny-badge', me.name);
+    }
     document.getElementById('my-bar-name').textContent = me.name;
     document.getElementById('my-bar-purse').textContent = `₹${me.purse.toLocaleString()}`;
     document.getElementById('my-team-count-display').textContent = `${me.team_count}/6`;
@@ -1024,19 +1688,19 @@ function renderMyRoster(team) {
       const animeName = p.anime_name || 'Pokémon';
       const formText = p.current_form && p.current_form !== 'Base' ? `(${p.current_form})` : '';
       slot.innerHTML = `
-        <span class="slot-num">#${i + 1}</span>
-        <img src="${p.image}" alt="${p.name}" class="roster-slot-img" onerror="this.onerror=null; this.src='/api/avatar/' + (p.id || p.name.toLowerCase().replace(/\\s+/g, '_'));">
+        <img src="${p.image}" alt="${escapeHtml(p.name)}" class="roster-slot-img" onerror="this.onerror=null; this.src='/api/avatar/' + (p.id || p.name.toLowerCase().replace(/\\s+/g, '_'));">
         <div class="roster-slot-info">
           <div class="roster-slot-name">${escapeHtml(p.name)}</div>
           <div class="roster-slot-meta">
-            <span style="font-size:0.75rem; color:#38bdf8;">${escapeHtml(animeName)} ${escapeHtml(formText)}</span>
+            <span>${escapeHtml(animeName)} ${escapeHtml(formText)}</span>
           </div>
         </div>
+        <span class="slot-num">#${i + 1}</span>
       `;
     } else {
       slot.innerHTML = `
-        <span class="slot-num">#${i + 1}</span>
-        <div class="empty-slot-text">Empty Slot</div>
+        <span class="empty-slot-plus" aria-hidden="true">+</span>
+        <span class="empty-slot-text">Add Character</span>
       `;
     }
     container.appendChild(slot);
@@ -1046,30 +1710,40 @@ function renderMyRoster(team) {
 // Render Opponents Table during Auction (NO TEAM POWER SHOWN)
 function renderOpponents(players) {
   const container = document.getElementById('opponents-list');
+  const countBadge = document.getElementById('players-arena-count');
+  if (countBadge) countBadge.textContent = `(${players.length})`;
   container.innerHTML = '';
 
   players.forEach(p => {
     const isMe = p.session_id === gameState.sessionId;
     const isLeader = p.session_id === (gameState.roomState ? gameState.roomState.highest_bidder_id : null);
-    const av = TRAINER_AVATARS.find(a => a.id === p.avatar) || TRAINER_AVATARS[0];
+    const crownHtml = p.is_host
+      ? `<span class="arena-host-crown" title="Room Host" aria-label="Room Host">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="#facc15" stroke="#eab308" stroke-width="1.2" aria-hidden="true">
+            <path d="M3 18h18v2H3v-2zm0-2l2-9 5 4 2-6 2 6 5-4 2 9H3z"/>
+          </svg>
+        </span>`
+      : '';
 
     const card = document.createElement('div');
     card.className = `opponent-card ${isLeader ? 'leading' : ''} ${isMe ? 'is-me' : ''} ${p.is_withdrawn ? 'is-withdrawn' : ''}`;
     card.innerHTML = `
-      <div class="opponent-avatar" style="background:${av.color};">${av.icon}</div>
+      ${renderAvatarBadgeHtml(p.avatar, 'opponent-avatar', p.name)}
       <div class="opponent-info">
         <div class="opponent-name">
-          ${escapeHtml(p.name)} ${isMe ? '(You)' : ''}
-          ${p.is_withdrawn ? '<span class="withdrawn-badge" style="background:#ef4444; color:#fff; font-size:0.7rem; padding:2px 6px; border-radius:4px; font-weight:700; margin-left:4px;">WITHDRAWN</span>' : ''}
-          ${p.has_skipped && !p.is_withdrawn ? '<span class="skipped-badge" style="background:#64748b; color:#fff; font-size:0.7rem; padding:2px 6px; border-radius:4px; font-weight:700; margin-left:4px;">SKIPPED</span>' : ''}
+          <span>${escapeHtml(p.name)}${isMe ? ' (You)' : ''}</span>
+          ${p.is_withdrawn ? '<span class="withdrawn-badge" style="background:#ef4444; color:#fff; font-size:0.65rem; padding:1px 5px; border-radius:4px; font-weight:700;">WITHDRAWN</span>' : ''}
+          ${p.has_skipped && !p.is_withdrawn ? '<span class="skipped-badge" style="background:#64748b; color:#fff; font-size:0.65rem; padding:1px 5px; border-radius:4px; font-weight:700;">SKIPPED</span>' : ''}
           ${isLeader ? '<span class="lead-badge">🔥 LEADING</span>' : ''}
           ${p.is_team_full ? '<span class="full-badge">FULL</span>' : ''}
         </div>
         <div class="opponent-stats">
-          <span>Purse: ₹${p.purse.toLocaleString()}</span> &bull; 
+          <span>Purse: ₹${p.purse.toLocaleString()}</span>
+          <span class="stat-sep">|</span>
           <span>Team: ${p.team_count}/6</span>
         </div>
       </div>
+      ${crownHtml}
     `;
     container.appendChild(card);
   });
@@ -1077,6 +1751,13 @@ function renderOpponents(players) {
 
 // Render Active Pokemon / Anime Character Auction Card (ONLY Artwork, Name, Anime, Form - NO STATS/TIER!)
 function renderAuctionCard(poke) {
+  const round = gameState.roomState ? (gameState.roomState.auction_pokemon_count || 1) : 1;
+  const maxPool = gameState.roomState ? (gameState.roomState.max_auction_pokemon || 16) : 16;
+  if (window.AuctionCharacterTicketUI && typeof window.AuctionCharacterTicketUI.renderCharacter === 'function') {
+    window.AuctionCharacterTicketUI.renderCharacter(poke, round, maxPool);
+    return;
+  }
+
   const card = document.getElementById('active-pokemon-card');
   const typeBadges = (poke.types && poke.types.length)
     ? poke.types.map(t => `<span class="type-badge type-${t.toLowerCase()}">${t}</span>`).join('')
@@ -1109,24 +1790,29 @@ function renderAuctionCard(poke) {
 // Update Timer Display
 function updateTimerDisplay(seconds) {
   const num = document.getElementById('auction-timer-num');
+  const box = document.getElementById('timer-banner-box');
   const circle = document.getElementById('timer-circle-fill');
-  num.textContent = Math.max(0, seconds);
+  const safeSec = Math.max(0, parseInt(seconds, 10) || 0);
+  if (num) {
+    const mins = Math.floor(safeSec / 60);
+    const secs = safeSec % 60;
+    num.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  }
 
-  const totalOffset = 263.89;
-  const maxSeconds = (gameState.roomState && gameState.roomState.countdown_seconds) || 15;
-  const progress = Math.max(0, Math.min(1, seconds / maxSeconds));
-  const strokeOffset = totalOffset * (1 - progress);
-  circle.style.strokeDashoffset = strokeOffset;
+  if (circle) {
+    const totalOffset = 263.89;
+    const maxSeconds = (gameState.roomState && gameState.roomState.countdown_seconds) || 15;
+    const progress = Math.max(0, Math.min(1, safeSec / maxSeconds));
+    circle.style.strokeDashoffset = totalOffset * (1 - progress);
+    circle.style.stroke = safeSec <= 4 ? '#ef4444' : (safeSec <= 7 ? '#f59e0b' : '#22d3ee');
+  }
 
-  if (seconds <= 4) {
-    circle.style.stroke = '#ef4444';
-    num.style.color = '#ef4444';
-  } else if (seconds <= 7) {
-    circle.style.stroke = '#f59e0b';
-    num.style.color = '#f59e0b';
-  } else {
-    circle.style.stroke = '#10b981';
-    num.style.color = '#10b981';
+  if (box) {
+    box.classList.toggle('is-urgent', safeSec <= 4);
+    box.classList.toggle('is-warning', safeSec > 4 && safeSec <= 7);
+  }
+  if (num) {
+    num.style.color = safeSec <= 4 ? '#fb7185' : (safeSec <= 7 ? '#fde047' : '#ffffff');
   }
 }
 
@@ -1211,12 +1897,13 @@ function updateDynamicQuickBids() {
 function updateReserveBudgetNote(me) {
   if (!me) return;
   const note = document.getElementById('reserve-budget-note');
+  const minBid = gameState.roomState ? (gameState.roomState.min_bid || 10) : 10;
   if (me.team_count >= 6) {
-    note.textContent = 'Team full (6/6 Pokémon). Maximum capacity reached.';
+    note.textContent = 'Team full (6/6). Maximum capacity reached.';
     note.style.color = '#94a3b8';
   } else {
-    note.textContent = `Available Purse: ₹${me.purse.toLocaleString()} • Roster: ${me.team_count}/6 Pokémon (6 is max limit, team sizes 1–6 are all valid).`;
-    note.style.color = '#38bdf8';
+    note.textContent = `Minimum bid is ₹${minBid} • Bids are final • Purse: ₹${me.purse.toLocaleString()} (${me.team_count}/6)`;
+    note.style.color = '#cbd5e1';
   }
 }
 
@@ -1269,7 +1956,7 @@ function updateBidButtonStates(me, roomState) {
     } else if (minRequired > maxAllowed) {
       submitBtn.textContent = 'INSUFFICIENT FUNDS';
     } else {
-      submitBtn.textContent = '🔨 PLACE BID';
+      submitBtn.innerHTML = `<svg class="gavel-btn-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 13-7.5 7.5c-.83.83-2.17.83-3 0a2.12 2.12 0 0 1 0-3L11 10"/><path d="m16 16 6-6"/><path d="m8 8 6-6"/><path d="m9 7 8 8"/><path d="m21 11-8-8"/></svg><span>PLACE BID</span>`;
     }
   }
 }
@@ -1292,15 +1979,76 @@ function showShowcaseBanner(title, subtitle) {
 // Live Auction Log
 function addStageLog(htmlText, type) {
   const list = document.getElementById('stage-log-list');
+  if (!list) return;
   const item = document.createElement('div');
-  item.className = `log-item log-${type}`;
-  item.innerHTML = htmlText;
+  const safeType = type || 'system';
+  item.className = `log-item log-${safeType}`;
+
+  const iconMap = {
+    bid: '🔨',
+    sold: '🏆',
+    unsold: '❌',
+    round: '🟢',
+    join: '👤',
+    system: '⚡'
+  };
+  const icon = iconMap[safeType] || '•';
+  const now = new Date();
+  const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+  item.innerHTML = `
+    <span class="log-item-icon" aria-hidden="true">${icon}</span>
+    <span class="log-item-body">${htmlText}</span>
+    <span class="log-item-time">${timeStr}</span>
+  `;
   list.prepend(item);
-  if (list.children.length > 20) list.lastChild.remove();
+  if (list.children.length > 25) list.lastChild.remove();
+}
+
+// Render Dynamic Category-Based MVP Showcase Panel
+function renderMvpPanel(leaderboard) {
+  if (!Array.isArray(leaderboard) || leaderboard.length === 0) return;
+  if (typeof window.resolveMvpCharacter !== 'function') return;
+
+  const winner = leaderboard[0];
+  const mvp = window.resolveMvpCharacter(gameState.roomState, leaderboard);
+
+  const trainerEl = document.getElementById('mvp-trainer-name');
+  const powerEl = document.getElementById('mvp-team-power');
+  const sizeEl = document.getElementById('mvp-team-size');
+  const bstEl = document.getElementById('mvp-total-bst');
+  const hpEl = document.getElementById('mvp-total-hp');
+  const purseEl = document.getElementById('mvp-purse');
+  const imgEl = document.getElementById('mvp-character-img');
+  const charNameEl = document.getElementById('mvp-character-name');
+  const franchiseEl = document.getElementById('mvp-character-franchise');
+
+  if (trainerEl) trainerEl.textContent = winner.name || 'Winner';
+  if (powerEl) powerEl.textContent = Number(winner.team_power || 0).toFixed(1);
+  const teamCount = winner.pokemon_count || (winner.team ? winner.team.length : 0);
+  if (sizeEl) sizeEl.textContent = `${teamCount}/6`;
+  if (bstEl) bstEl.textContent = Number(winner.total_bst || 0).toLocaleString();
+  if (hpEl) hpEl.textContent = Number(winner.total_hp || 0).toLocaleString();
+  if (purseEl) purseEl.textContent = `₹${Number(winner.remaining_purse || 0).toLocaleString()}`;
+
+  if (charNameEl) charNameEl.textContent = mvp.character_name || 'Champion';
+  if (franchiseEl) franchiseEl.textContent = mvp.franchise || '';
+  if (imgEl) {
+    imgEl.alt = mvp.character_name || 'MVP Character';
+    imgEl.onerror = () => {
+      if (imgEl.dataset.fallbackApplied) return;
+      imgEl.dataset.fallbackApplied = '1';
+      imgEl.src = mvp.fallback_image_url;
+    };
+    delete imgEl.dataset.fallbackApplied;
+    imgEl.src = mvp.image_url || mvp.fallback_image_url;
+  }
 }
 
 // Render Final Leaderboard (REVEAL ALL STATS DRAMATICALLY!)
 function renderLeaderboard(leaderboard, battleResults = null) {
+  renderMvpPanel(leaderboard);
+
   // 0. Champion Banner from Battle Results
   const champBanner = document.getElementById('battle-champion-banner');
   if (champBanner) {
@@ -1321,7 +2069,6 @@ function renderLeaderboard(leaderboard, battleResults = null) {
   const medals = ['🥇', '🥈', '🥉'];
 
   top3.forEach((p, idx) => {
-    const av = TRAINER_AVATARS.find(a => a.id === p.avatar) || TRAINER_AVATARS[0];
     const pod = document.createElement('div');
     pod.className = `podium-card rank-${p.rank || (idx + 1)}`;
     const teamCount = p.pokemon_count || (p.team ? p.team.length : 0);
@@ -1331,7 +2078,7 @@ function renderLeaderboard(leaderboard, battleResults = null) {
       : `${p.team_power.toFixed(1)} <span class="lbl">TEAM POWER</span>`;
     pod.innerHTML = `
       <div class="podium-medal">${medals[idx] || '🏅'}</div>
-      <div class="podium-avatar" style="background:${av.color};">${av.icon}</div>
+      ${renderAvatarBadgeHtml(p.avatar, 'podium-avatar', p.name)}
       <h3 class="podium-name">${escapeHtml(p.name)}</h3>
       <div class="podium-power">${headline}</div>
       <div class="podium-stats">
@@ -1351,7 +2098,6 @@ function renderLeaderboard(leaderboard, battleResults = null) {
   tbody.innerHTML = '';
 
   leaderboard.forEach(p => {
-    const av = TRAINER_AVATARS.find(a => a.id === p.avatar) || TRAINER_AVATARS[0];
     const isMe = p.session_id === gameState.sessionId;
     const teamCount = p.pokemon_count || (p.team ? p.team.length : 0);
     const recordText = typeof p.battle_wins === 'number'
@@ -1365,7 +2111,7 @@ function renderLeaderboard(leaderboard, battleResults = null) {
       <td><span class="rank-badge">${p.rank}</span></td>
       <td>
         <div style="display:flex; align-items:center; gap:0.5rem;">
-          <span style="font-size:1.2rem;">${av.icon}</span>
+          ${renderAvatarInlineHtml(p.avatar, p.name)}
           <strong>${escapeHtml(p.name)}</strong> ${isMe ? '(You)' : ''}
           ${p.is_withdrawn ? '<span style="color:#ef4444; font-size:0.75rem; font-weight:700;">(Withdrawn)</span>' : ''}
         </div>
@@ -1418,10 +2164,9 @@ function renderLeaderboard(leaderboard, battleResults = null) {
     });
   });
 
-  // Auto-inspect winner
-  if (leaderboard.length > 0) {
-    inspectPlayerTeam(leaderboard[0]);
-  }
+  // Keep Team Inspection drawer collapsed on initial load (opens on "Inspect Team" click)
+  const showcasePanel = document.getElementById('team-showcase-panel');
+  if (showcasePanel) showcasePanel.style.display = 'none';
 
   // Update Rematch button state according to host role
   const rematchBtn = document.getElementById('btn-rematch');
@@ -2721,3 +3466,105 @@ function applyResolvedInteractiveTurn(t, nameA, nameB) {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', initArena);
+
+
+// ============================================================================
+// STAGE LEFT SIDE PANEL: CHARACTER DEX
+// ============================================================================
+const dexSideState = {
+  offset: 0,
+  limit: 25,
+  total: 0,
+  timer: null
+};
+
+function initStageCharacterDex() {
+  const searchInp = document.getElementById('dex-side-search');
+  const franchiseSel = document.getElementById('dex-side-franchise');
+  const tierSel = document.getElementById('dex-side-tier');
+  const loadMoreBtn = document.getElementById('dex-side-load-more');
+  if (!searchInp || !franchiseSel || !tierSel) return;
+
+  const reload = () => {
+    dexSideState.offset = 0;
+    fetchStageCharacterDex(false);
+  };
+
+  searchInp.addEventListener('input', () => {
+    clearTimeout(dexSideState.timer);
+    dexSideState.timer = setTimeout(reload, 220);
+  });
+  franchiseSel.addEventListener('change', reload);
+  tierSel.addEventListener('change', reload);
+  if (loadMoreBtn) {
+    loadMoreBtn.addEventListener('click', () => {
+      dexSideState.offset += dexSideState.limit;
+      fetchStageCharacterDex(true);
+    });
+  }
+
+  fetchStageCharacterDex(false);
+}
+
+async function fetchStageCharacterDex(append = false) {
+  const listEl = document.getElementById('dex-side-list');
+  const countEl = document.getElementById('dex-side-count');
+  const loadMoreBtn = document.getElementById('dex-side-load-more');
+  if (!listEl) return;
+
+  const q = (document.getElementById('dex-side-search')?.value || '').trim();
+  const animeId = document.getElementById('dex-side-franchise')?.value || '';
+  const tier = document.getElementById('dex-side-tier')?.value || '';
+
+  const params = new URLSearchParams({
+    sort: 'power_desc',
+    limit: String(dexSideState.limit),
+    offset: String(dexSideState.offset)
+  });
+  if (q) params.set('q', q);
+  if (animeId) params.set('anime_id', animeId);
+  if (tier) params.set('power_tier', tier);
+
+  try {
+    const res = await fetch(`/api/characters?${params.toString()}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const chars = Array.isArray(data.characters) ? data.characters : [];
+    dexSideState.total = data.total || chars.length;
+
+    if (countEl) countEl.textContent = dexSideState.total.toLocaleString();
+    if (!append) listEl.innerHTML = '';
+
+    if (chars.length === 0 && !append) {
+      listEl.innerHTML = '<div class="dex-side-empty">No characters match your filter.</div>';
+    } else {
+      chars.forEach(c => {
+        const tierKey = (c.power_tier || 'B').replace('+', '-plus');
+        const fallback = `/api/avatar/${encodeURIComponent(c.id || String(c.name || 'char').toLowerCase().replace(/\s+/g, '_'))}`;
+        const card = document.createElement('div');
+        card.className = 'dex-side-card';
+        card.innerHTML = `
+          <img src="${escapeHtml(c.image || fallback)}" alt="${escapeHtml(c.name)}" class="dex-side-thumb" loading="lazy"
+            onerror="this.onerror=null; this.src='${fallback}';">
+          <div class="dex-side-meta">
+            <div class="dex-side-name" title="${escapeHtml(c.name)}">${escapeHtml(c.name)}</div>
+            <div class="dex-side-sub">${escapeHtml(c.anime_name || 'Anime')}</div>
+          </div>
+          <div class="dex-side-stats">
+            <span class="dex-side-tier tier-${tierKey}">${escapeHtml(c.power_tier || 'B')}</span>
+          </div>
+        `;
+        listEl.appendChild(card);
+      });
+    }
+
+    if (loadMoreBtn) {
+      const shown = dexSideState.offset + chars.length;
+      loadMoreBtn.style.display = shown < dexSideState.total ? 'block' : 'none';
+    }
+  } catch (err) {
+    if (!append) {
+      listEl.innerHTML = '<div class="dex-side-empty">Unable to load Character Dex.</div>';
+    }
+  }
+}

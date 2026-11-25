@@ -3,52 +3,97 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pokémon Auction Arena — Real-Time Multiplayer Bidding Game</title>
+  <title>Otaku Arena — Real-Time Multiplayer Anime &amp; Pokémon Auction</title>
   <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/assets/tear-ticket-bundle.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Chakra+Petch:ital,wght@0,500;0,600;0,700;1,700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
 </head>
-<body>
-  <!-- Top App Navigation -->
-  <header class="app-header">
-    <div class="header-top">
-      <div class="brand">
-        <div class="pokeball-icon">
-          <div class="pb-top"></div>
-          <div class="pb-center"></div>
-          <div class="pb-bottom"></div>
-        </div>
-        <div>
-          <h1>MULTI-ANIME AUCTION ARENA</h1>
-          <p class="subtitle">Real-Time Multiplayer Anime & Pokémon Bidding Platform (31 Franchises, 3,470+ Characters)</p>
-        </div>
-      </div>
+<body class="landing-page-body">
+  <!-- Full-Viewport 4K Animated Anime Background Video -->
+  <div id="landing-video-bg" class="landing-video-bg" aria-hidden="true">
+    <video id="landing-bg-video" class="landing-bg-video" autoplay muted loop playsinline preload="auto" poster="/assets/landing-fallback.jpg">
+      <source src="/assets/landing-video.mp4" type="video/mp4">
+    </video>
+    <div class="landing-bg-overlay"></div>
+  </div>
 
-      <!-- Navigation Tabs -->
-      <nav class="nav-tabs">
-        <button id="tab-arena-btn" class="nav-tab active">
-          <span class="tab-icon">⚔️</span> Multiplayer Arena
+  <!-- Futuristic Gaming HUD Top Navigation Bar -->
+  <header class="hud-navbar">
+    <div class="hud-navbar-inner">
+      <!-- Left Brand Logo: Poké Ball + Straw Hat Emblem + Otaku Arena Title -->
+      <a href="#arena-setup" class="hud-brand" aria-label="Otaku Arena Home">
+        <div class="hud-brand-icons">
+          <img src="/assets/logo.png" alt="Otaku Arena Logo" class="hud-logo-img">
+        </div>
+        <div class="hud-brand-text">
+          <span class="hud-brand-line2">OTAKU ARENA</span>
+        </div>
+      </a>
+
+      <!-- Mobile Menu Toggle -->
+      <button id="hud-mobile-toggle" class="hud-mobile-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+
+      <!-- Four HUD Navigation Items Only -->
+      <nav class="hud-nav-items" id="hud-nav-items" aria-label="Main Navigation">
+        <!-- 1. MULTIPLAYER ARENA -->
+        <button id="tab-arena-btn" class="hud-nav-btn hud-nav-arena active" type="button">
+          <svg class="hud-nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/>
+            <line x1="13" y1="19" x2="19" y2="13"/>
+            <line x1="16" y1="16" x2="20" y2="20"/>
+            <line x1="19" y1="21" x2="21" y2="19"/>
+            <polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/>
+            <line x1="5" y1="14" x2="9" y2="18"/>
+            <line x1="7" y1="17" x2="4" y2="20"/>
+            <line x1="3" y1="19" x2="5" y2="21"/>
+          </svg>
+          <span class="hud-nav-two-line">
+            <span>MULTIPLAYER</span>
+            <span>ARENA</span>
+          </span>
         </button>
-        <button id="tab-anime-btn" class="nav-tab">
-          <span class="tab-icon">🎌</span> Anime Database
+
+        <!-- 2. SELECT YOUR NAME & AVATAR -->
+        <button id="nav-profile-btn" class="hud-nav-btn hud-nav-profile" type="button" aria-haspopup="dialog">
+          <svg class="hud-nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+          <span class="hud-nav-single-line">SELECT YOUR NAME &amp; AVATAR</span>
+          <svg class="hud-nav-chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
         </button>
-        <button id="tab-pokedex-btn" class="nav-tab">
-          <span class="tab-icon">📖</span> Pokédex Database
+
+        <!-- 3. SOUND ON/OFF -->
+        <button id="sound-toggle-btn" class="hud-nav-btn hud-nav-sound active" type="button" title="Toggle Sound">
+          <svg class="hud-nav-icon hud-sound-icon-on" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+          </svg>
+          <svg class="hud-nav-icon hud-sound-icon-off" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <line x1="23" y1="9" x2="17" y2="15"/>
+            <line x1="17" y1="9" x2="23" y2="15"/>
+          </svg>
+          <span class="hud-sound-label">SOUND ON</span>
+        </button>
+
+        <!-- 4. RULES & INFO -->
+        <button id="view-stats-btn" class="hud-nav-btn hud-nav-rules" type="button">
+          <svg class="hud-nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <span>RULES &amp; INFO</span>
         </button>
       </nav>
-
-      <div class="header-actions">
-        <button id="open-admin-btn" class="btn btn-outline" style="border-color:#38bdf8; color:#38bdf8;" title="Anime Database Admin">
-          ⚙️ Anime Admin
-        </button>
-        <button id="sound-toggle-btn" class="btn btn-outline" title="Toggle Sound">
-          🔊 Sound On
-        </button>
-        <button id="view-stats-btn" class="btn btn-outline">
-          ℹ️ Rules & Info
-        </button>
-      </div>
     </div>
   </header>
 
@@ -56,143 +101,47 @@
        VIEW 1: MULTIPLAYER AUCTION ARENA
        ==================================================================== -->
   <section id="view-arena" class="app-view active">
-    <!-- SUB-SCREEN 1A: LOBBY & ROOM CREATION / JOIN -->
-    <div id="arena-setup" class="arena-screen active">
-      <div class="setup-container">
-        <div class="setup-hero">
-          <h2>ENTER THE AUCTION ARENA</h2>
-          <p>Compete against up to 8 players in a real-time live Pokémon auction! Build your ultimate 6-Pokémon dream team using your virtual purse. Highest team power wins!</p>
+    <!-- SUB-SCREEN 1A: CINEMATIC GAME LANDING PAGE -->
+    <div id="arena-setup" class="arena-screen active landing-screen">
+      <div class="landing-bottom-dock">
+        <!-- Left Decorative Angular HUD Lines -->
+        <div class="hud-wing-lines hud-wing-left" aria-hidden="true">
+          <span class="wing-line wing-primary"></span>
+          <span class="wing-line wing-secondary"></span>
+          <span class="wing-node"></span>
         </div>
 
-        <div class="setup-card">
-          <!-- Profile Customization -->
-          <div class="profile-setup">
-            <label class="form-label">Choose Trainer Name & Avatar</label>
-            <div class="avatar-picker" id="avatar-picker">
-              <!-- Avatar options populated via JS -->
-            </div>
-            <input type="text" id="player-name-input" class="text-input" placeholder="Enter Trainer Name..." maxlength="18" value="Trainer Red">
-          </div>
+        <div class="landing-cta-group">
+          <!-- BUTTON 1: CREATE ROOM -->
+          <button id="open-create-modal-btn" class="hud-action-btn hud-btn-create" type="button">
+            <span class="hud-btn-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </span>
+            <span class="hud-btn-label">CREATE ROOM</span>
+          </button>
 
-          <div class="room-action-tabs">
-            <button id="subtab-create-btn" class="subtab-btn active">Create Room</button>
-            <button id="subtab-join-btn" class="subtab-btn">Join Existing Room</button>
-          </div>
+          <!-- BUTTON 2: JOIN EXISTING ROOM -->
+          <button id="open-join-modal-btn" class="hud-action-btn hud-btn-join" type="button">
+            <span class="hud-btn-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </span>
+            <span class="hud-btn-label">JOIN EXISTING ROOM</span>
+          </button>
+        </div>
 
-          <!-- Create Room Form -->
-          <div id="form-create-room" class="room-form active">
-            <div class="form-row">
-              <label for="starting-purse-select">Starting Purse per Player (Carries across all auctions):</label>
-              <select id="starting-purse-select" class="select-input">
-                <option value="250">₹250 (Fast / Tactical)</option>
-                <option value="500" selected>₹500 (Official Default)</option>
-                <option value="1000">₹1,000 (Deep Strategy)</option>
-                <option value="2000">₹2,000 (High Roller)</option>
-              </select>
-            </div>
-
-            <!-- Anime Game Mode Selection -->
-            <div class="mode-selection-group">
-              <label class="form-label" style="font-weight:700; color:#38bdf8;">Choose Auction Franchise Mode:</label>
-              <div class="mode-options-grid" id="mode-options-grid">
-                <div class="mode-radio-btn selected" data-mode="all">
-                  <span class="mode-icon">🌐</span>
-                  <span>All Universes</span>
-                </div>
-                <div class="mode-radio-btn" data-mode="pokemon">
-                  <span class="mode-icon">⚡</span>
-                  <span>Pokémon Only</span>
-                </div>
-                <div class="mode-radio-btn" data-mode="anime_only">
-                  <span class="mode-icon">🍥</span>
-                  <span>Anime Only</span>
-                </div>
-                <div class="mode-radio-btn" data-mode="marvel">
-                  <span class="mode-icon">🛡️</span>
-                  <span>Marvel Only</span>
-                </div>
-                <div class="mode-radio-btn" data-mode="pokemon_anime">
-                  <span class="mode-icon">⚡🍥</span>
-                  <span>Pokémon + Anime</span>
-                </div>
-                <div class="mode-radio-btn" data-mode="pokemon_marvel">
-                  <span class="mode-icon">⚡🛡️</span>
-                  <span>Pokémon + Marvel</span>
-                </div>
-                <div class="mode-radio-btn" data-mode="anime_marvel">
-                  <span class="mode-icon">🍥🛡️</span>
-                  <span>Anime + Marvel</span>
-                </div>
-                <div class="mode-radio-btn" data-mode="single">
-                  <span class="mode-icon">🎯</span>
-                  <span>Single Franchise</span>
-                </div>
-                <div class="mode-radio-btn" data-mode="multiple">
-                  <span class="mode-icon">⚔️</span>
-                  <span>Selected Franchises</span>
-                </div>
-              </div>
-
-              <!-- Single Franchise Dropdown (Conditional) -->
-              <div id="single-anime-wrapper" style="display:none; margin-top:0.75rem;">
-                <label for="single-anime-select" style="font-size:0.8rem; color:#94a3b8;">Select Franchise:</label>
-                <select id="single-anime-select" class="select-input" style="margin-top:0.25rem;">
-                  <!-- Populated via API -->
-                </select>
-              </div>
-
-              <!-- Multiple Franchise Checkboxes (Conditional) -->
-              <div id="multiple-anime-wrapper" style="display:none; margin-top:0.75rem;">
-                <label style="font-size:0.8rem; color:#94a3b8;">Click franchises to include:</label>
-                <div class="franchise-checklist" id="franchise-chips-list">
-                  <!-- Populated via API -->
-                </div>
-              </div>
-
-              <!-- Transformations / Forms Mode -->
-              <div style="margin-top:0.85rem; padding-top:0.75rem; border-top:1px solid rgba(255,255,255,0.08);">
-                <label for="forms-mode-select" style="font-size:0.82rem; font-weight:600; color:#cbd5e1;">Character Forms & Transformations:</label>
-                <select id="forms-mode-select" class="select-input" style="margin-top:0.25rem;">
-                  <option value="SINGLE_BASE" selected>Base Form Only (One entry per character)</option>
-                  <option value="SEPARATE_ENTRIES">Transformations as Separate Entries (SSJ, Ultra Instinct, Gear 5, etc.)</option>
-                </select>
-              </div>
-
-              <!-- Battle Control Mode & Championship Format -->
-              <div style="margin-top:0.85rem; padding-top:0.75rem; border-top:1px solid rgba(255,255,255,0.08); display:grid; grid-template-columns:1fr 1fr; gap:0.6rem;">
-                <div>
-                  <label for="battle-control-select" style="font-size:0.82rem; font-weight:600; color:#cbd5e1;">Battle Control Mode:</label>
-                  <select id="battle-control-select" class="select-input" style="margin-top:0.25rem;">
-                    <option value="ai_vs_ai" selected>AI vs AI (Auto Tournament)</option>
-                    <option value="player_vs_ai">Player vs AI (Interactive 1v1)</option>
-                    <option value="player_vs_player">Player vs Player (Live 1v1)</option>
-                  </select>
-                </div>
-                <div>
-                  <label for="tournament-format-select" style="font-size:0.82rem; font-weight:600; color:#cbd5e1;">Tournament Format:</label>
-                  <select id="tournament-format-select" class="select-input" style="margin-top:0.25rem;">
-                    <option value="round_robin" selected>Round-Robin League</option>
-                    <option value="bracket">Championship Bracket</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <button id="create-room-btn" class="btn btn-primary btn-large">
-              ✨ Create Match Room
-            </button>
-          </div>
-
-          <!-- Join Room Form -->
-          <div id="form-join-room" class="room-form">
-            <div class="form-row">
-              <label for="room-code-input">Enter 8-Character Room Code:</label>
-              <input type="text" id="room-code-input" class="text-input uppercase" placeholder="e.g. PKMN-8F42" maxlength="10">
-            </div>
-            <button id="join-room-btn" class="btn btn-primary btn-large">
-              🚀 Join Room
-            </button>
-          </div>
+        <!-- Right Decorative Angular HUD Lines -->
+        <div class="hud-wing-lines hud-wing-right" aria-hidden="true">
+          <span class="wing-node"></span>
+          <span class="wing-line wing-primary"></span>
+          <span class="wing-line wing-secondary"></span>
         </div>
       </div>
     </div>
@@ -200,55 +149,121 @@
     <!-- SUB-SCREEN 1B: WAITING LOBBY -->
     <div id="arena-lobby" class="arena-screen">
       <div class="lobby-container">
+        <!-- Horizontal Room Information Banner -->
         <div class="lobby-header-card">
-          <div class="lobby-title-area">
+          <div class="lobby-banner-left">
+            <span class="lobby-pokeball-badge" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22">
+                <circle cx="12" cy="12" r="10" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+                <path d="M2 12a10 10 0 0 1 20 0H2z" fill="#ef4444"/>
+                <rect x="2" y="11" width="20" height="2" fill="#0f172a"/>
+                <circle cx="12" cy="12" r="3.2" fill="#fff" stroke="#0f172a" stroke-width="1.6"/>
+              </svg>
+            </span>
             <span class="badge-status">LOBBY</span>
-            <h2>Auction Room: <span id="lobby-code-display" class="highlight-code">PKMN-XXXX</span></h2>
-            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.35rem;">
-              <button id="copy-invite-btn" class="btn btn-primary btn-sm" style="background:linear-gradient(135deg, #10b981, #059669); font-weight:700; box-shadow:0 0 12px rgba(16,185,129,0.35);">🔗 COPY INVITE LINK</button>
-              <button id="copy-code-btn" class="btn btn-outline btn-sm">📋 Copy Room Code</button>
-            </div>
-            <div id="invite-copied-toast" style="display:none; font-size:0.85rem; color:#10b981; font-weight:600; margin-top:0.35rem;">✅ Invite link copied! Share with friends to join directly.</div>
+            <h2 class="lobby-room-heading">Auction Room: <span id="lobby-code-display" class="highlight-code">PKMN-XXXX</span></h2>
           </div>
+
+          <div class="lobby-banner-actions">
+            <button id="copy-invite-btn" class="btn btn-lobby-invite" type="button">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+              </svg>
+              <span>COPY INVITE LINK</span>
+            </button>
+            <button id="copy-code-btn" class="btn btn-lobby-code" type="button">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+              <span>COPY ROOM CODE</span>
+            </button>
+            <div id="invite-copied-toast" class="lobby-copied-toast" style="display:none;">✅ Copied!</div>
+          </div>
+
           <div class="lobby-purse-badge">
-            <span class="label">Starting Purse</span>
-            <span class="value" id="lobby-purse-display">₹500</span>
+            <span class="lobby-purse-icon" aria-hidden="true">💰</span>
+            <div class="lobby-purse-text">
+              <span class="label">STARTING PURSE</span>
+              <span class="value" id="lobby-purse-display">₹500</span>
+            </div>
           </div>
         </div>
 
+        <!-- Two-Column Main Lobby Area (55% / 45%) -->
         <div class="lobby-body-grid">
-          <!-- Players List -->
+          <!-- LEFT PANEL: TRAINERS IN ROOM -->
           <div class="lobby-players-panel">
-            <div class="panel-header">
-              <h3>Trainers in Room (<span id="lobby-player-count">1</span>/8)</h3>
-              <span class="min-notice">Minimum 2 players to start</span>
+            <div class="panel-header lobby-panel-header">
+              <div class="lobby-panel-title">
+                <svg class="lobby-panel-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                <h3>TRAINERS IN ROOM <span class="lobby-count-accent">(<span id="lobby-player-count">1</span>/8)</span></h3>
+              </div>
+              <span class="lobby-slash-accent" aria-hidden="true">///</span>
             </div>
+
             <div class="players-grid" id="lobby-players-list">
-              <!-- Dynamically populated -->
+              <!-- Dynamically populated + waiting slots -->
             </div>
 
             <!-- Lobby Controls -->
             <div class="lobby-controls-bar">
-              <button id="ready-toggle-btn" class="btn btn-ready">
-                ✅ Mark Ready
+              <button id="ready-toggle-btn" class="btn btn-ready" type="button">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <span>MARK READY</span>
               </button>
-              <button id="start-game-btn" class="btn btn-primary btn-start" disabled>
-                ⚔️ Start Auction (Host Only)
+              <button id="start-game-btn" class="btn btn-primary btn-start" type="button" disabled>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="m14 13-7.5 7.5c-.83.83-2.17.83-3 0a2.12 2.12 0 0 1 0-3L11 10"/>
+                  <path d="m16 16 6-6"/>
+                  <path d="m8 8 6-6"/>
+                  <path d="m9 7 8 8"/>
+                  <path d="m21 11-8-8"/>
+                </svg>
+                <span>START AUCTION <small>(HOST ONLY)</small></span>
               </button>
             </div>
           </div>
 
-          <!-- Room Chat & Activity -->
+          <!-- RIGHT PANEL: ROOM FEED & CHAT -->
           <div class="lobby-chat-panel">
-            <div class="panel-header">
-              <h3>Room Feed & Chat</h3>
+            <div class="panel-header lobby-panel-header">
+              <div class="lobby-panel-title">
+                <svg class="lobby-panel-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <h3>ROOM FEED &amp; CHAT</h3>
+              </div>
+              <span class="lobby-slash-accent" aria-hidden="true">///</span>
             </div>
+
             <div class="chat-messages" id="lobby-chat-messages">
-              <div class="chat-system-msg">Welcome to Pokémon Auction Arena! Share the room code with friends to invite them.</div>
+              <div class="chat-system-msg">
+                <span class="chat-welcome-icon" aria-hidden="true">📣</span>
+                <div>
+                  <strong>Welcome to Pokémon Auction Arena!</strong>
+                  <div>Share the room code with friends to invite them and start the auction.</div>
+                </div>
+              </div>
             </div>
+
             <div class="chat-input-bar">
               <input type="text" id="chat-input" placeholder="Type a message..." maxlength="120">
-              <button id="chat-send-btn" class="btn btn-primary btn-sm">Send</button>
+              <button id="chat-send-btn" class="btn btn-lobby-send" type="button">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="22" y1="2" x2="11" y2="13"/>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                </svg>
+                <span>Send</span>
+              </button>
             </div>
           </div>
         </div>
@@ -258,125 +273,227 @@
     <!-- SUB-SCREEN 1C: LIVE AUCTION STAGE -->
     <div id="arena-stage" class="arena-screen">
       <div class="stage-container">
-        <!-- Top Status Bar -->
+        <!-- Player Information Bar -->
         <div class="stage-top-bar">
           <div class="my-status-chip">
-            <img id="my-bar-avatar" src="" class="avatar-tiny" alt="avatar">
-            <div>
+            <div id="my-bar-avatar-wrap" class="my-bar-avatar-wrap">
+              <img id="my-bar-avatar" src="" class="avatar-tiny" alt="avatar" style="display:none;">
+            </div>
+            <div class="my-bar-identity">
               <div class="chip-name" id="my-bar-name">Trainer Red</div>
-              <div class="chip-purse" id="my-bar-purse">₹500</div>
+              <div class="chip-purse-row">
+                <svg class="coin-icon-sm" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                  <ellipse cx="12" cy="7" rx="8" ry="3.5" fill="#fde047" stroke="#ca8a04" stroke-width="1.5"/>
+                  <path d="M4 7v5c0 1.93 3.58 3.5 8 3.5s8-1.57 8-3.5V7" fill="#facc15" stroke="#ca8a04" stroke-width="1.5"/>
+                  <path d="M4 12v5c0 1.93 3.58 3.5 8 3.5s8-1.57 8-3.5v-5" fill="#eab308" stroke="#a16207" stroke-width="1.5"/>
+                </svg>
+                <span class="chip-purse" id="my-bar-purse">₹500</span>
+              </div>
             </div>
           </div>
 
-          <div class="my-team-progress-chip">
-            <span class="chip-label">Team Slots</span>
-            <div class="team-dots" id="my-team-dots">
-              <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-              <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          <div class="stage-meta-strip">
+            <div class="my-team-progress-chip">
+              <span class="chip-label">TEAM</span>
+              <div class="team-dots" id="my-team-dots">
+                <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+              </div>
+              <span class="chip-val" id="my-team-count-display">0/6</span>
             </div>
-            <span class="chip-val" id="my-team-count-display">0/6</span>
-          </div>
 
-          <div class="my-team-power-chip">
-            <span class="chip-label">Stats Status</span>
-            <span class="chip-val power-num" id="my-team-power-display" style="font-size:0.85rem; color:#f59e0b;">🔒 Revealed at End</span>
-          </div>
+            <div class="my-team-power-chip">
+              <span class="chip-label">STATS</span>
+              <span class="chip-val power-num" id="my-team-power-display">🔒 Revealed at End</span>
+            </div>
 
-          <div class="room-tag-chip">
-            <span class="chip-label">Auction Pool</span>
-            <span class="chip-val" id="stage-pool-display" style="color:#38bdf8; font-weight:700;">1 / 16</span>
-          </div>
+            <div class="room-tag-chip">
+              <span class="chip-label">POOL</span>
+              <span class="chip-val" id="stage-pool-display">1 / 16</span>
+            </div>
 
-          <div class="room-tag-chip">
-            <span class="chip-label">Room</span>
-            <span class="chip-val" id="stage-room-code">PKMN-XXXX</span>
+            <div class="room-tag-chip">
+              <span class="chip-label">ROOM</span>
+              <span class="chip-val" id="stage-room-code">PKMN-XXXX</span>
+            </div>
           </div>
         </div>
 
-        <!-- Main Auction Grid -->
+        <!-- 3-Column Main Auction Grid -->
         <div class="stage-layout-grid">
-          <!-- Left: My Acquired Team Roster -->
-          <div class="stage-panel my-roster-panel">
-            <div class="panel-header">
-              <h3>My Team Roster (Max 6)</h3>
+          <!-- LEFT COLUMN: My Team Roster + Players in Arena -->
+          <div class="stage-col-left">
+            <!-- Panel A: My Team Roster (Max 6) -->
+            <div class="stage-panel neon-panel-pink my-roster-panel">
+              <div class="panel-header neon-panel-header">
+                <div class="panel-title-group">
+                  <svg class="panel-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                  </svg>
+                  <h3>MY TEAM ROSTER <span class="panel-accent-gold">(MAX 6)</span></h3>
+                </div>
+              </div>
+              <div class="roster-slot-list" id="my-roster-list">
+                <!-- 6 slots populated by renderMyRoster -->
+              </div>
             </div>
-            <div class="roster-slot-list" id="my-roster-list">
-              <!-- 6 slots -->
+
+            <!-- Panel B: Players in Arena -->
+            <div class="stage-panel neon-panel-pink opponents-panel">
+              <div class="panel-header neon-panel-header">
+                <div class="panel-title-group">
+                  <svg class="panel-icon panel-icon-cyan" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                  </svg>
+                  <h3>PLAYERS IN ARENA <span class="panel-accent-cyan" id="players-arena-count">(0)</span></h3>
+                </div>
+              </div>
+              <div class="opponents-list" id="opponents-list">
+                <!-- Dynamically populated -->
+              </div>
             </div>
           </div>
 
-          <!-- Center: Giant Auction Stage & Timer -->
+          <!-- CENTER COLUMN: Character Card + Current Bid Panel + Place Your Bid -->
           <div class="stage-center-arena">
-            <!-- Giant Timer Ring & Status -->
-            <div class="timer-banner">
-              <div class="timer-widget">
-                <svg class="timer-svg" viewBox="0 0 100 100">
-                  <circle class="timer-track" cx="50" cy="50" r="42"></circle>
-                  <circle class="timer-fill" id="timer-circle-fill" cx="50" cy="50" r="42"></circle>
-                </svg>
-                <div class="timer-number" id="auction-timer-num">15</div>
+            <!-- Top Row: Character Card (Left) + Current Bid Panel (Right) -->
+            <div class="stage-center-hero-row">
+              <!-- Character Card -->
+              <div class="active-auction-card" id="active-pokemon-card">
+                <!-- Rendered dynamically without any competitive stats -->
               </div>
-              <div class="auction-status-text">
-                <h3 id="auction-stage-headline">CURRENT BID</h3>
-                <div class="bid-hero-display" id="bid-hero-display">
-                  <span class="currency">₹</span>
-                  <span class="amount" id="current-bid-amount">0</span>
+
+              <!-- Current Bid Panel -->
+              <div class="current-bid-panel neon-panel-cyan">
+                <div class="bid-pool-counter-pill" id="bid-pool-counter-pill" title="Auctions Done & Remaining">
+                  <span class="pool-done-text" id="bid-pool-done">LOT 1 / 16</span>
+                  <span class="pool-left-text" id="bid-pool-left">15 LEFT</span>
+                </div>
+                <h3 class="current-bid-heading" id="auction-stage-headline">CURRENT BID</h3>
+
+                <div class="current-bid-amount-row">
+                  <svg class="coin-stack-hero" viewBox="0 0 36 36" width="38" height="38" aria-hidden="true">
+                    <ellipse cx="14" cy="11" rx="9" ry="3.8" fill="#fef08a" stroke="#ca8a04" stroke-width="1.6"/>
+                    <path d="M5 11v5c0 2.1 4.03 3.8 9 3.8s9-1.7 9-3.8v-5" fill="#facc15" stroke="#ca8a04" stroke-width="1.6"/>
+                    <path d="M5 16v5c0 2.1 4.03 3.8 9 3.8s9-1.7 9-3.8v-5" fill="#eab308" stroke="#a16207" stroke-width="1.6"/>
+                    <ellipse cx="23" cy="19" rx="8" ry="3.4" fill="#fef08a" stroke="#ca8a04" stroke-width="1.6"/>
+                    <path d="M15 19v4.5c0 1.88 3.58 3.4 8 3.4s8-1.52 8-3.4V19" fill="#facc15" stroke="#ca8a04" stroke-width="1.6"/>
+                    <path d="M15 23.5V28c0 1.88 3.58 3.4 8 3.4s8-1.52 8-3.4v-4.5" fill="#eab308" stroke="#a16207" stroke-width="1.6"/>
+                  </svg>
+                  <div class="bid-hero-display" id="bid-hero-display">
+                    <span class="currency">₹</span>
+                    <span class="amount" id="current-bid-amount">0</span>
+                  </div>
+                </div>
+
+                <div class="cyan-divider"></div>
+
+                <div class="bid-status-subrow">
+                  <svg class="gavel-icon-gold" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#facc15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="m14 13-7.5 7.5c-.83.83-2.17.83-3 0 0 0 0 0 0 0a2.12 2.12 0 0 1 0-3L11 10"/>
+                    <path d="m16 16 6-6"/>
+                    <path d="m8 8 6-6"/>
+                    <path d="m9 7 8 8"/>
+                    <path d="m21 11-8-8"/>
+                  </svg>
                   <span class="bidder" id="current-bidder-name">No Bids Yet (Opening: ₹10)</span>
+                </div>
+
+                <!-- Prominent Countdown Box -->
+                <div class="auction-countdown-box" id="timer-banner-box">
+                  <div class="countdown-clock-wrap">
+                    <svg class="countdown-clock-icon" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <circle cx="12" cy="12" r="10"/>
+                      <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                  </div>
+                  <div class="countdown-text-col">
+                    <span class="countdown-label">AUCTION ENDS IN</span>
+                    <span class="countdown-value" id="auction-timer-num">00:15</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <!-- Big Auction Card (CLEAN: ONLY Artwork, Name, Types - NO STATS/TIER) -->
-            <div class="active-auction-card" id="active-pokemon-card">
-              <!-- Rendered dynamically without any competitive stats -->
-            </div>
-
-            <!-- Flexible Bidding Console with Dynamic Suggestions -->
-            <div class="bidding-console" id="bidding-console">
-              <div class="bid-suggestion-bar" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.6rem; padding:0.4rem 0.8rem; background:rgba(255,255,255,0.04); border-radius:8px; border:1px solid rgba(56,189,248,0.2);">
-                <span style="font-size:0.85rem; color:#94a3b8;">Next Valid Bid:</span>
-                <span id="next-valid-bid-display" style="font-size:1.1rem; font-weight:800; color:#38bdf8;">₹10</span>
+            <!-- Bottom Center: Place Your Bid Panel -->
+            <div class="bidding-console neon-panel-cyan" id="bidding-console">
+              <div class="bidding-console-header">
+                <div class="panel-title-group">
+                  <svg class="gavel-icon-gold" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#facc15" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="m14 13-7.5 7.5c-.83.83-2.17.83-3 0a2.12 2.12 0 0 1 0-3L11 10"/>
+                    <path d="m16 16 6-6"/>
+                    <path d="m8 8 6-6"/>
+                    <path d="m9 7 8 8"/>
+                    <path d="m21 11-8-8"/>
+                  </svg>
+                  <h3>PLACE YOUR BID</h3>
+                </div>
+                <span class="next-valid-pill">Next Valid: <strong id="next-valid-bid-display">₹10</strong></span>
               </div>
 
               <div class="quick-bid-buttons" id="dynamic-quick-bids">
-                <button class="btn btn-quick-bid" id="btn-quick-min" data-amount="10">MIN (₹10)</button>
-                <button class="btn btn-quick-bid" id="btn-quick-p5" data-inc="5">+₹5</button>
-                <button class="btn btn-quick-bid" id="btn-quick-p10" data-inc="10">+₹10</button>
-                <button class="btn btn-quick-bid" id="btn-quick-p25" data-inc="25">+₹25</button>
-                <button class="btn btn-quick-bid" id="btn-quick-p50" data-inc="50">+₹50</button>
+                <button class="btn btn-quick-bid is-selected" id="btn-quick-min" data-amount="10">MIN (₹10)</button>
+                <button class="btn btn-quick-bid" id="btn-quick-p5" data-inc="5">+₹5 (₹15)</button>
+                <button class="btn btn-quick-bid" id="btn-quick-p10" data-inc="10">+₹10 (₹20)</button>
+                <button class="btn btn-quick-bid" id="btn-quick-p25" data-inc="25">+₹25 (₹35)</button>
+                <button class="btn btn-quick-bid" id="btn-quick-p50" data-inc="50">+₹50 (₹60)</button>
               </div>
 
               <div class="custom-bid-row">
                 <div class="input-with-label">
                   <span class="currency-prefix">₹</span>
-                  <input type="number" id="custom-bid-input" class="bid-custom-input" step="1" min="1" placeholder="Enter bid (e.g. 21, 25, 40, 75)">
+                  <input type="number" id="custom-bid-input" class="bid-custom-input" step="1" min="1" placeholder="Enter bid">
                 </div>
                 <button id="submit-bid-btn" class="btn btn-bid-submit">
-                  🔨 PLACE BID
+                  <svg class="gavel-btn-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="m14 13-7.5 7.5c-.83.83-2.17.83-3 0a2.12 2.12 0 0 1 0-3L11 10"/>
+                    <path d="m16 16 6-6"/>
+                    <path d="m8 8 6-6"/>
+                    <path d="m9 7 8 8"/>
+                    <path d="m21 11-8-8"/>
+                  </svg>
+                  <span>PLACE BID</span>
                 </button>
               </div>
 
               <div class="bidding-feedback" id="bidding-feedback">
-                <span id="reserve-budget-note" class="reserve-note">Reserve Budget: Keeping ₹50 reserved for future slots.</span>
+                <span id="reserve-budget-note" class="reserve-note">Minimum bid is ₹10 • Bids are final</span>
               </div>
 
               <!-- Skip Character & More Options Dropdown -->
-              <div class="auction-action-bar" style="display:flex; align-items:center; justify-content:space-between; margin-top:0.8rem; padding-top:0.6rem; border-top:1px solid rgba(255,255,255,0.08); gap:0.5rem;">
-                <div style="display:flex; align-items:center; gap:0.5rem;">
-                  <button id="btn-skip-character" class="btn btn-skip" style="background:#334155; border:1px solid #64748b; color:#f8fafc; font-weight:700; padding:0.45rem 0.9rem; border-radius:8px; cursor:pointer;" title="Skip bidding on current character">
-                    ⏭️ SKIP CHARACTER
+              <div class="auction-action-bar">
+                <div class="auction-action-left">
+                  <button id="btn-skip-character" class="btn btn-skip" title="Skip bidding on current character">
+                    <svg class="skip-btn-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <polygon points="5 4 15 12 5 20 5 4"/>
+                      <line x1="19" y1="5" x2="19" y2="19"/>
+                    </svg>
+                    <span>SKIP CHARACTER</span>
                   </button>
-                  <span id="skip-status-badge" class="skip-status-badge" style="display:none; font-size:0.8rem; font-weight:700; color:#f43f5e; background:rgba(244,63,94,0.12); padding:0.35rem 0.75rem; border-radius:6px; border:1px solid rgba(244,63,94,0.3);">
+                  <span id="skip-status-badge" class="skip-status-badge" style="display:none;">
                     ⏭️ Skipped by you
                   </span>
                 </div>
 
-                <div class="more-options-container" style="position:relative;">
-                  <button id="btn-more-options" class="btn btn-secondary btn-sm" style="padding:0.4rem 0.75rem; font-size:0.8rem;" title="More Match Options">
-                    ⚙️ Options &#9662;
+                <div class="more-options-container">
+                  <button id="btn-more-options" class="btn btn-options-glass" title="More Match Options">
+                    <svg class="options-btn-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <circle cx="12" cy="12" r="3"/>
+                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                    <span>OPTIONS</span>
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
                   </button>
-                  <div id="more-options-menu" class="more-options-menu" style="display:none; position:absolute; right:0; bottom:115%; background:#1e293b; border:1px solid #334155; border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.5); z-index:100; min-width:190px; padding:0.4rem;">
-                    <button id="btn-withdraw-match" class="dropdown-item-withdraw" style="width:100%; text-align:left; background:none; border:none; color:#f43f5e; font-weight:600; padding:0.5rem 0.8rem; cursor:pointer; border-radius:6px; font-size:0.85rem; display:flex; align-items:center; gap:0.4rem;">
+                  <div id="more-options-menu" class="more-options-menu" style="display:none;">
+                    <button id="btn-withdraw-match" class="dropdown-item-withdraw">
                       🚪 Withdraw From Match
                     </button>
                   </div>
@@ -385,20 +502,66 @@
             </div>
           </div>
 
-          <!-- Right: Opponents Dashboard & Live Activity -->
-          <div class="stage-panel opponents-panel">
-            <div class="panel-header">
-              <h3>Trainers in Arena</h3>
-            </div>
-            <div class="opponents-list" id="opponents-list">
-              <!-- Dynamically populated -->
+          <!-- RIGHT COLUMN: Character Dex + Live Auction Log -->
+          <div class="stage-col-right">
+            <!-- Panel A: Character Dex -->
+            <div class="stage-panel neon-panel-pink character-dex-panel" id="stage-character-dex">
+              <div class="panel-header neon-panel-header dex-side-header">
+                <div class="panel-title-group">
+                  <svg class="panel-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                  </svg>
+                  <h3>CHARACTER DEX</h3>
+                </div>
+                <span class="dex-side-count" id="dex-side-count">0</span>
+              </div>
+              <div class="dex-side-controls">
+                <div class="dex-search-wrap">
+                  <svg class="dex-search-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  </svg>
+                  <input type="text" id="dex-side-search" class="text-input dex-side-input" placeholder="Search character...">
+                </div>
+                <div class="dex-side-filters">
+                  <select id="dex-side-franchise" class="select-input dex-side-select">
+                    <option value="">All Franchises</option>
+                  </select>
+                  <select id="dex-side-tier" class="select-input dex-side-select dex-side-tier-select">
+                    <option value="">All Tiers</option>
+                    <option value="S+">S+</option>
+                    <option value="S">S</option>
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                  </select>
+                </div>
+              </div>
+              <div class="dex-side-list" id="dex-side-list">
+                <!-- Populated dynamically from /api/characters -->
+              </div>
+              <button type="button" id="dex-side-load-more" class="dex-side-load-more" style="display:none;">Load More</button>
             </div>
 
-            <div class="panel-header" style="margin-top: 1rem;">
-              <h3>Live Auction Log</h3>
-            </div>
-            <div class="stage-log" id="stage-log-list">
-              <!-- Dynamic event feed -->
+            <!-- Panel B: Live Auction Log -->
+            <div class="stage-panel neon-panel-pink stage-log-panel">
+              <div class="panel-header neon-panel-header">
+                <div class="panel-title-group">
+                  <svg class="panel-icon panel-icon-gold" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#facc15" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                  </svg>
+                  <h3>LIVE AUCTION LOG</h3>
+                </div>
+              </div>
+              <div class="stage-log" id="stage-log-list">
+                <!-- Dynamic event feed -->
+              </div>
             </div>
           </div>
         </div>
@@ -505,65 +668,127 @@
     <!-- SUB-SCREEN 1E: FINAL LEADERBOARD & VICTORY SCREEN -->
     <div id="arena-results" class="arena-screen">
       <div class="results-container">
-        <div class="victory-banner champion-pulse">
-          <div class="trophy-icon">🏆</div>
-          <h2 id="victory-banner-title">TOURNAMENT CONCLUDED!</h2>
-          <p id="victory-banner-desc">Champion determined by simulated battle results:</p>
-          <div id="battle-champion-banner" class="champion-banner" style="display:none;"></div>
-        </div>
+        <div class="results-layout-split">
+          <!-- Left: Dynamic Category-Based MVP Showcase Panel -->
+          <aside class="results-mvp-panel" id="results-mvp-panel">
+            <div class="mvp-header-badge">
+              <div class="mvp-crown-row" aria-hidden="true">👑</div>
+              <div class="mvp-title-wreath">MVP</div>
+              <div class="mvp-trainer-pill" id="mvp-trainer-name">Trainer Red</div>
+            </div>
 
-        <!-- Podium (Top 3) -->
-        <div class="podium-grid" id="podium-grid">
-          <!-- Populated dynamically -->
-        </div>
+            <div class="mvp-body-split">
+              <div class="mvp-stats-col">
+                <div class="mvp-stat-chip">
+                  <span class="mvp-stat-icon">⚔️</span>
+                  <div>
+                    <div class="mvp-stat-lbl">Team Power</div>
+                    <div class="mvp-stat-val is-cyan" id="mvp-team-power">0.0</div>
+                  </div>
+                </div>
+                <div class="mvp-stat-chip">
+                  <span class="mvp-stat-icon">👥</span>
+                  <div>
+                    <div class="mvp-stat-lbl">Team Size</div>
+                    <div class="mvp-stat-val" id="mvp-team-size">0/6</div>
+                  </div>
+                </div>
+                <div class="mvp-stat-chip">
+                  <span class="mvp-stat-icon">⭐</span>
+                  <div>
+                    <div class="mvp-stat-lbl">Total BST</div>
+                    <div class="mvp-stat-val" id="mvp-total-bst">0</div>
+                  </div>
+                </div>
+                <div class="mvp-stat-chip">
+                  <span class="mvp-stat-icon">❤️</span>
+                  <div>
+                    <div class="mvp-stat-lbl">Total HP</div>
+                    <div class="mvp-stat-val" id="mvp-total-hp">0</div>
+                  </div>
+                </div>
+                <div class="mvp-stat-chip">
+                  <span class="mvp-stat-icon">🪙</span>
+                  <div>
+                    <div class="mvp-stat-lbl">Purse</div>
+                    <div class="mvp-stat-val is-gold" id="mvp-purse">₹500</div>
+                  </div>
+                </div>
+              </div>
 
-        <!-- Full Leaderboard Table -->
-        <div class="leaderboard-card">
-          <h3>Full Tournament Standings</h3>
-          <table class="leaderboard-table">
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Trainer</th>
-                <th>Record (W-L-D)</th>
-                <th>Battle Pts</th>
-                <th>Team Roster</th>
-                <th>Team Power</th>
-                <th>Remaining Purse</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="leaderboard-body">
+              <div class="mvp-artwork-col">
+                <img id="mvp-character-img" src="" alt="MVP Character" class="mvp-character-img">
+                <div class="mvp-character-caption">
+                  <span id="mvp-character-name">Champion</span>
+                  <span class="mvp-character-franchise" id="mvp-character-franchise"></span>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          <!-- Right: Match Concluded + Battle Championship Results -->
+          <div class="results-main-col">
+            <div class="victory-banner champion-pulse">
+              <div class="trophy-icon">🏆</div>
+              <h2 id="victory-banner-title">TOURNAMENT CONCLUDED!</h2>
+              <p id="victory-banner-desc">Champion determined by simulated battle results:</p>
+              <div id="battle-champion-banner" class="champion-banner" style="display:none;"></div>
+            </div>
+
+            <!-- Podium (Top 3) -->
+            <div class="podium-grid" id="podium-grid">
               <!-- Populated dynamically -->
-            </tbody>
-          </table>
-        </div>
+            </div>
 
-        <!-- Individual Battle Summaries -->
-        <div class="leaderboard-card" id="battle-matches-card" style="display:none; margin-top:1.2rem;">
-          <h3>Simulated Battle Summaries</h3>
-          <div class="battle-matches-grid" id="battle-matches-summary"></div>
-        </div>
+            <!-- Full Leaderboard Table -->
+            <div class="leaderboard-card">
+              <h3>Full Tournament Standings</h3>
+              <table class="leaderboard-table">
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Trainer</th>
+                    <th>Record (W-L-D)</th>
+                    <th>Battle Pts</th>
+                    <th>Team Roster</th>
+                    <th>Team Power</th>
+                    <th>Remaining Purse</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="leaderboard-body">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
 
-        <!-- Team Inspection Showcase Drawer (Visible when a player is selected) -->
-        <div class="team-showcase-panel" id="team-showcase-panel">
-          <h3 id="showcase-title">Team Inspection</h3>
-          <div class="showcase-cards-grid" id="showcase-cards-grid">
-            <!-- 6 cards rendered here -->
+            <!-- Individual Battle Summaries -->
+            <div class="leaderboard-card" id="battle-matches-card" style="display:none; margin-top:1.2rem;">
+              <h3>Simulated Battle Summaries</h3>
+              <div class="battle-matches-grid" id="battle-matches-summary"></div>
+            </div>
+
+            <!-- Team Inspection Showcase Drawer (Visible when a player is selected) -->
+            <div class="team-showcase-panel" id="team-showcase-panel">
+              <h3 id="showcase-title">Team Inspection</h3>
+              <div class="showcase-cards-grid" id="showcase-cards-grid">
+                <!-- 6 cards rendered here -->
+              </div>
+            </div>
+
+            <!-- Results Actions: Rematch & Exit Room -->
+            <div class="results-actions">
+              <button id="btn-rematch" class="btn btn-rematch-cyan">
+                🔄 PROPOSE REMATCH
+              </button>
+              <button id="btn-exit-room" class="btn btn-exit-glass">
+                🚪 EXIT ROOM
+              </button>
+              <button id="play-again-btn" class="btn btn-secondary btn-large" style="display:none;">
+                🔄 Return to Arena Lobby
+              </button>
+            </div>
           </div>
-        </div>
-
-        <!-- Results Actions: Rematch & Exit Room -->
-        <div class="results-actions" style="display:flex; gap:1.2rem; justify-content:center; flex-wrap:wrap; margin-top:1.8rem;">
-          <button id="btn-rematch" class="btn btn-primary btn-large" style="background:linear-gradient(135deg, #10b981, #059669); border:none; box-shadow:0 4px 15px rgba(16,185,129,0.4); font-size:1.05rem; font-weight:800; padding:0.8rem 2rem;">
-            🔄 REMATCH
-          </button>
-          <button id="btn-exit-room" class="btn btn-secondary btn-large" style="background:#334155; border-color:#475569; font-size:1.05rem; font-weight:700; padding:0.8rem 1.8rem;">
-            🚪 EXIT ROOM
-          </button>
-          <button id="play-again-btn" class="btn btn-secondary btn-large" style="display:none;">
-            🔄 Return to Arena Lobby
-          </button>
         </div>
 
         <!-- Rematch Voting Modal -->
@@ -970,11 +1195,156 @@
     </div>
   </div>
 
+  <!-- Universal Anime Avatar Library & Trainer Name Modal -->
+  <div class="modal-backdrop hud-modal-backdrop" id="profile-modal-backdrop">
+    <div class="modal-card hud-modal-card avatar-lib-modal" id="profile-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title">
+      <button class="modal-close-btn hud-modal-close" id="profile-modal-close-btn" type="button" aria-label="Close">&times;</button>
+
+      <div class="hud-modal-header avatar-lib-header">
+        <div>
+          <span class="hud-modal-kicker">UNIVERSAL ANIME AVATAR LIBRARY</span>
+          <h2 id="profile-modal-title">CHOOSE YOUR AVATAR</h2>
+        </div>
+        <div class="avatar-lib-header-actions">
+          <span class="avatar-lib-count-badge" id="avatar-lib-total-badge">0 Custom • 12 Default</span>
+          <button id="toggle-avatar-admin-btn" class="avatar-admin-toggle-btn" type="button">
+            <span>⚙️ MANAGE / IMPORT</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Custom Trainer Name + Search Bar -->
+      <div class="avatar-lib-toolbar">
+        <div class="avatar-lib-name-box">
+          <label class="form-label" for="player-name-input">Custom Trainer Name</label>
+          <input type="text" id="player-name-input" class="text-input hud-input" placeholder="Enter Trainer Name..." maxlength="18" value="Trainer Red">
+        </div>
+        <div class="avatar-lib-search-box">
+          <label class="form-label" for="avatar-search-input">Character Search</label>
+          <div class="avatar-search-wrap">
+            <svg class="avatar-search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="avatar-search-input" class="text-input hud-input avatar-search-input" placeholder="Search any anime character...">
+            <button id="avatar-search-clear" class="avatar-search-clear" type="button" aria-label="Clear search" style="display:none;">&times;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- View 1: Character Selection Browser -->
+      <div id="avatar-browser-view" class="avatar-browser-view">
+        <!-- Anime Franchise Category Filters -->
+        <div class="avatar-category-bar" id="avatar-category-filters" role="tablist" aria-label="Anime Franchise Filters">
+          <!-- Populated dynamically from local manifest & default trainers -->
+        </div>
+
+        <!-- Split Grid + Selected Character Preview -->
+        <div class="avatar-lib-workspace">
+          <!-- Left: Portrait Grid -->
+          <div class="avatar-grid-panel">
+            <div class="avatar-library-grid" id="avatar-library-grid">
+              <!-- Character portrait cards populated dynamically -->
+            </div>
+            <!-- Legacy fallback container kept for compatibility -->
+            <div id="avatar-picker" style="display:none;"></div>
+            <div class="avatar-load-more-wrap" id="avatar-load-more-wrap" style="display:none;">
+              <button id="avatar-load-more-btn" class="hud-nav-btn" type="button">LOAD MORE CHARACTERS</button>
+            </div>
+          </div>
+
+          <!-- Right: Dedicated Selected Character Preview -->
+          <aside class="avatar-preview-panel" id="avatar-preview-panel">
+            <div class="avatar-preview-kicker">SELECTED IDENTITY</div>
+            <div class="avatar-preview-frame" id="preview-avatar-media">
+              <!-- Populated dynamically -->
+            </div>
+            <div class="avatar-preview-meta">
+              <div class="avatar-preview-status" id="preview-char-status">ACTIVE AVATAR</div>
+              <h3 class="avatar-preview-name" id="preview-char-name">Red</h3>
+              <p class="avatar-preview-anime" id="preview-char-anime">Default Trainer</p>
+            </div>
+            <div class="avatar-preview-actions">
+              <button id="save-profile-btn" class="hud-action-btn hud-btn-join avatar-confirm-btn" type="button">
+                <span class="hud-btn-label">CONFIRM CHARACTER</span>
+              </button>
+              <button id="cancel-profile-btn" class="avatar-cancel-btn" type="button">CANCEL</button>
+            </div>
+          </aside>
+        </div>
+      </div>
+
+      <!-- View 2: Local Avatar Import & Admin Management (Zero External APIs) -->
+      <div id="avatar-admin-view" class="avatar-admin-view" style="display:none;">
+        <div class="avatar-admin-grid">
+          <!-- Left: Local Multi-Image Import Form -->
+          <div class="avatar-admin-card">
+            <h3>📥 Import Local Character Portraits</h3>
+            <p class="avatar-admin-hint">
+              Drop PNG, JPG, JPEG, or WEBP portraits into <code>public/assets/avatars/&lt;franchise&gt;/</code> or upload them locally below. Duplicate images and missing files are automatically validated.
+            </p>
+            <div class="form-row">
+              <label for="avatar-upload-franchise">Anime Franchise</label>
+              <select id="avatar-upload-franchise" class="select-input hud-input">
+                <option value="one-piece">One Piece</option>
+                <option value="naruto">Naruto</option>
+                <option value="pokemon">Pokémon</option>
+                <option value="dragon-ball">Dragon Ball</option>
+                <option value="bleach">Bleach</option>
+                <option value="jujutsu-kaisen">Jujutsu Kaisen</option>
+                <option value="demon-slayer">Demon Slayer</option>
+                <option value="attack-on-titan">Attack on Titan</option>
+                <option value="hunter-x-hunter">Hunter x Hunter</option>
+                <option value="my-hero-academia">My Hero Academia</option>
+                <option value="death-note">Death Note</option>
+                <option value="solo-leveling">Solo Leveling</option>
+                <option value="other-anime">Other Anime</option>
+                <option value="default">Default</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label for="avatar-upload-name">Character Name (leave blank for batch filename)</label>
+              <input type="text" id="avatar-upload-name" class="text-input hud-input" placeholder="e.g. Monkey D. Luffy">
+            </div>
+            <div class="form-row">
+              <label for="avatar-upload-files">Select Portrait Image(s)</label>
+              <input type="file" id="avatar-upload-files" class="text-input hud-input" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" multiple>
+            </div>
+            <div id="avatar-upload-preview-strip" class="avatar-upload-preview-strip"></div>
+            <div id="avatar-admin-status" class="avatar-admin-status" style="display:none;"></div>
+            <button id="avatar-upload-submit-btn" class="hud-action-btn hud-btn-join avatar-confirm-btn" type="button" style="margin-top:0.75rem;">
+              <span class="hud-btn-label">IMPORT TO LIBRARY</span>
+            </button>
+          </div>
+
+          <!-- Right: Existing Imported Characters Manager -->
+          <div class="avatar-admin-card">
+            <div class="avatar-admin-list-head">
+              <h3>🗂️ Manage Imported Avatars (<span id="avatar-admin-count">0</span>)</h3>
+              <button id="avatar-rescan-btn" class="avatar-mini-btn" type="button">🔄 Rescan Folders</button>
+            </div>
+            <input type="text" id="avatar-admin-search" class="text-input hud-input" placeholder="Filter imported avatars..." style="margin-bottom:0.75rem;">
+            <div id="avatar-admin-list" class="avatar-admin-list">
+              <!-- Populated dynamically -->
+            </div>
+            <input type="file" id="avatar-replace-file-input" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" style="display:none;">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive TearTicket Root (Create Room & Join Existing Room) -->
+  <div id="auction-ticket-react-root"></div>
+
   <!-- Rules & Info Dialog -->
-  <div class="modal-backdrop" id="metrics-modal-backdrop">
-    <div class="modal-card metrics-dialog" id="metrics-dialog">
-      <button class="modal-close-btn" id="metrics-close-btn">&times;</button>
-      <h2>Auction Game Rules & Valuation Formula</h2>
+  <div class="modal-backdrop hud-modal-backdrop" id="metrics-modal-backdrop">
+    <div class="modal-card metrics-dialog hud-modal-card" id="metrics-dialog" role="dialog" aria-modal="true">
+      <button class="modal-close-btn hud-modal-close" id="metrics-close-btn" type="button" aria-label="Close">&times;</button>
+      <div class="hud-modal-header">
+        <span class="hud-modal-kicker">OFFICIAL GUIDELINES</span>
+        <h2>RULES &amp; INFO — AUCTION VALUATION</h2>
+      </div>
       <div class="metrics-grid">
         <div class="metric-block">
           <h3>Tournament Rules</h3>
@@ -1165,7 +1535,9 @@
     </div>
   </div>
 
-  <!-- Sound Audio Synthesizer & App Scripts -->
+  <!-- Interactive TearTicket Bundle & App Scripts -->
+  <script src="/assets/tear-ticket-bundle.js"></script>
+  <script src="/mvp-config.js"></script>
   <script src="/game.js"></script>
   <script src="/app.js"></script>
 </body>
