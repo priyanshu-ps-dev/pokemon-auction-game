@@ -983,15 +983,41 @@ async def ws_handler(websocket: ServerConnection):
             # 11B. SUBMIT LIVE BATTLE ACTION
             elif action == "submit_battle_action":
                 if not client_room_code or not client_session_id:
-                    continue
-                room = room_manager.rooms.get(client_room_code)
-                if not room or not room.active_live_battle:
                     await websocket.send(json.dumps({
                         "type": "battle_action_error",
-                        "data": {"message": "No interactive battle is currently active."}
+                        "data": {"success": False, "message": "You are no longer a member of this room."}
                     }))
                     continue
-                ok, msg = room.active_live_battle.submit_action(client_session_id, data)
+                room = room_manager.rooms.get(client_room_code)
+                if not room:
+                    await websocket.send(json.dumps({
+                        "type": "battle_action_error",
+                        "data": {"success": False, "message": "Room not found or no longer active."}
+                    }))
+                    continue
+
+                async with room.auction_lock:
+                    if client_session_id not in room.players:
+                        err_msg = (
+                            "You have been removed from this room by the host."
+                            if client_session_id in room.kicked_session_ids
+                            else "You are no longer a member of this room."
+                        )
+                        await websocket.send(json.dumps({
+                            "type": "battle_action_error",
+                            "data": {"success": False, "message": err_msg}
+                        }))
+                        continue
+
+                    if not room.active_live_battle:
+                        await websocket.send(json.dumps({
+                            "type": "battle_action_error",
+                            "data": {"success": False, "message": "No interactive battle is currently active."}
+                        }))
+                        continue
+
+                    ok, msg = room.active_live_battle.submit_action(client_session_id, data)
+
                 await websocket.send(json.dumps({
                     "type": "battle_action_ack" if ok else "battle_action_error",
                     "data": {"success": ok, "message": msg}

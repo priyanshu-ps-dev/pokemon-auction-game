@@ -19,7 +19,9 @@ import websockets
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, BASE_DIR)
 
+from src.battle_engine import PokemonCombatant
 from src.combat_data import CombatDataProvider
+from src.live_battle_session import LiveBattleSession
 from src.room_manager import RoomManager
 
 
@@ -299,6 +301,94 @@ class TestFrontendKickAndLeaveHooks(unittest.TestCase):
             "pkmn_auction_room_code",
         ]:
             self.assertIn(marker, js)
+
+
+class TestBattleActionMembershipGuard(unittest.TestCase):
+    def test_08_ws_battle_action_rejected_for_kicked_and_departed_players(self):
+        import server as srv
+        provider = CombatDataProvider()
+
+        async def run():
+            async with websockets.serve(srv.ws_handler, "127.0.0.1", 0) as ws_srv:
+                port = ws_srv.sockets[0].getsockname()[1]
+                uri = f"ws://127.0.0.1:{port}/ws"
+
+                async with websockets.connect(uri) as ws_host, \
+                           websockets.connect(uri) as ws_kicked, \
+                           websockets.connect(uri) as ws_left:
+                    await ws_host.send(json.dumps({
+                        "action": "create_room",
+                        "data": {"name": "HostRed", "avatar": "red", "session_id": "ba_h1", "battle_control_mode": "player_vs_player"}
+                    }))
+                    joined, _ = await recv_until(ws_host, {"room_joined"})
+                    code = joined["data"]["room_code"]
+
+                    await ws_kicked.send(json.dumps({
+                        "action": "join_room",
+                        "data": {"room_code": code, "name": "KickedBlue", "avatar": "blue", "session_id": "ba_k1"}
+                    }))
+                    await recv_until(ws_kicked, {"room_joined"})
+                    await recv_until(ws_host, {"room_state"})
+
+                    await ws_left.send(json.dumps({
+                        "action": "join_room",
+                        "data": {"room_code": code, "name": "LeftGreen", "avatar": "green", "session_id": "ba_l1"}
+                    }))
+                    await recv_until(ws_left, {"room_joined"})
+                    await recv_until(ws_host, {"room_state"})
+
+                    room = srv.room_manager.rooms[code]
+                    room.status = "BATTLE"
+                    p1_mon = PokemonCombatant(provider.get_combat_profile("pkmn_25"))
+                    p2_mon = PokemonCombatant(provider.get_combat_profile("pkmn_6"))
+                    live = LiveBattleSession("ba_h1", [p1_mon], "ba_k1", [p2_mon], control_mode="player_vs_player", match_id=room.match_id)
+                    live.turn_number = 1
+                    room.active_live_battle = live
+
+                    # 1. Host kicks ba_k1, then ba_k1 attempts submit_battle_action
+                    await ws_host.send(json.dumps({
+                        "action": "kick_player",
+                        "data": {"target_session_id": "ba_k1"}
+                    }))
+                    await recv_until(ws_host, {"kick_success"})
+                    await recv_until(ws_kicked, {"player_kicked"})
+
+                    await ws_kicked.send(json.dumps({
+                        "action": "submit_battle_action",
+                        "data": {"type": "attack", "move_index": 0}
+                    }))
+                    kicked_err, _ = await recv_until(ws_kicked, {"battle_action_error"})
+                    self.assertFalse(kicked_err["data"]["success"])
+                    self.assertIn("removed from this room by the host", kicked_err["data"]["message"])
+                    self.assertNotIn("ba_k1", live.pending_actions)
+
+                    # 2. ba_l1 voluntarily leaves, then attempts submit_battle_action
+                    await ws_left.send(json.dumps({"action": "leave_room", "data": {}}))
+                    await recv_until(ws_left, {"room_left"})
+
+                    await ws_left.send(json.dumps({
+                        "action": "submit_battle_action",
+                        "data": {"type": "attack", "move_index": 0}
+                    }))
+                    left_err, _ = await recv_until(ws_left, {"battle_action_error"})
+                    self.assertFalse(left_err["data"]["success"])
+                    self.assertIn("no longer a member of this room", left_err["data"]["message"])
+                    self.assertNotIn("ba_l1", live.pending_actions)
+
+                    # 3. Valid active member (ba_h1) can still submit a battle action
+                    first_move_id = p1_mon.moves[0]["id"]
+                    await ws_host.send(json.dumps({
+                        "action": "submit_battle_action",
+                        "data": {"action_type": "attack", "move_id": first_move_id}
+                    }))
+                    ack, _ = await recv_until(ws_host, {"battle_action_ack"})
+                    self.assertTrue(ack["data"]["success"])
+                    self.assertIn("ba_h1", live.pending_actions)
+
+                    # Cleanup room
+                    srv.room_manager.rooms.pop(code, None)
+
+        asyncio.run(run())
 
 
 if __name__ == "__main__":
