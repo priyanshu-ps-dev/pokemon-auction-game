@@ -224,10 +224,21 @@ function handleServerMessage(type, data) {
     case 'rematch_requested':
       showRematchModal(data);
       break;
+      showRoomToast(data.message || 'Host status transferred.', 'info', 4000);
 
     case 'rematch_vote_update':
       updateRematchTally(data);
       break;
+      if (gameState.roomState && Array.isArray(gameState.roomState.players)) {
+        gameState.roomState.players.forEach(p => {
+          p.is_host = (p.session_id === data.new_host_id);
+        });
+        if (gameState.roomState.status === 'LOBBY') {
+          updateLobbyUI(gameState.roomState);
+        } else {
+          updateStageUI(gameState.roomState);
+        }
+      }
 
     case 'rematch_declined':
       hideRematchModal();
@@ -259,10 +270,58 @@ function handleServerMessage(type, data) {
         gameState.roomState = data.room_state;
       } else if (gameState.roomState) {
         gameState.roomState.current_bid = data.current_bid;
+      gameState.roomState = null;
         gameState.roomState.highest_bidder_id = data.highest_bidder_id;
+      closeLeaveRoomModal();
+      closeKickConfirmModal();
         gameState.roomState.highest_bidder_name = data.highest_bidder_name;
         gameState.roomState.timer_seconds_left = data.timer_seconds_left;
       }
+    case 'player_kicked':
+      gameState.roomCode = null;
+      gameState.isHost = false;
+      gameState.isWithdrawn = false;
+      gameState.roomState = null;
+      sessionStorage.removeItem('pkmn_auction_room_code');
+      closeLeaveRoomModal();
+      closeKickConfirmModal();
+      const wModal = document.getElementById('withdraw-modal');
+      if (wModal) wModal.style.display = 'none';
+      hideRematchModal();
+      switchArenaScreen('arena-setup');
+      showRoomToast(data.message || 'You have been removed from this room by the host.', 'error', 7000);
+      break;
+
+    case 'kick_success':
+      showRoomToast(data.message || `${data.target_name || 'Player'} has been removed from the room.`, 'success', 4500);
+      if (document.getElementById('arena-stage')?.classList.contains('active')) {
+        addStageLog(`🚫 <strong>${escapeHtml(data.target_name || 'Player')}</strong> was removed from the room.`, 'alert');
+      }
+      break;
+
+    case 'player_left':
+      if (data.room_state) {
+        gameState.roomState = data.room_state;
+        const meInRoom = Array.isArray(data.room_state.players)
+          ? data.room_state.players.find(pl => pl.session_id === gameState.sessionId)
+          : null;
+        if (meInRoom) {
+          gameState.isHost = !!meInRoom.is_host;
+        }
+        if (data.room_state.status === 'LOBBY') {
+          updateLobbyUI(data.room_state);
+        } else {
+          updateStageUI(data.room_state);
+        }
+      }
+      if (document.getElementById('arena-stage')?.classList.contains('active')) {
+        addStageLog(
+          `🚪 <strong>${escapeHtml(data.player_name || 'A player')}</strong> ${data.kicked ? 'was removed by the host' : 'left the room'}.`,
+          'alert'
+        );
+      }
+      break;
+
       updateTimerDisplay(data.timer_seconds_left);
       updateBidStatus(data.current_bid, data.highest_bidder_id, data.highest_bidder_name, data.highest_bidder_avatar);
       if (gameState.roomState && Array.isArray(gameState.roomState.players)) {
@@ -1406,20 +1465,49 @@ function setupEventListeners() {
     });
   }
 
-  const exitRoomBtn = document.getElementById('btn-exit-room');
-  if (exitRoomBtn) {
-    exitRoomBtn.addEventListener('click', () => {
-      if (confirm('Are you sure you want to exit the room?')) {
-        if (gameState.ws && gameState.roomCode) {
-          gameState.ws.send(JSON.stringify({
-            action: 'exit_room',
-            data: {}
-          }));
-        }
-        gameState.roomCode = null;
-        gameState.isHost = false;
-        gameState.isWithdrawn = false;
-        switchArenaScreen('arena-setup');
+  // Back to Lobby / Leave Room Buttons (Lobby, Stage, Battle, Results)
+  document.querySelectorAll('.js-back-to-lobby').forEach(btn => {
+    btn.addEventListener('click', () => {
+      openLeaveRoomModal();
+    });
+  });
+
+  const leaveCancelBtn = document.getElementById('btn-leave-cancel');
+  const leaveConfirmBtn = document.getElementById('btn-leave-confirm');
+  if (leaveCancelBtn) {
+    leaveCancelBtn.addEventListener('click', closeLeaveRoomModal);
+  }
+  if (leaveConfirmBtn) {
+    leaveConfirmBtn.addEventListener('click', () => {
+      closeLeaveRoomModal();
+      if (gameState.ws && gameState.ws.readyState === WebSocket.OPEN && gameState.roomCode) {
+        gameState.ws.send(JSON.stringify({
+          action: 'leave_room',
+          data: {}
+        }));
+      }
+      gameState.roomCode = null;
+      gameState.isHost = false;
+      gameState.isWithdrawn = false;
+      gameState.roomState = null;
+      sessionStorage.removeItem('pkmn_auction_room_code');
+      switchArenaScreen('arena-setup');
+    });
+  }
+
+  // Kick Player Confirmation Modal
+  const kickCancelBtn = document.getElementById('btn-kick-cancel');
+  const kickConfirmBtn = document.getElementById('btn-kick-confirm');
+  if (kickCancelBtn) {
+    kickCancelBtn.addEventListener('click', closeKickConfirmModal);
+  }
+  if (kickConfirmBtn) {
+    kickConfirmBtn.addEventListener('click', () => {
+      if (pendingKickTarget && gameState.ws && gameState.ws.readyState === WebSocket.OPEN && gameState.roomCode) {
+        gameState.ws.send(JSON.stringify({
+          action: 'kick_player',
+          data: { target_session_id: pendingKickTarget.sessionId }
+        }));
       }
     });
   }
@@ -1526,6 +1614,15 @@ function appendChatMessage(msg) {
 // Bidding Action
 function placeBid(amount) {
   if (!gameState.ws) return;
+      closeKickConfirmModal();
+    });
+  }
+
+  const toastCloseBtn = document.getElementById('room-toast-close');
+  if (toastCloseBtn) {
+    toastCloseBtn.addEventListener('click', () => {
+      const banner = document.getElementById('room-toast-banner');
+      if (banner) banner.style.display = 'none';
   gameState.ws.send(JSON.stringify({
     action: 'place_bid',
     data: { amount }
@@ -1647,6 +1744,49 @@ function updateStageUI(roomState) {
 
     // Render my team roster (ONLY artwork, name, and types - NO STATS/TIER!)
     renderMyRoster(me.team);
+let pendingKickTarget = null;
+let roomToastTimer = null;
+
+function showRoomToast(message, variant = 'info', durationMs = 4500) {
+  const banner = document.getElementById('room-toast-banner');
+  const textEl = document.getElementById('room-toast-text');
+  if (!banner || !textEl) return;
+  textEl.textContent = message;
+  banner.classList.remove('is-error', 'is-success');
+  if (variant === 'error') banner.classList.add('is-error');
+  if (variant === 'success') banner.classList.add('is-success');
+  banner.style.display = 'flex';
+  if (roomToastTimer) clearTimeout(roomToastTimer);
+  roomToastTimer = setTimeout(() => {
+    banner.style.display = 'none';
+  }, durationMs);
+}
+
+function openKickConfirmModal(sessionId, playerName) {
+  if (!gameState.isHost || sessionId === gameState.sessionId) return;
+  pendingKickTarget = { sessionId, playerName };
+  const nameEl = document.getElementById('kick-confirm-player-name');
+  if (nameEl) nameEl.textContent = playerName;
+  const modal = document.getElementById('kick-confirm-modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeKickConfirmModal() {
+  pendingKickTarget = null;
+  const modal = document.getElementById('kick-confirm-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function openLeaveRoomModal() {
+  const modal = document.getElementById('leave-room-modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeLeaveRoomModal() {
+  const modal = document.getElementById('leave-room-modal');
+  if (modal) modal.style.display = 'none';
+}
+
     updateReserveBudgetNote(me);
     updateBidButtonStates(me, roomState);
   }
@@ -1695,7 +1835,15 @@ function renderOpponents(players) {
   if (countBadge) countBadge.textContent = `(${players.length})`;
   container.innerHTML = '';
 
+      ${gameState.isHost && !isMe ? `<button type="button" class="btn-kick-player" data-session-id="${escapeHtml(p.session_id)}" data-player-name="${escapeHtml(p.name)}">Kick Player</button>` : ''}
   players.forEach(p => {
+    const kickBtn = card.querySelector('.btn-kick-player');
+    if (kickBtn) {
+      kickBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openKickConfirmModal(p.session_id, p.name);
+      });
+    }
     const isMe = p.session_id === gameState.sessionId;
     const isLeader = p.session_id === (gameState.roomState ? gameState.roomState.highest_bidder_id : null);
     const crownHtml = p.is_host
@@ -1829,8 +1977,16 @@ function updateBidStatus(amount, bidderId, bidderName, bidderAvatar) {
 function updateDynamicQuickBids() {
   const current = gameState.roomState ? (gameState.roomState.current_bid || 0) : 0;
   const minBid = gameState.roomState ? (gameState.roomState.min_bid || 10) : 10;
+      ${gameState.isHost && !isMe ? `<button type="button" class="btn-kick-player btn-kick-player--sm" data-session-id="${escapeHtml(p.session_id)}" data-player-name="${escapeHtml(p.name)}">Kick Player</button>` : ''}
   const nextValid = current === 0 ? minBid : current + 1;
 
+    const kickBtn = card.querySelector('.btn-kick-player');
+    if (kickBtn) {
+      kickBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openKickConfirmModal(p.session_id, p.name);
+      });
+    }
   const nextValidDisplay = document.getElementById('next-valid-bid-display');
   if (nextValidDisplay) {
     nextValidDisplay.textContent = `₹${nextValid.toLocaleString()}`;

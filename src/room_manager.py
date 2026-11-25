@@ -219,6 +219,7 @@ class Room:
         self.auction_history: List[dict] = []
         self.chat_history: List[dict] = []
         self.skipped_player_ids: Set[str] = set()
+        self.kicked_session_ids: Set[str] = set()
         self.rematch_votes: Dict[str, bool] = {}
         self.skip_event: Optional[asyncio.Event] = None
         self.auction_lock: asyncio.Lock = asyncio.Lock()
@@ -342,6 +343,39 @@ class Room:
         should_end_match = (len(remaining_active) < 2) and (self.status in ("AUCTION", "SHOWCASE"))
 
         return True, f"{player.name} withdrew from the match.", new_host_id, should_end_match
+
+    def kick_player(self, host_session_id: str, target_session_id: str) -> tuple[bool, str, Optional[dict]]:
+        """
+        Removes a target player from the room when initiated by the authenticated room host.
+        Returns: (success, message, info_dict)
+        """
+        host = self.players.get(host_session_id)
+        if not host or not host.is_host:
+            return False, "Only the room host can kick players.", None
+
+        if host_session_id == target_session_id:
+            return False, "Host cannot kick themselves.", None
+
+        target = self.players.pop(target_session_id, None)
+        if not target:
+            return False, "Target player is not in this room.", None
+
+        self.kicked_session_ids.add(target_session_id)
+        self.skipped_player_ids.discard(target_session_id)
+        self.rematch_votes.pop(target_session_id, None)
+
+        if self.highest_bidder_id == target_session_id:
+            self.highest_bidder_id = None
+            self.current_bid = 0
+
+        should_end_match = (len(self.active_players) < 2) and (self.status in ("AUCTION", "SHOWCASE"))
+        all_skipped = (self.status == "AUCTION") and self.all_eligible_players_skipped()
+
+        return True, f"{target.name} was removed from the room.", {
+            "target_player": target,
+            "should_end_match": should_end_match,
+            "all_skipped": all_skipped,
+        }
 
     def request_rematch(self, session_id: str) -> tuple[bool, str]:
         """Host requests a rematch after match completion."""
@@ -675,6 +709,9 @@ class RoomManager:
         if not room:
             return None, "Room not found. Check the room code."
 
+        if session_id in room.kicked_session_ids:
+            return None, "You have been removed from this room by the host."
+
         # Check existing reconnection in this room
         if session_id in room.players:
             existing = room.players[session_id]
@@ -698,6 +735,73 @@ class RoomManager:
         player = Player(session_id=session_id, name=player_name, avatar=player_avatar, is_host=False, starting_purse=room.starting_purse)
         room.players[session_id] = player
         return room, "Joined room successfully."
+
+    def leave_room(self, room_code: str, session_id: str) -> tuple[bool, str, dict]:
+        """
+        Removes a player (or spectator) from a room, transfers host if needed,
+        and deletes the room if no players remain.
+        """
+        code = room_code.strip().upper()
+        room = self.rooms.get(code)
+        if not room:
+            return False, "Room not found.", {}
+
+        player = room.players.pop(session_id, None)
+        was_spectator = False
+        if not player:
+            player = room.spectators.pop(session_id, None)
+            if not player:
+                return False, "Player not found in room.", {}
+            was_spectator = True
+            return True, f"{player.name} left the room.", {
+                "room": room,
+                "player": player,
+                "was_spectator": True,
+                "new_host_id": None,
+                "new_host_name": None,
+                "room_deleted": False,
+                "should_end_match": False,
+                "all_skipped": False,
+            }
+
+        room.skipped_player_ids.discard(session_id)
+        room.rematch_votes.pop(session_id, None)
+        if room.highest_bidder_id == session_id:
+            room.highest_bidder_id = None
+            room.current_bid = 0
+
+        new_host_id = None
+        new_host_name = None
+        if player.is_host:
+            player.is_host = False
+            candidates = (
+                [pl for pl in room.players.values() if pl.is_connected and not pl.is_withdrawn]
+                or [pl for pl in room.players.values() if not pl.is_withdrawn]
+                or list(room.players.values())
+            )
+            if candidates:
+                candidates[0].is_host = True
+                new_host_id = candidates[0].session_id
+                new_host_name = candidates[0].name
+
+        room_deleted = False
+        if len(room.players) == 0:
+            self.rooms.pop(code, None)
+            room_deleted = True
+
+        should_end_match = (not room_deleted) and (len(room.active_players) < 2) and (room.status in ("AUCTION", "SHOWCASE"))
+        all_skipped = (not room_deleted) and (room.status == "AUCTION") and room.all_eligible_players_skipped()
+
+        return True, f"{player.name} left the room.", {
+            "room": room,
+            "player": player,
+            "was_spectator": was_spectator,
+            "new_host_id": new_host_id,
+            "new_host_name": new_host_name,
+            "room_deleted": room_deleted,
+            "should_end_match": should_end_match,
+            "all_skipped": all_skipped,
+        }
 
     def select_random_character(self, room: Room) -> Optional[dict]:
         """Server-authoritative random selection from unused pool."""
