@@ -49,18 +49,22 @@ class TestMarvelCombatAndImporter(unittest.TestCase):
 
     def test_02_pagination_and_duplicate_detection(self):
         """Mocked paginated API responses deduplicate against existing characters."""
+        import tempfile
         imp = MarvelCharacterImporter(public_key="pub", private_key="priv")
         page1 = {"data": {"results": [
             {"id": 1009610, "name": "Spider-Man (Earth-616)", "description": "Dup", "thumbnail": {}},
             {"id": 999001, "name": "Silver Surfer", "description": "Herald", "thumbnail": {"path": "http://i.annihil.us/u/prod/marvel/i/mg/b/40/image", "extension": "jpg"}},
         ]}}
         page2 = {"data": {"results": []}}
-        with patch.object(imp, "fetch_api_page", side_effect=[page1, page2]):
-            meta = imp.import_characters(max_pages=2, use_cache=False)
-            self.assertGreaterEqual(meta["total_characters"], 28)
-            self.assertEqual(meta["api_fetched"], 1)  # Silver Surfer added, duplicate skipped
-        # Restore clean offline seed file
-        MarvelCharacterImporter(public_key="", private_key="").import_characters()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            raw_p = os.path.join(tmpdir, "marvel_raw.json")
+            cache_p = os.path.join(tmpdir, "marvel_cache.json")
+            with patch("src.marvel_combat_importer.MARVEL_RAW_PATH", raw_p), \
+                 patch("src.marvel_combat_importer.MARVEL_CACHE_PATH", cache_p), \
+                 patch.object(imp, "fetch_api_page", side_effect=[page1, page2]):
+                meta = imp.import_characters(max_pages=2, use_cache=False)
+                self.assertGreaterEqual(meta["total_characters"], 28)
+                self.assertEqual(meta["api_fetched"], 1)  # Silver Surfer added, duplicate skipped
 
     def test_03_incarnation_separation_and_unverified_exclusion(self):
         """Comics and MCU incarnations stay separate; unverified civilians are excluded from battle."""
@@ -121,6 +125,74 @@ class TestMarvelCombatAndImporter(unittest.TestCase):
         self.assertTrue(ok)
         res = asyncio.run(sess.run_interactive(max_turns=25))
         self.assertIn(res.winner_id, ("p1", "p2"))
+
+    def test_07_marvel_real_image_urls_and_metadata(self):
+        """All 26 combat-eligible Marvel characters have verified real artwork URLs; civilians flagged."""
+        from src.anime_database import AnimeDatabaseManager
+
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        db = AnimeDatabaseManager(
+            os.path.join(base_dir, "data", "anime_database.json"),
+            os.path.join(base_dir, "data", "anime_platform.db"),
+        )
+        for cid in (
+            "marvel_616_hulk",
+            "marvel_616_spider_man",
+            "marvel_616_iron_man",
+            "marvel_616_ultron",
+            "marvel_616_thor",
+            "marvel_616_doctor_strange",
+            "marvel_616_thanos",
+            "marvel_616_loki",
+            "marvel_616_wolverine",
+            "marvel_616_magneto",
+        ):
+            ch = db.get_character_by_id(cid)
+            self.assertIsNotNone(ch, f"Missing {cid}")
+            self.assertTrue(ch["image"].startswith("https://cdn.jsdelivr.net/gh/akabab/superhero-api"), ch["image"])
+            self.assertEqual(ch.get("image_verification_status"), "verified_cdn")
+            self.assertIn("SuperHeroAPI", ch.get("image_source", ""))
+            self.assertIn("Marvel", ch.get("image_attribution", ""))
+
+        may = db.get_character_by_id("marvel_616_aunt_may")
+        self.assertIsNotNone(may)
+        self.assertEqual(may.get("image_verification_status"), "missing_artwork_placeholder")
+
+    def test_08_phase8_expanded_catalog_manifest_and_auction_isolation(self):
+        """Phase 8: 2,000+ Marvel records browsable in catalog, but only combat-eligible enter auctions."""
+        from src.anime_database import AnimeDatabaseManager
+
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        manifest_path = os.path.join(base_dir, "data", "marvel_import_manifest.json")
+        self.assertTrue(os.path.exists(manifest_path))
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            manifest = json.load(f)
+
+        self.assertGreater(manifest["unique_ids"], 2000)
+        self.assertGreater(manifest["duplicates_merged"], 0)
+        self.assertEqual(manifest["sources"]["official_marvel_api"]["status"], "skipped_no_credentials")
+        self.assertEqual(manifest["combat_verification_coverage"]["combat_eligible"], 26)
+
+        db = AnimeDatabaseManager(
+            os.path.join(base_dir, "data", "anime_database.json"),
+            os.path.join(base_dir, "data", "anime_platform.db"),
+        )
+        all_marvel = db.search_characters(anime_id="marvel", limit=50, offset=0)
+        self.assertEqual(all_marvel["total"], manifest["unique_ids"])
+        self.assertEqual(len(all_marvel["characters"]), 50)
+
+        villains = db.search_characters(anime_id="marvel", category="Villains", limit=20)
+        self.assertGreater(villains["total"], 100)
+
+        verified_art = db.search_characters(anime_id="marvel", has_artwork="true", limit=20)
+        self.assertGreaterEqual(verified_art["total"], 290)
+
+        combat_only = db.search_characters(anime_id="marvel", combat_eligible="true", limit=50)
+        self.assertEqual(combat_only["total"], 26)
+
+        auction_pool = db.get_characters_for_mode(mode="marvel")
+        self.assertEqual(len(auction_pool), 26)
+        self.assertTrue(all(c.get("is_active") for c in auction_pool))
 
 
 if __name__ == "__main__":

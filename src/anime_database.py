@@ -313,6 +313,11 @@ class AnimeDatabaseManager:
         power_tier: Optional[str] = None,
         rarity: Optional[str] = None,
         species: Optional[str] = None,
+        category: Optional[str] = None,
+        affiliation: Optional[str] = None,
+        continuity: Optional[str] = None,
+        combat_eligible: Optional[str] = None,
+        has_artwork: Optional[str] = None,
         sort: str = "power_desc",
         limit: int = 50,
         offset: int = 0
@@ -332,6 +337,31 @@ class AnimeDatabaseManager:
         if species:
             sp = species.lower()
             items = [c for c in items if sp in c.get("species", "").lower() or sp in c.get("race", "").lower()]
+
+        if category:
+            cat_l = category.strip().lower()
+            items = [c for c in items if any(cat_l == str(x).lower() for x in (c.get("categories") or []))]
+
+        if affiliation:
+            aff_l = affiliation.strip().lower()
+            items = [c for c in items if any(aff_l in str(x).lower() for x in (c.get("affiliations") or []))]
+
+        if continuity:
+            cont_l = continuity.strip().lower()
+            items = [c for c in items if cont_l in str(c.get("incarnation") or "").lower()]
+
+        if combat_eligible is not None and str(combat_eligible).strip() != "":
+            want = str(combat_eligible).strip().lower() in ("1", "true", "yes")
+            items = [c for c in items if bool(c.get("is_active", True)) is want]
+
+        if has_artwork is not None and str(has_artwork).strip() != "":
+            want_art = str(has_artwork).strip().lower() in ("1", "true", "yes")
+            def _has_art(c: dict) -> bool:
+                if c.get("image_verification_status") == "missing_artwork_placeholder":
+                    return False
+                img = str(c.get("image") or "")
+                return bool(img) and not img.startswith("/api/avatar/")
+            items = [c for c in items if _has_art(c) is want_art]
 
         if query:
             q = query.strip().lower()

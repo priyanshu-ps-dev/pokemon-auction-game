@@ -1835,6 +1835,9 @@ const animeDatabaseModule = {
       power_tier: '',
       rarity: '',
       species: '',
+      category: '',
+      combat_eligible: '',
+      has_artwork: '',
       sort: 'power_desc'
     }
   },
@@ -1906,6 +1909,9 @@ const animeDatabaseModule = {
     const tierSelect = document.getElementById('anime-tier-select');
     const raritySelect = document.getElementById('anime-rarity-select');
     const speciesSelect = document.getElementById('anime-species-select');
+    const categorySelect = document.getElementById('anime-category-select');
+    const combatSelect = document.getElementById('anime-combat-select');
+    const artworkSelect = document.getElementById('anime-artwork-select');
     const sortSelect = document.getElementById('anime-sort-select');
     const resetBtn = document.getElementById('anime-reset-filters-btn');
     const prevBtn = document.getElementById('anime-prev-page-btn');
@@ -1981,6 +1987,30 @@ const animeDatabaseModule = {
       });
     }
 
+    if (categorySelect) {
+      categorySelect.addEventListener('change', (e) => {
+        this.state.filters.category = e.target.value;
+        this.state.currentPage = 1;
+        this.fetchCharacters();
+      });
+    }
+
+    if (combatSelect) {
+      combatSelect.addEventListener('change', (e) => {
+        this.state.filters.combat_eligible = e.target.value;
+        this.state.currentPage = 1;
+        this.fetchCharacters();
+      });
+    }
+
+    if (artworkSelect) {
+      artworkSelect.addEventListener('change', (e) => {
+        this.state.filters.has_artwork = e.target.value;
+        this.state.currentPage = 1;
+        this.fetchCharacters();
+      });
+    }
+
     if (sortSelect) {
       sortSelect.addEventListener('change', (e) => {
         this.state.filters.sort = e.target.value;
@@ -1997,6 +2027,9 @@ const animeDatabaseModule = {
         if (tierSelect) tierSelect.value = '';
         if (raritySelect) raritySelect.value = '';
         if (speciesSelect) speciesSelect.value = '';
+        if (categorySelect) categorySelect.value = '';
+        if (combatSelect) combatSelect.value = '';
+        if (artworkSelect) artworkSelect.value = '';
         if (sortSelect) sortSelect.value = 'power_desc';
 
         quickButtons.forEach(b => b.classList.remove('active'));
@@ -2009,6 +2042,9 @@ const animeDatabaseModule = {
           power_tier: '',
           rarity: '',
           species: '',
+          category: '',
+          combat_eligible: '',
+          has_artwork: '',
           sort: 'power_desc'
         };
         this.state.currentPage = 1;
@@ -2052,6 +2088,9 @@ const animeDatabaseModule = {
     if (this.state.filters.power_tier) p.set('power_tier', this.state.filters.power_tier);
     if (this.state.filters.rarity) p.set('rarity', this.state.filters.rarity);
     if (this.state.filters.species) p.set('species', this.state.filters.species);
+    if (this.state.filters.category) p.set('category', this.state.filters.category);
+    if (this.state.filters.combat_eligible) p.set('combat_eligible', this.state.filters.combat_eligible);
+    if (this.state.filters.has_artwork) p.set('has_artwork', this.state.filters.has_artwork);
     if (this.state.filters.sort) p.set('sort', this.state.filters.sort);
 
     try {

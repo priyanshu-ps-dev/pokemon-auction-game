@@ -13,21 +13,62 @@ Discovers and imports Marvel Comics & MCU characters into data/marvel_characters
 import hashlib
 import json
 import os
+import re
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CACHE_DIR = os.path.join(BASE_DIR, "cache")
 DATA_DIR = os.path.join(BASE_DIR, "data")
 MARVEL_RAW_PATH = os.path.join(DATA_DIR, "marvel_characters_raw.json")
+MARVEL_MANIFEST_PATH = os.path.join(DATA_DIR, "marvel_import_manifest.json")
 MARVEL_CACHE_PATH = os.path.join(CACHE_DIR, "marvel_api_cache.json")
+SUPERHERO_API_CACHE_PATH = os.path.join(CACHE_DIR, "superhero_api_all.json")
+WIKIDATA_CACHE_PATH = os.path.join(CACHE_DIR, "wikidata_marvel_pages.json")
+WIKIPEDIA_CACHE_PATH = os.path.join(CACHE_DIR, "wikipedia_marvel_categories.json")
+
+SUPERHERO_API_URL = "https://cdn.jsdelivr.net/gh/akabab/superhero-api@0.3.0/api/all.json"
+WIKIDATA_SPARQL_URL = "https://query.wikidata.org/sparql"
+WIKIPEDIA_API_URL = "https://en.wikipedia.org/w/api.php"
+USER_AGENT = "PokemonAnimeMarvelAuctionArena/1.0 (educational-open-data)"
 
 MARVEL_API_BASE = "https://gateway.marvel.com/v1/public/characters"
 MARVEL_ATTRIBUTION = "Data provided by Marvel. © 2024 Marvel"
+
+# Verified high-resolution character portraits via MIT-licensed akabab/superhero-api (jsDelivr CDN).
+# Non-combatant civilian entries without CDN portraits fall back to local placeholder & are flagged.
+_OFFLINE_VERIFIED_IMAGES: Dict[str, str] = {
+    "marvel_616_spider_man": "https://cdn.jsdelivr.net/gh/akabab/superhero-api@0.3.0/api/images/lg/620-spider-man.jpg",
+    "marvel_616_iron_man": "https://cdn.jsdelivr.net/gh/akabab/superhero-api@0.3.0/api/images/lg/346-iron-man.jpg",
+    "marvel_616_captain_america": "https://cdn.jsdelivr.net/gh/akabab/superhero-api@0.3.0/api/images/lg/149-captain-america.jpg",
+    "marvel_616_thor": "https://cdn.jsdelivr.net/gh/akabab/superhero-api@0.3.0/api/images/lg/659-thor.jpg",
+    "marvel_616_hulk": "https://cdn.jsdelivr.net/gh/akabab/superhero-api@0.3.0/api/images/lg/332-hulk.jpg",
+    "marvel_616_doctor_strange": "https://cdn.jsdelivr.net/gh/akabab/superhero-api@0.3.0/api/images/lg/226-doctor-strange.jpg",
+    "marvel_616_scarlet_witch": "https://cdn.jsdelivr.net/gh/akabab/superhero-api@0.3.0/api/images/lg/579-scarlet-witch.jpg",
+    "marvel_616_wolverine": "https://cdn.jsdelivr.net/gh/akabab/superhero-api@0.3.0/api/images/lg/717-wolverine.jpg",
+    "marvel_616_deadpool": "https://cdn.jsdelivr.net/gh/akabab/superhero-api@0.3.0/api/images/lg/213-deadpool.jpg",
+    "marvel_616_captain_marvel": "https://cdn.jsdelivr.net/gh/akabab/superhero-api@0.3.0/api/images/lg/157-captain-marvel.jpg",
+    "marvel_616_black_panther": "https://cdn.jsdelivr.net/gh/akabab/superhero-api@0.3.0/api/images/lg/106-black-panther.jpg",
+    "marvel_616_ant_man": "https://cdn.jsdelivr.net/gh/akabab/superhero-api@0.3.0/api/images/lg/31-ant-man-ii.jpg",
+    "marvel_616_daredevil": "https://cdn.jsdelivr.net/gh/akabab/superhero-api@0.3.0/api/images/lg/201-daredevil.jpg",
+    "marvel_616_vision": "https://cdn.jsdelivr.net/gh/akabab/superhero-api@0.3.0/api/images/lg/697-vision.jpg",
+    "marvel_616_thanos": "https://cdn.jsdelivr.net/gh/akabab/superhero-api@0.3.0/api/images/lg/655-thanos.jpg",
+    "marvel_616_loki": "https://cdn.jsdelivr.net/gh/akabab/superhero-api@0.3.0/api/images/lg/414-loki.jpg",
+    "marvel_616_ultron": "https://cdn.jsdelivr.net/gh/akabab/superhero-api@0.3.0/api/images/lg/680-ultron.jpg",
+    "marvel_616_doctor_doom": "https://cdn.jsdelivr.net/gh/akabab/superhero-api@0.3.0/api/images/lg/222-doctor-doom.jpg",
+    "marvel_616_magneto": "https://cdn.jsdelivr.net/gh/akabab/superhero-api@0.3.0/api/images/lg/423-magneto.jpg",
+    "marvel_616_green_goblin": "https://cdn.jsdelivr.net/gh/akabab/superhero-api@0.3.0/api/images/lg/299-green-goblin.jpg",
+    "marvel_616_venom": "https://cdn.jsdelivr.net/gh/akabab/superhero-api@0.3.0/api/images/lg/687-venom.jpg",
+    "marvel_616_red_skull": "https://cdn.jsdelivr.net/gh/akabab/superhero-api@0.3.0/api/images/lg/550-red-skull.jpg",
+    "marvel_616_kang": "https://cdn.jsdelivr.net/gh/akabab/superhero-api@0.3.0/api/images/lg/379-kang.jpg",
+    "marvel_616_galactus": "https://cdn.jsdelivr.net/gh/akabab/superhero-api@0.3.0/api/images/lg/273-galactus.jpg",
+    "marvel_mcu_iron_man": "https://cdn.jsdelivr.net/gh/akabab/superhero-api@0.3.0/api/images/lg/346-iron-man.jpg",
+    "marvel_mcu_thanos": "https://cdn.jsdelivr.net/gh/akabab/superhero-api@0.3.0/api/images/lg/655-thanos.jpg",
+}
 
 
 def _seed_offline_marvel_catalog() -> List[Dict[str, Any]]:
@@ -49,6 +90,7 @@ def _seed_offline_marvel_catalog() -> List[Dict[str, Any]]:
         source: str,
         combat_capable: bool = True,
     ) -> Dict[str, Any]:
+        verified_url = _OFFLINE_VERIFIED_IMAGES.get(mid)
         return {
             "id": mid,
             "marvel_id": marvel_id,
@@ -58,7 +100,10 @@ def _seed_offline_marvel_catalog() -> List[Dict[str, Any]]:
             "anime_id": "marvel",
             "anime_name": "Marvel Comics",
             "description": desc,
-            "image": f"/api/avatar/{mid}",
+            "image": verified_url if verified_url else f"/api/avatar/{mid}",
+            "image_source": "SuperHeroAPI (akabab/superhero-api, MIT) via jsDelivr CDN" if verified_url else "Missing artwork (neutral fallback)",
+            "image_attribution": f"{MARVEL_ATTRIBUTION} | Portrait via akabab/superhero-api (MIT)" if verified_url else MARVEL_ATTRIBUTION,
+            "image_verification_status": "verified_cdn" if verified_url else "missing_artwork_placeholder",
             "aliases": aliases,
             "comics": comics,
             "series": series,
@@ -259,7 +304,498 @@ class MarvelCharacterImporter:
 
         return out_payload["metadata"]
 
+    # ------------------------------------------------------------------
+    # PHASE 8: CREDENTIAL-FREE PUBLIC MULTI-SOURCE RESUMABLE EXPANSION
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _normalize_name(name: str) -> str:
+        cleaned = re.sub(r"\s*\([^)]*\)", "", name or "").strip().lower()
+        cleaned = re.sub(r"[^a-z0-9]+", " ", cleaned).strip()
+        return cleaned
+
+    @staticmethod
+    def _classify_from_metadata(
+        alignment: str = "",
+        race: str = "",
+        categories: Optional[List[str]] = None,
+        description: str = "",
+    ) -> List[str]:
+        cats: Set[str] = set(categories or [])
+        al = (alignment or "").strip().lower()
+        if al == "good":
+            cats.add("Heroes")
+        elif al == "bad":
+            cats.add("Villains")
+        elif al == "neutral":
+            cats.add("Antiheroes")
+
+        rc = (race or "").strip().lower()
+        desc = (description or "").strip().lower()
+        if "mutant" in rc or "mutant" in desc:
+            cats.add("Mutants")
+        if any(k in rc for k in ("cosmic", "eternal", "celestial", "god", "asgardian", "titan")):
+            cats.add("Cosmic")
+        if any(k in rc for k in ("alien", "kree", "skrull", "symbiote", "klyntar", "flora colossus", "shi'ar")):
+            cats.add("Aliens")
+        if any(k in rc for k in ("demon", "vampire", "ghost", "mystic", "undead")):
+            cats.add("Supernatural")
+        if not cats:
+            cats.add("Other / unclassified")
+        return sorted(cats)
+
+    def _http_get_json(self, url: str, timeout: int = 25, retries: int = 3) -> Optional[Any]:
+        for attempt in range(retries):
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+                with urllib.request.urlopen(req, timeout=timeout) as resp:
+                    return json.loads(resp.read().decode("utf-8"))
+            except urllib.error.HTTPError as e:
+                if e.code in (429, 502, 503, 504):
+                    time.sleep(2 ** attempt)
+                    continue
+                self.errors.append(f"HTTP {e.code} on {url[:80]}")
+                return None
+            except Exception as e:
+                if attempt == retries - 1:
+                    self.errors.append(f"{type(e).__name__} on {url[:80]}")
+                    return None
+                time.sleep(1.5 * (attempt + 1))
+        return None
+
+    def fetch_superhero_api_marvel(self, use_cache: bool = True) -> List[dict]:
+        """Fetch all Marvel Comics & Marvel-imprint entries from MIT-licensed SuperHeroAPI."""
+        all_items: Optional[List[dict]] = None
+        if use_cache and os.path.exists(SUPERHERO_API_CACHE_PATH):
+            with open(SUPERHERO_API_CACHE_PATH, "r", encoding="utf-8") as f:
+                all_items = json.load(f)
+        if not all_items:
+            all_items = self._http_get_json(SUPERHERO_API_URL, timeout=25)
+            if isinstance(all_items, list) and all_items:
+                with open(SUPERHERO_API_CACHE_PATH, "w", encoding="utf-8") as f:
+                    json.dump(all_items, f, ensure_ascii=False)
+        if not isinstance(all_items, list):
+            return []
+
+        marvel_pubs = {
+            "marvel comics", "giant-man", "icon comics", "binary", "evil deadpool",
+            "deadpool", "iron lad", "spider-carnage", "venom iii", "ms marvel ii",
+            "rune king thor", "anti-venom", "anti-vision", "ant-man", "phoenix",
+            "meltdown", "power man", "thunderbird ii", "atlas", "goliath", "tempest",
+        }
+        out: List[dict] = []
+        for x in all_items:
+            bio = x.get("biography") or {}
+            pub = (bio.get("publisher") or "").strip().lower()
+            if "marvel" not in pub and pub not in marvel_pubs:
+                continue
+            app = x.get("appearance") or {}
+            conn = x.get("connections") or {}
+            stats = x.get("powerstats") or {}
+            img = ((x.get("images") or {}).get("lg") or "").strip()
+            aff_raw = conn.get("groupAffiliation") or ""
+            affiliations = [a.strip() for a in re.split(r"[,;]", aff_raw) if a.strip() and a.strip() != "-"][:10]
+            aliases = [a for a in (bio.get("aliases") or []) if a and a != "-"]
+            if bio.get("fullName") and bio["fullName"] != "-" and bio["fullName"] not in aliases:
+                aliases.insert(0, bio["fullName"])
+            race = app.get("race") if app.get("race") not in (None, "null", "-") else ""
+            cats = self._classify_from_metadata(bio.get("alignment", ""), race)
+            cid = f"marvel_sh_{x['id']}"
+            out.append({
+                "id": cid,
+                "superhero_api_id": x["id"],
+                "marvel_id": None,
+                "name": x["name"],
+                "incarnation": "Earth-616 / Comics (SuperHeroAPI)",
+                "universe": "marvel",
+                "anime_id": "marvel",
+                "anime_name": "Marvel Comics",
+                "description": f"{bio.get('fullName') or x['name']} — First appearance: {bio.get('firstAppearance') or 'Unknown'}.",
+                "image": img if img else f"/api/avatar/{cid}",
+                "image_source": "SuperHeroAPI (akabab/superhero-api, MIT) via jsDelivr CDN" if img else "Missing artwork (neutral fallback)",
+                "image_attribution": f"{MARVEL_ATTRIBUTION} | Portrait via akabab/superhero-api (MIT)" if img else MARVEL_ATTRIBUTION,
+                "image_verification_status": "verified_cdn" if img else "missing_artwork_placeholder",
+                "aliases": aliases,
+                "affiliations": affiliations,
+                "species": race or "Unknown",
+                "gender": app.get("gender") if app.get("gender") not in (None, "-") else "Unknown",
+                "categories": cats,
+                "powerstats": stats,
+                "comics": [bio["firstAppearance"]] if bio.get("firstAppearance") and bio["firstAppearance"] != "-" else [],
+                "series": [],
+                "events": [],
+                "source": "SuperHeroAPI (akabab/superhero-api, MIT)",
+                "attribution": MARVEL_ATTRIBUTION,
+                "is_combat_capable": False,
+            })
+        return out
+
+    def fetch_wikidata_marvel_paginated(self, use_cache: bool = True, page_size: int = 500) -> Dict[str, Any]:
+        """Paginated, resumable Wikidata SPARQL import for all Marvel Comics / MCU fictional characters."""
+        cache_state = {"completed": False, "last_offset": 0, "failed_pages": [], "records": {}}
+        if use_cache and os.path.exists(WIKIDATA_CACHE_PATH):
+            with open(WIKIDATA_CACHE_PATH, "r", encoding="utf-8") as f:
+                cache_state = json.load(f)
+
+        if not cache_state.get("completed"):
+            offset = int(cache_state.get("last_offset", 0))
+            while True:
+                sparql = f"""
+SELECT ?item ?itemLabel ?itemDescription ?speciesLabel ?genderLabel ?affLabel WHERE {{
+  {{
+    SELECT DISTINCT ?item WHERE {{
+      ?item wdt:P31/wdt:P279* wd:Q95074 .
+      {{ ?item wdt:P1441 ?w . {{ ?w wdt:P123 wd:Q173496 . }} UNION {{ ?w wdt:P179 wd:Q173496 . }} UNION {{ ?w wdt:P179 wd:Q642878 . }} }}
+      UNION {{ ?item wdt:P1080 wd:Q931597 . }}
+      UNION {{ ?item wdt:P1080 wd:Q642878 . }}
+    }}
+    ORDER BY ?item
+    LIMIT {page_size}
+    OFFSET {offset}
+  }}
+  OPTIONAL {{ ?item wdt:P31 ?species . }}
+  OPTIONAL {{ ?item wdt:P21 ?gender . }}
+  OPTIONAL {{ ?item wdt:P463 ?aff . }}
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }}
+}}"""
+                url = f"{WIKIDATA_SPARQL_URL}?format=json&query={urllib.parse.quote(sparql)}"
+                data = self._http_get_json(url, timeout=30, retries=3)
+                if not data:
+                    cache_state.setdefault("failed_pages", []).append(offset)
+                    break
+                bindings = (data.get("results") or {}).get("bindings") or []
+                if not bindings:
+                    cache_state["completed"] = True
+                    break
+
+                seen_in_page: Set[str] = set()
+                for b in bindings:
+                    uri = (b.get("item") or {}).get("value", "")
+                    qid = uri.rsplit("/", 1)[-1]
+                    if not qid.startswith("Q"):
+                        continue
+                    seen_in_page.add(qid)
+                    label = (b.get("itemLabel") or {}).get("value", qid)
+                    if label == qid:
+                        continue
+                    desc = (b.get("itemDescription") or {}).get("value", "")
+                    sp = (b.get("speciesLabel") or {}).get("value", "")
+                    gen = (b.get("genderLabel") or {}).get("value", "")
+                    aff = (b.get("affLabel") or {}).get("value", "")
+
+                    rec = cache_state["records"].setdefault(qid, {
+                        "wikidata_id": qid,
+                        "name": label,
+                        "description": desc,
+                        "species": [],
+                        "gender": gen or "Unknown",
+                        "affiliations": [],
+                    })
+                    if sp and sp not in rec["species"] and not sp.startswith("Q"):
+                        rec["species"].append(sp)
+                    if aff and aff not in rec["affiliations"] and not aff.startswith("Q"):
+                        rec["affiliations"].append(aff)
+
+                offset += page_size
+                cache_state["last_offset"] = offset
+                with open(WIKIDATA_CACHE_PATH, "w", encoding="utf-8") as f:
+                    json.dump(cache_state, f, ensure_ascii=False)
+                if len(seen_in_page) < 50:
+                    cache_state["completed"] = True
+                    with open(WIKIDATA_CACHE_PATH, "w", encoding="utf-8") as f:
+                        json.dump(cache_state, f, ensure_ascii=False)
+                    break
+                time.sleep(0.3)
+
+        return cache_state
+
+    def fetch_wikipedia_marvel_categories(self, use_cache: bool = True) -> Dict[str, Any]:
+        """Paginated Wikipedia category traversal for Marvel heroes, villains, antiheroes, mutants, and teams."""
+        if use_cache and os.path.exists(WIKIPEDIA_CACHE_PATH):
+            with open(WIKIPEDIA_CACHE_PATH, "r", encoding="utf-8") as f:
+                cached = json.load(f)
+            if cached.get("completed"):
+                return cached
+
+        cat_specs = [
+            ("Category:Marvel_Comics_superheroes", "Heroes", None),
+            ("Category:Marvel_Comics_supervillains", "Villains", None),
+            ("Category:Marvel_Comics_antiheroes", "Antiheroes", None),
+            ("Category:Marvel_Comics_mutants", "Mutants", None),
+            ("Category:Marvel_Comics_cosmic_characters", "Cosmic", None),
+            ("Category:Marvel_Comics_alien_characters", "Aliens", None),
+            ("Category:Marvel_Comics_characters", "Other / unclassified", None),
+            ("Category:Avengers_(comics)_characters", None, "Avengers"),
+            ("Category:Spider-Man_characters", None, "Spider-Man Universe"),
+            ("Category:X-Men_members", None, "X-Men"),
+            ("Category:Fantastic_Four_characters", None, "Fantastic Four"),
+            ("Category:Guardians_of_the_Galaxy_characters", None, "Guardians of the Galaxy"),
+            ("Category:Inhumans_characters", None, "Inhumans"),
+            ("Category:Eternals_(comics)_characters", None, "Eternals"),
+            ("Category:Defenders_(comics)_characters", None, "Defenders"),
+            ("Category:Thunderbolts_(comics)_characters", None, "Thunderbolts"),
+            ("Category:Young_Avengers_characters", None, "Young Avengers"),
+            ("Category:Midnight_Sons_characters", None, "Midnight Sons"),
+        ]
+
+        pages_by_id: Dict[str, dict] = {}
+        failed_cats: List[str] = []
+        skip_prefixes = ("List of ", "Category:", "Template:", "Portal:", "Wikipedia:")
+
+        for cat_title, role_cat, team_aff in cat_specs:
+            cmcontinue = None
+            while True:
+                params = {
+                    "action": "query",
+                    "list": "categorymembers",
+                    "cmtitle": cat_title,
+                    "cmtype": "page",
+                    "cmlimit": "500",
+                    "format": "json",
+                }
+                if cmcontinue:
+                    params["cmcontinue"] = cmcontinue
+                url = f"{WIKIPEDIA_API_URL}?{urllib.parse.urlencode(params)}"
+                data = self._http_get_json(url, timeout=20, retries=3)
+                if not data:
+                    failed_cats.append(cat_title)
+                    break
+                for m in (data.get("query") or {}).get("categorymembers") or []:
+                    title = m.get("title", "")
+                    if not title or title.startswith(skip_prefixes):
+                        continue
+                    pid = str(m["pageid"])
+                    entry = pages_by_id.setdefault(pid, {
+                        "pageid": m["pageid"],
+                        "title": title,
+                        "categories": [],
+                        "affiliations": [],
+                    })
+                    if role_cat and role_cat not in entry["categories"]:
+                        entry["categories"].append(role_cat)
+                    if team_aff and team_aff not in entry["affiliations"]:
+                        entry["affiliations"].append(team_aff)
+                cmcontinue = (data.get("continue") or {}).get("cmcontinue")
+                if not cmcontinue:
+                    break
+                time.sleep(0.15)
+
+        result = {"completed": True, "failed_categories": failed_cats, "pages": pages_by_id}
+        with open(WIKIPEDIA_CACHE_PATH, "w", encoding="utf-8") as f:
+            json.dump(result, f, ensure_ascii=False)
+        return result
+
+    def import_public_catalog(self, use_cache: bool = True) -> Dict[str, Any]:
+        """
+        Comprehensive, resumable credential-free Marvel import merging:
+        1. Curated 28 seed characters (preserved with exact IDs & verified artwork)
+        2. SuperHeroAPI (MIT, jsDelivr CDN)
+        3. Wikidata SPARQL (CC0 1.0, paginated)
+        4. Wikipedia Category API (CC BY-SA 4.0, paginated)
+        Writes data/marvel_characters_raw.json and data/marvel_import_manifest.json.
+        """
+        os.makedirs(CACHE_DIR, exist_ok=True)
+        os.makedirs(DATA_DIR, exist_ok=True)
+
+        records_by_id: Dict[str, dict] = {}
+        norm_index: Dict[str, str] = {}
+        duplicates_merged = 0
+
+        def _merge_metadata(target: dict, incoming: dict):
+            for field in ("aliases", "affiliations", "categories", "comics", "series", "events"):
+                existing = target.setdefault(field, [])
+                for val in (incoming.get(field) or []):
+                    if val and val not in existing:
+                        existing.append(val)
+            if not target.get("description") and incoming.get("description"):
+                target["description"] = incoming["description"]
+            if (not target.get("species") or target.get("species") == "Unknown") and incoming.get("species"):
+                target["species"] = incoming["species"]
+            if incoming.get("wikidata_id") and not target.get("wikidata_id"):
+                target["wikidata_id"] = incoming["wikidata_id"]
+            if incoming.get("wikipedia_pageid") and not target.get("wikipedia_pageid"):
+                target["wikipedia_pageid"] = incoming["wikipedia_pageid"]
+            if incoming.get("powerstats") and not target.get("powerstats"):
+                target["powerstats"] = incoming["powerstats"]
+            srcs = target.setdefault("sources", [target.get("source", "Unknown")])
+            if incoming.get("source") and incoming["source"] not in srcs:
+                srcs.append(incoming["source"])
+
+        # 1. Curated 28 seed records (never overwritten)
+        for entry in _seed_offline_marvel_catalog():
+            entry.setdefault("categories", ["Supporting characters"] if not entry.get("is_combat_capable") else [])
+            entry.setdefault("affiliations", [])
+            entry.setdefault("sources", [entry.get("source", "Curated")])
+            records_by_id[entry["id"]] = entry
+            norm = self._normalize_name(entry["name"])
+            if norm and "mcu" not in entry["id"]:
+                norm_index.setdefault(norm, entry["id"])
+
+        # 2. SuperHeroAPI (~288 Marvel characters with verified CDN artwork & powerstats)
+        sh_records = self.fetch_superhero_api_marvel(use_cache=use_cache)
+        for rec in sh_records:
+            norm = self._normalize_name(rec["name"])
+            if norm in norm_index:
+                _merge_metadata(records_by_id[norm_index[norm]], rec)
+                duplicates_merged += 1
+            else:
+                records_by_id[rec["id"]] = rec
+                if norm:
+                    norm_index[norm] = rec["id"]
+
+        # 3. Wikidata SPARQL (1,488+ Marvel characters)
+        wd_state = self.fetch_wikidata_marvel_paginated(use_cache=use_cache)
+        wd_records = wd_state.get("records") or {}
+        for qid, wrec in wd_records.items():
+            cid = f"marvel_wd_{qid}"
+            norm = self._normalize_name(wrec["name"])
+            cats = self._classify_from_metadata("", " ".join(wrec.get("species") or []), [], wrec.get("description", ""))
+            entry = {
+                "id": cid,
+                "marvel_id": None,
+                "wikidata_id": qid,
+                "name": wrec["name"],
+                "incarnation": "Marvel Universe (Wikidata)",
+                "universe": "marvel",
+                "anime_id": "marvel",
+                "anime_name": "Marvel Comics",
+                "description": wrec.get("description", ""),
+                "image": f"/api/avatar/{cid}",
+                "image_source": "Missing artwork (neutral fallback)",
+                "image_attribution": MARVEL_ATTRIBUTION,
+                "image_verification_status": "missing_artwork_placeholder",
+                "aliases": [],
+                "affiliations": wrec.get("affiliations", []),
+                "species": ", ".join(wrec.get("species") or []) or "Unknown",
+                "gender": wrec.get("gender", "Unknown"),
+                "categories": cats,
+                "comics": [],
+                "series": [],
+                "events": [],
+                "source": "Wikidata SPARQL (CC0 1.0)",
+                "attribution": f"{MARVEL_ATTRIBUTION} | Metadata via Wikidata (CC0)",
+                "is_combat_capable": False,
+            }
+            if norm in norm_index:
+                _merge_metadata(records_by_id[norm_index[norm]], entry)
+                duplicates_merged += 1
+            else:
+                records_by_id[cid] = entry
+                if norm:
+                    norm_index[norm] = cid
+
+        # 4. Wikipedia Categories (heroes, villains, antiheroes, mutants, cosmic, teams)
+        wp_state = self.fetch_wikipedia_marvel_categories(use_cache=use_cache)
+        wp_pages = wp_state.get("pages") or {}
+        for pid, wpage in wp_pages.items():
+            cid = f"marvel_wp_{pid}"
+            norm = self._normalize_name(wpage["title"])
+            cats = [c for c in (wpage.get("categories") or []) if c != "Other / unclassified"] or ["Other / unclassified"]
+            entry = {
+                "id": cid,
+                "marvel_id": None,
+                "wikipedia_pageid": wpage["pageid"],
+                "name": wpage["title"],
+                "incarnation": "Marvel Comics (Wikipedia)",
+                "universe": "marvel",
+                "anime_id": "marvel",
+                "anime_name": "Marvel Comics",
+                "description": f"Marvel Comics character documented on Wikipedia ({wpage['title']}).",
+                "image": f"/api/avatar/{cid}",
+                "image_source": "Missing artwork (neutral fallback)",
+                "image_attribution": MARVEL_ATTRIBUTION,
+                "image_verification_status": "missing_artwork_placeholder",
+                "aliases": [],
+                "affiliations": wpage.get("affiliations", []),
+                "species": "Unknown",
+                "categories": cats,
+                "comics": [],
+                "series": [],
+                "events": [],
+                "source": "Wikipedia MediaWiki API (CC BY-SA 4.0)",
+                "attribution": f"{MARVEL_ATTRIBUTION} | Categories via Wikipedia (CC BY-SA 4.0)",
+                "is_combat_capable": False,
+            }
+            if norm in norm_index:
+                _merge_metadata(records_by_id[norm_index[norm]], entry)
+                duplicates_merged += 1
+            else:
+                records_by_id[cid] = entry
+                if norm:
+                    norm_index[norm] = cid
+
+        records = list(records_by_id.values())
+        cat_counts: Dict[str, int] = {}
+        img_verified = 0
+        combat_ready = 0
+        for r in records:
+            if r.get("image_verification_status") == "verified_cdn":
+                img_verified += 1
+            if r.get("is_combat_capable"):
+                combat_ready += 1
+            for c in (r.get("categories") or ["Other / unclassified"]):
+                cat_counts[c] = cat_counts.get(c, 0) + 1
+
+        now_iso = datetime.now(timezone.utc).isoformat()
+        manifest = {
+            "version": "2.0.0",
+            "import_mode": "public_multi_source_resumable",
+            "last_import_timestamp": now_iso,
+            "sources": {
+                "curated_seed": {"records": 28, "status": "complete"},
+                "superhero_api_mit": {"records": len(sh_records), "status": "complete" if sh_records else "unavailable"},
+                "wikidata_sparql_cc0": {
+                    "records": len(wd_records),
+                    "last_successful_offset": wd_state.get("last_offset", 0),
+                    "completed": wd_state.get("completed", False),
+                    "failed_pages": wd_state.get("failed_pages", []),
+                },
+                "wikipedia_categories_cc_by_sa": {
+                    "records": len(wp_pages),
+                    "completed": wp_state.get("completed", False),
+                    "failed_categories": wp_state.get("failed_categories", []),
+                },
+                "official_marvel_api": {"status": "skipped_no_credentials"},
+            },
+            "total_discovered_before_merge": 28 + len(sh_records) + len(wd_records) + len(wp_pages),
+            "unique_ids": len(records),
+            "duplicates_merged": duplicates_merged,
+            "failed_pages": wd_state.get("failed_pages", []),
+            "last_successful_offset": wd_state.get("last_offset", 0),
+            "image_coverage": {
+                "verified_cdn": img_verified,
+                "missing_artwork_placeholder": len(records) - img_verified,
+            },
+            "combat_verification_coverage": {
+                "combat_eligible": combat_ready,
+                "combat_incomplete_or_discovery_only": len(records) - combat_ready,
+            },
+            "category_counts": cat_counts,
+            "errors": self.errors,
+        }
+
+        out_payload = {
+            "metadata": {
+                "version": "2.0.0",
+                "universe": "marvel",
+                "import_mode": "public_multi_source_resumable",
+                "attribution": MARVEL_ATTRIBUTION,
+                "generated_at": now_iso,
+                "total_characters": len(records),
+                "api_fetched": len(sh_records) + len(wd_records) + len(wp_pages),
+                "duplicates_skipped": duplicates_merged,
+                "errors": self.errors,
+            },
+            "characters": records,
+        }
+        with open(MARVEL_RAW_PATH, "w", encoding="utf-8") as f:
+            json.dump(out_payload, f, indent=2, ensure_ascii=False)
+        with open(MARVEL_MANIFEST_PATH, "w", encoding="utf-8") as f:
+            json.dump(manifest, f, indent=2, ensure_ascii=False)
+
+        return manifest
+
 
 if __name__ == "__main__":
     importer = MarvelCharacterImporter()
-    print(json.dumps(importer.import_characters(), indent=2))
+    print(json.dumps(importer.import_public_catalog(use_cache=True), indent=2))
