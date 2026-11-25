@@ -17,6 +17,7 @@ import json
 import asyncio
 import mimetypes
 import time
+from typing import Any
 from urllib.parse import urlparse, parse_qs
 
 from websockets.asyncio.server import serve, ServerConnection, Response
@@ -33,7 +34,9 @@ ANIME_DB_PATH = os.path.join(DATA_DIR, "anime_platform.db")
 # Import database manager & avatar generator
 from src.anime_database import AnimeDatabaseManager
 from src.avatar_generator import generate_character_svg
+from src.local_avatars import LocalAvatarLibrary
 anime_db = AnimeDatabaseManager(ANIME_JSON_PATH, ANIME_DB_PATH)
+local_avatars = LocalAvatarLibrary(PUBLIC_DIR)
 
 # Legacy compatibility cache
 with open(POKEMON_JSON_PATH, "r", encoding="utf-8") as f:
@@ -518,6 +521,121 @@ async def ws_handler(websocket: ServerConnection):
                         "data": {"message": "You have withdrawn from this match."}
                     }))
                     continue
+
+            # 9. UPDATE PROFILE (Live Name & Avatar Sync)
+            elif action == "update_profile":
+                new_name = str(data.get("name", "")).strip()[:20]
+                new_avatar = str(data.get("avatar", "")).strip()
+                if client_room_code and client_session_id:
+                    room = room_manager.rooms.get(client_room_code)
+                    if room:
+                        p = room.get_player(client_session_id)
+                        if p:
+                            if new_name:
+                                p.name = new_name
+                            if new_avatar:
+                                p.avatar = new_avatar
+                            await broadcast_to_room(room, "room_state", room.to_state_dict())
+
+            # 10. LOCAL ANIME AVATAR LIBRARY MANAGEMENT (Zero External APIs)
+            elif action == "avatar_admin_list":
+                manifest = local_avatars.sync_and_get_manifest()
+                await websocket.send(json.dumps({
+                    "type": "avatar_library_updated",
+                    "data": manifest
+                }))
+
+            elif action == "avatar_admin_upload":
+                items = data.get("items") or []
+                if not items and data.get("image_data"):
+                    items = [data]
+                added = []
+                errors = []
+                for item in items:
+                    try:
+                        entry = local_avatars.upload_character(
+                            name=str(item.get("name", "")),
+                            anime=str(item.get("anime", "other-anime")),
+                            image_data=str(item.get("image_data", "")),
+                            filename=str(item.get("filename", "avatar.png")),
+                            description=str(item.get("description", "")),
+                            source=str(item.get("source", "")),
+                            license_info=str(item.get("license", "")),
+                        )
+                        added.append(entry)
+                    except Exception as ex:
+                        errors.append(str(ex))
+                manifest = local_avatars.sync_and_get_manifest()
+                await websocket.send(json.dumps({
+                    "type": "avatar_admin_result",
+                    "data": {
+                        "action": "upload",
+                        "success": len(added) > 0 and len(errors) == 0,
+                        "added": added,
+                        "errors": errors,
+                        "message": f"Imported {len(added)} character(s)." + (f" Errors: {'; '.join(errors)}" if errors else "")
+                    }
+                }))
+                await websocket.send(json.dumps({
+                    "type": "avatar_library_updated",
+                    "data": manifest
+                }))
+
+            elif action == "avatar_admin_edit":
+                try:
+                    updated = local_avatars.edit_character(
+                        char_id=str(data.get("id", "")),
+                        new_name=str(data.get("name", "")),
+                        new_anime=str(data.get("anime", "")),
+                    )
+                    manifest = local_avatars.sync_and_get_manifest()
+                    await websocket.send(json.dumps({
+                        "type": "avatar_admin_result",
+                        "data": {"action": "edit", "success": True, "character": updated, "message": f"Updated {updated['name']}."}
+                    }))
+                    await websocket.send(json.dumps({
+                        "type": "avatar_library_updated",
+                        "data": manifest
+                    }))
+                except Exception as ex:
+                    await websocket.send(json.dumps({
+                        "type": "avatar_admin_result",
+                        "data": {"action": "edit", "success": False, "message": str(ex)}
+                    }))
+
+            elif action == "avatar_admin_replace":
+                try:
+                    updated = local_avatars.replace_portrait(
+                        char_id=str(data.get("id", "")),
+                        image_data=str(data.get("image_data", "")),
+                        filename=str(data.get("filename", "avatar.png")),
+                    )
+                    manifest = local_avatars.sync_and_get_manifest()
+                    await websocket.send(json.dumps({
+                        "type": "avatar_admin_result",
+                        "data": {"action": "replace", "success": True, "character": updated, "message": f"Replaced portrait for {updated['name']}."}
+                    }))
+                    await websocket.send(json.dumps({
+                        "type": "avatar_library_updated",
+                        "data": manifest
+                    }))
+                except Exception as ex:
+                    await websocket.send(json.dumps({
+                        "type": "avatar_admin_result",
+                        "data": {"action": "replace", "success": False, "message": str(ex)}
+                    }))
+
+            elif action == "avatar_admin_delete":
+                ok = local_avatars.delete_character(str(data.get("id", "")))
+                manifest = local_avatars.sync_and_get_manifest()
+                await websocket.send(json.dumps({
+                    "type": "avatar_admin_result",
+                    "data": {"action": "delete", "success": ok, "message": "Character removed from library." if ok else "Character not found."}
+                }))
+                await websocket.send(json.dumps({
+                    "type": "avatar_library_updated",
+                    "data": manifest
+                }))
                 if p.has_skipped:
                     continue
 
@@ -928,6 +1046,11 @@ def process_http_request(connection, request):
 
         return json_response(200, "OK", POKEMON_DATABASE)
 
+    # Local Anime Avatar Library Manifest (Synced with local folders, zero external APIs)
+    if path in ["/assets/avatars/manifest.json", "/local-avatars/manifest"]:
+        manifest = local_avatars.sync_and_get_manifest()
+        return json_response(200, "OK", manifest)
+
     # Static file routing
     file_rel = "index.html" if path in ["", "/"] else path.lstrip("/")
     file_path = os.path.join(PUBLIC_DIR, file_rel)
@@ -940,6 +1063,35 @@ def process_http_request(connection, request):
         if "text/" in content_type or "javascript" in content_type or "json" in content_type:
             content_type += "; charset=utf-8"
 
+        file_size = os.path.getsize(file_path)
+        range_header = request.headers.get("Range")
+        if range_header and range_header.startswith("bytes="):
+            try:
+                spec = range_header.replace("bytes=", "").split(",")[0].strip()
+                start_s, end_s = spec.split("-", 1)
+                start = int(start_s) if start_s else 0
+                end = int(end_s) if end_s else file_size - 1
+                start = max(0, start)
+                end = min(file_size - 1, end)
+                length = max(0, end - start + 1)
+                with open(file_path, "rb") as f:
+                    f.seek(start)
+                    chunk = f.read(length)
+                return Response(
+                    206, "Partial Content",
+                    Headers([
+                        ("Content-Type", content_type),
+                        ("Content-Range", f"bytes {start}-{end}/{file_size}"),
+                        ("Accept-Ranges", "bytes"),
+                        ("Content-Length", str(len(chunk))),
+                        ("Access-Control-Allow-Origin", "*"),
+                        ("Cache-Control", "no-cache"),
+                    ]),
+                    chunk
+                )
+            except Exception:
+                pass
+
         with open(file_path, "rb") as f:
             data = f.read()
 
@@ -947,6 +1099,8 @@ def process_http_request(connection, request):
             200, "OK",
             Headers([
                 ("Content-Type", content_type),
+                ("Accept-Ranges", "bytes"),
+                ("Content-Length", str(len(data))),
                 ("Access-Control-Allow-Origin", "*"),
                 ("Cache-Control", "no-cache")
             ]),

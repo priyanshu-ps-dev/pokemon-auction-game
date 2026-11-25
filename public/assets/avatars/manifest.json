@@ -1,0 +1,594 @@
+{
+  "characters": [
+    {
+      "id": "one-piece-ace",
+      "name": "Ace",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/ace.jpg",
+      "description": "",
+      "source": "Local Upload",
+      "license": ""
+    },
+    {
+      "id": "one-piece-dracule-mihawk",
+      "name": "Dracule Mihawk",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/dracule_mihawk.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-edward-newgate",
+      "name": "Edward Newgate",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/edward_newgate.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-kaido-of-the-beasts",
+      "name": "Kaido Of The Beasts",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/kaido_of_the_beasts.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-marshall-d-teach",
+      "name": "Marshall D Teach",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/marshall_d_teach.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-red-haired-shanks",
+      "name": "Red Haired Shanks",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/red_haired_shanks.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-sakazuki",
+      "name": "Sakazuki",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/sakazuki.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "naruto-hashirama-senju",
+      "name": "Hashirama Senju",
+      "anime": "Naruto",
+      "franchise_slug": "naruto",
+      "image": "/assets/avatars/naruto/hashirama_senju.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "naruto-madara-uchiha",
+      "name": "Madara Uchiha",
+      "anime": "Naruto",
+      "franchise_slug": "naruto",
+      "image": "/assets/avatars/naruto/madara_uchiha.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "naruto-naruto-uzumaki",
+      "name": "Naruto Uzumaki",
+      "anime": "Naruto",
+      "franchise_slug": "naruto",
+      "image": "/assets/avatars/naruto/naruto_uzumaki.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "naruto-obito-uchiha",
+      "name": "Obito Uchiha",
+      "anime": "Naruto",
+      "franchise_slug": "naruto",
+      "image": "/assets/avatars/naruto/obito_uchiha.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "naruto-sasuke-uchiha",
+      "name": "Sasuke Uchiha",
+      "anime": "Naruto",
+      "franchise_slug": "naruto",
+      "image": "/assets/avatars/naruto/sasuke_uchiha.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "naruto-tobirama-senju",
+      "name": "Tobirama Senju",
+      "anime": "Naruto",
+      "franchise_slug": "naruto",
+      "image": "/assets/avatars/naruto/tobirama_senju.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-eternatus",
+      "name": "Eternatus",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/eternatus.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-mega-mewtwo-x",
+      "name": "Mega Mewtwo X",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/mega_mewtwo_x.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-mega-mewtwo-y",
+      "name": "Mega Mewtwo Y",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/mega_mewtwo_y.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-mega-rayquaza",
+      "name": "Mega Rayquaza",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/mega_rayquaza.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-mega-zygarde",
+      "name": "Mega Zygarde",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/mega_zygarde.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-primal-groudon",
+      "name": "Primal Groudon",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/primal_groudon.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "dragon-ball-jiren",
+      "name": "Jiren",
+      "anime": "Dragon Ball",
+      "franchise_slug": "dragon-ball",
+      "image": "/assets/avatars/dragon-ball/jiren.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "dragon-ball-lord-beerus",
+      "name": "Lord Beerus",
+      "anime": "Dragon Ball",
+      "franchise_slug": "dragon-ball",
+      "image": "/assets/avatars/dragon-ball/lord_beerus.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "dragon-ball-son-goku",
+      "name": "Son Goku",
+      "anime": "Dragon Ball",
+      "franchise_slug": "dragon-ball",
+      "image": "/assets/avatars/dragon-ball/son_goku.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "dragon-ball-whis",
+      "name": "Whis",
+      "anime": "Dragon Ball",
+      "franchise_slug": "dragon-ball",
+      "image": "/assets/avatars/dragon-ball/whis.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "bleach-genryusai-yamamoto",
+      "name": "Genryusai Yamamoto",
+      "anime": "Bleach",
+      "franchise_slug": "bleach",
+      "image": "/assets/avatars/bleach/genryusai_yamamoto.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "bleach-ichigo-kurosaki",
+      "name": "Ichigo Kurosaki",
+      "anime": "Bleach",
+      "franchise_slug": "bleach",
+      "image": "/assets/avatars/bleach/ichigo_kurosaki.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "bleach-kenpachi-zaraki",
+      "name": "Kenpachi Zaraki",
+      "anime": "Bleach",
+      "franchise_slug": "bleach",
+      "image": "/assets/avatars/bleach/kenpachi_zaraki.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "bleach-kisuke-urahara",
+      "name": "Kisuke Urahara",
+      "anime": "Bleach",
+      "franchise_slug": "bleach",
+      "image": "/assets/avatars/bleach/kisuke_urahara.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "bleach-rukia-kuchiki",
+      "name": "Rukia Kuchiki",
+      "anime": "Bleach",
+      "franchise_slug": "bleach",
+      "image": "/assets/avatars/bleach/rukia_kuchiki.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "bleach-sosuke-aizen",
+      "name": "Sosuke Aizen",
+      "anime": "Bleach",
+      "franchise_slug": "bleach",
+      "image": "/assets/avatars/bleach/sosuke_aizen.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "jujutsu-kaisen-nobara-kugisaki",
+      "name": "Nobara Kugisaki",
+      "anime": "Jujutsu Kaisen",
+      "franchise_slug": "jujutsu-kaisen",
+      "image": "/assets/avatars/jujutsu-kaisen/nobara_kugisaki.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "jujutsu-kaisen-ryomen-sukuna",
+      "name": "Ryomen Sukuna",
+      "anime": "Jujutsu Kaisen",
+      "franchise_slug": "jujutsu-kaisen",
+      "image": "/assets/avatars/jujutsu-kaisen/ryomen_sukuna.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "jujutsu-kaisen-satoru-gojou",
+      "name": "Satoru Gojou",
+      "anime": "Jujutsu Kaisen",
+      "franchise_slug": "jujutsu-kaisen",
+      "image": "/assets/avatars/jujutsu-kaisen/satoru_gojou.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "jujutsu-kaisen-toji-fushiguro",
+      "name": "Toji Fushiguro",
+      "anime": "Jujutsu Kaisen",
+      "franchise_slug": "jujutsu-kaisen",
+      "image": "/assets/avatars/jujutsu-kaisen/toji_fushiguro.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "jujutsu-kaisen-yuta-okkotsu",
+      "name": "Yuta Okkotsu",
+      "anime": "Jujutsu Kaisen",
+      "franchise_slug": "jujutsu-kaisen",
+      "image": "/assets/avatars/jujutsu-kaisen/yuta_okkotsu.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "jujutsu-kaisen-yuuji-itadori",
+      "name": "Yuuji Itadori",
+      "anime": "Jujutsu Kaisen",
+      "franchise_slug": "jujutsu-kaisen",
+      "image": "/assets/avatars/jujutsu-kaisen/yuuji_itadori.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "demon-slayer-inosuke-hashibira",
+      "name": "Inosuke Hashibira",
+      "anime": "Demon Slayer",
+      "franchise_slug": "demon-slayer",
+      "image": "/assets/avatars/demon-slayer/inosuke_hashibira.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "demon-slayer-muzan-kibutsuji",
+      "name": "Muzan Kibutsuji",
+      "anime": "Demon Slayer",
+      "franchise_slug": "demon-slayer",
+      "image": "/assets/avatars/demon-slayer/muzan_kibutsuji.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "demon-slayer-nezuko-kamado",
+      "name": "Nezuko Kamado",
+      "anime": "Demon Slayer",
+      "franchise_slug": "demon-slayer",
+      "image": "/assets/avatars/demon-slayer/nezuko_kamado.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "demon-slayer-tanjirou-kamado",
+      "name": "Tanjirou Kamado",
+      "anime": "Demon Slayer",
+      "franchise_slug": "demon-slayer",
+      "image": "/assets/avatars/demon-slayer/tanjirou_kamado.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "demon-slayer-yoriichi-tsugikuni",
+      "name": "Yoriichi Tsugikuni",
+      "anime": "Demon Slayer",
+      "franchise_slug": "demon-slayer",
+      "image": "/assets/avatars/demon-slayer/yoriichi_tsugikuni.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "demon-slayer-zenitsu-agatsuma",
+      "name": "Zenitsu Agatsuma",
+      "anime": "Demon Slayer",
+      "franchise_slug": "demon-slayer",
+      "image": "/assets/avatars/demon-slayer/zenitsu_agatsuma.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "attack-on-titan-armin-arlert",
+      "name": "Armin Arlert",
+      "anime": "Attack on Titan",
+      "franchise_slug": "attack-on-titan",
+      "image": "/assets/avatars/attack-on-titan/armin_arlert.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "attack-on-titan-eren-yeager",
+      "name": "Eren Yeager",
+      "anime": "Attack on Titan",
+      "franchise_slug": "attack-on-titan",
+      "image": "/assets/avatars/attack-on-titan/eren_yeager.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "attack-on-titan-erwin-smith",
+      "name": "Erwin Smith",
+      "anime": "Attack on Titan",
+      "franchise_slug": "attack-on-titan",
+      "image": "/assets/avatars/attack-on-titan/erwin_smith.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "attack-on-titan-hange-zoe",
+      "name": "Hange Zoe",
+      "anime": "Attack on Titan",
+      "franchise_slug": "attack-on-titan",
+      "image": "/assets/avatars/attack-on-titan/hange_zoe.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "attack-on-titan-levi",
+      "name": "Levi",
+      "anime": "Attack on Titan",
+      "franchise_slug": "attack-on-titan",
+      "image": "/assets/avatars/attack-on-titan/levi.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "attack-on-titan-levi-ackerman",
+      "name": "Levi Ackerman",
+      "anime": "Attack on Titan",
+      "franchise_slug": "attack-on-titan",
+      "image": "/assets/avatars/attack-on-titan/levi_ackerman.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "my-hero-academia-all-might",
+      "name": "All Might",
+      "anime": "My Hero Academia",
+      "franchise_slug": "my-hero-academia",
+      "image": "/assets/avatars/my-hero-academia/all_might.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "my-hero-academia-eijirou-kirishima",
+      "name": "Eijirou Kirishima",
+      "anime": "My Hero Academia",
+      "franchise_slug": "my-hero-academia",
+      "image": "/assets/avatars/my-hero-academia/eijirou_kirishima.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "my-hero-academia-izuku-midoriya",
+      "name": "Izuku Midoriya",
+      "anime": "My Hero Academia",
+      "franchise_slug": "my-hero-academia",
+      "image": "/assets/avatars/my-hero-academia/izuku_midoriya.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "my-hero-academia-shouta-aizawa",
+      "name": "Shouta Aizawa",
+      "anime": "My Hero Academia",
+      "franchise_slug": "my-hero-academia",
+      "image": "/assets/avatars/my-hero-academia/shouta_aizawa.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "my-hero-academia-shouto-todoroki",
+      "name": "Shouto Todoroki",
+      "anime": "My Hero Academia",
+      "franchise_slug": "my-hero-academia",
+      "image": "/assets/avatars/my-hero-academia/shouto_todoroki.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "my-hero-academia-toshinori-yagi",
+      "name": "Toshinori Yagi",
+      "anime": "My Hero Academia",
+      "franchise_slug": "my-hero-academia",
+      "image": "/assets/avatars/my-hero-academia/toshinori_yagi.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-black-panther",
+      "name": "Black Panther",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/black_panther.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-captain-america",
+      "name": "Captain America",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/captain_america.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-doctor-strange",
+      "name": "Doctor Strange",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/doctor_strange.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-iron-man",
+      "name": "Iron Man",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/iron_man.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-spider-man",
+      "name": "Spider Man",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/spider_man.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-thor",
+      "name": "Thor",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/thor.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    }
+  ]
+}
