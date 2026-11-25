@@ -10,6 +10,7 @@ import asyncio
 import json
 import random
 import time
+import uuid
 from typing import Dict, List, Optional, Set, Any
 
 # Constants
@@ -57,6 +58,8 @@ def sanitize_character_for_auction(char: dict) -> dict:
     return {
         "id": char["id"],
         "name": char["name"],
+        "universe": char.get("universe", "pokemon" if char.get("anime_id") == "pokemon" else ("marvel" if char.get("anime_id") == "marvel" else "anime")),
+        "incarnation": char.get("incarnation", ""),
         "anime_id": char.get("anime_id", "pokemon"),
         "anime_name": char.get("anime_name", "Pokémon"),
         "current_form": char.get("current_form", "Base"),
@@ -171,13 +174,18 @@ class Room:
         min_bid: int = OPENING_MIN_BID,
         anime_mode: str = "all",
         selected_anime: Optional[List[str]] = None,
-        forms_mode: str = "SINGLE_BASE"
+        forms_mode: str = "SINGLE_BASE",
+        battle_control_mode: str = "ai_vs_ai",
+        tournament_format: str = "round_robin"
     ):
         self.room_code = room_code
         self.starting_purse = starting_purse
         self.countdown_seconds = countdown_seconds
         self.min_bid = min_bid
         self.bid_increment = MIN_BID_INCREMENT
+        self.battle_control_mode = battle_control_mode
+        self.tournament_format = tournament_format
+        self.active_live_battle: Optional[Any] = None
         
         # Anime game mode configurations
         self.anime_mode = anime_mode  # 'all', 'single', 'multiple', 'pokemon', 'custom'
@@ -205,6 +213,7 @@ class Room:
         self.match_number: int = 1
         self.match_id: str = f"{room_code}_m1"
         self.match_history: List[dict] = []
+        self.battle_results: Optional[dict] = None
         self.used_character_ids: Set[Any] = set()
         self.consecutive_unsold_count: int = 0
         self.auction_history: List[dict] = []
@@ -212,6 +221,9 @@ class Room:
         self.skipped_player_ids: Set[str] = set()
         self.rematch_votes: Dict[str, bool] = {}
         self.skip_event: Optional[asyncio.Event] = None
+        self.auction_lock: asyncio.Lock = asyncio.Lock()
+        self.settled_rounds: Set[int] = set()
+        self.settlement_ledger: List[dict] = []
 
         # Fixed Dynamic Auction Pool (calculated when game starts)
         self.max_auction_characters: int = 16
@@ -393,7 +405,12 @@ class Room:
             p.rematch_vote = None
 
         self.status = "AUCTION"
+        if self.active_live_battle and hasattr(self.active_live_battle, "invalidate"):
+            self.active_live_battle.invalidate()
+        self.active_live_battle = None
+        self.battle_results = None
         self.current_character_full = None
+        self.last_bid_record = None
         self.current_bid = 0
         self.highest_bidder_id = None
         self.skipped_player_ids.clear()
@@ -401,6 +418,8 @@ class Room:
         self.consecutive_unsold_count = 0
         self.auction_history.clear()
         self.used_character_ids.clear()
+        self.settled_rounds.clear()
+        self.settlement_ledger.clear()
 
         room_manager.initialize_room_pool(self)
 
@@ -421,6 +440,95 @@ class Room:
     def get_player(self, session_id: str) -> Optional[Player]:
         return self.players.get(session_id) or self.spectators.get(session_id)
 
+    def settle_current_round(self, round_id: int) -> Optional[dict]:
+        """
+        Atomically and idempotently settles the given auction round.
+        Guarantees each round settles at most once, and purse deduction +
+        roster assignment happen together with an auditable ledger record.
+        Returns settlement dict if settled by this call, or None if already settled.
+        """
+        if round_id in self.settled_rounds:
+            return None
+        self.settled_rounds.add(round_id)
+
+        sanitized_char = self.current_character_sanitized
+        settlement_id = f"{self.match_id}_r{round_id}_{uuid.uuid4().hex[:8]}"
+
+        if (
+            self.highest_bidder_id
+            and self.highest_bidder_id in self.players
+            and self.current_character_full is not None
+        ):
+            winner = self.players[self.highest_bidder_id]
+            winning_bid = int(self.current_bid)
+            if not winner.is_team_full and winner.purse >= winning_bid and winning_bid > 0:
+                winner.purse -= winning_bid
+                winner.team.append(self.current_character_full)
+                self.consecutive_unsold_count = 0
+
+                tx = {
+                    "settlement_id": settlement_id,
+                    "room_code": self.room_code,
+                    "match_id": self.match_id,
+                    "round_id": round_id,
+                    "character_id": self.current_character_full.get("id"),
+                    "player_id": winner.session_id,
+                    "amount": winning_bid,
+                    "status": "SOLD",
+                    "timestamp": time.time(),
+                }
+                self.settlement_ledger.append(tx)
+                self.auction_history.append({
+                    "settlement_id": settlement_id,
+                    "round_id": round_id,
+                    "character": sanitized_char,
+                    "winner_id": winner.session_id,
+                    "winner_name": winner.name,
+                    "winning_bid": winning_bid,
+                    "status": "SOLD",
+                })
+                return {
+                    "status": "SOLD",
+                    "settlement_id": settlement_id,
+                    "round_id": round_id,
+                    "winner": winner,
+                    "winning_bid": winning_bid,
+                    "character": sanitized_char,
+                    "transaction": tx,
+                }
+
+        self.consecutive_unsold_count += 1
+        tx = {
+            "settlement_id": settlement_id,
+            "room_code": self.room_code,
+            "match_id": self.match_id,
+            "round_id": round_id,
+            "character_id": self.current_character_full.get("id") if self.current_character_full else None,
+            "player_id": None,
+            "amount": 0,
+            "status": "UNSOLD",
+            "timestamp": time.time(),
+        }
+        self.settlement_ledger.append(tx)
+        self.auction_history.append({
+            "settlement_id": settlement_id,
+            "round_id": round_id,
+            "character": sanitized_char,
+            "winner_id": None,
+            "winner_name": None,
+            "winning_bid": 0,
+            "status": "UNSOLD",
+        })
+        return {
+            "status": "UNSOLD",
+            "settlement_id": settlement_id,
+            "round_id": round_id,
+            "winner": None,
+            "winning_bid": 0,
+            "character": sanitized_char,
+            "transaction": tx,
+        }
+
     def calculate_max_bid_for_player(self, player: Player) -> int:
         """
         Calculates maximum allowed bid for a player.
@@ -436,7 +544,7 @@ class Room:
         Reveals stats ONLY when status is GAME_OVER.
         During AUCTION and LOBBY, all competitive stats are hidden.
         """
-        reveal_stats = (self.status == "GAME_OVER")
+        reveal_stats = (self.status in ("BATTLE", "GAME_OVER"))
 
         highest_bidder_name = None
         highest_bidder_avatar = None
@@ -456,6 +564,8 @@ class Room:
             "anime_mode": self.anime_mode,
             "selected_anime": self.selected_anime,
             "forms_mode": self.forms_mode,
+            "battle_control_mode": self.battle_control_mode,
+            "tournament_format": self.tournament_format,
             "max_auction_pokemon": self.max_auction_characters,
             "max_auction_characters": self.max_auction_characters,
             "auction_pokemon_count": self.auction_character_count,
@@ -517,7 +627,9 @@ class RoomManager:
         min_bid: int = OPENING_MIN_BID,
         anime_mode: str = "all",
         selected_anime: Optional[List[str]] = None,
-        forms_mode: str = "SINGLE_BASE"
+        forms_mode: str = "SINGLE_BASE",
+        battle_control_mode: str = "ai_vs_ai",
+        tournament_format: str = "round_robin"
     ) -> Room:
         code = self.generate_room_code()
         host = Player(session_id=session_id, name=host_name, avatar=host_avatar, is_host=True, starting_purse=starting_purse)
@@ -529,7 +641,9 @@ class RoomManager:
             min_bid=min_bid,
             anime_mode=anime_mode,
             selected_anime=selected_anime,
-            forms_mode=forms_mode
+            forms_mode=forms_mode,
+            battle_control_mode=battle_control_mode,
+            tournament_format=tournament_format
         )
 
         # Build initial character pool based on anime_mode
@@ -677,3 +791,38 @@ class RoomManager:
             res["rank"] = current_rank
 
         return results
+
+    def calculate_battle_leaderboard(self, room: Room, battle_results: Optional[dict]) -> List[dict]:
+        """
+        Ranks players strictly by simulated battle results (wins/points/remaining HP),
+        keeping team_power as informational metadata only. Falls back to
+        calculate_final_leaderboard if no battle results are available.
+        """
+        if not battle_results or not battle_results.get("standings"):
+            return self.calculate_final_leaderboard(room)
+
+        standings_by_sid = {s["session_id"]: s for s in battle_results["standings"]}
+        base_entries = {e["session_id"]: e for e in self.calculate_final_leaderboard(room)}
+
+        final_list: List[dict] = []
+        for s in battle_results["standings"]:
+            sid = s["session_id"]
+            entry = dict(base_entries.get(sid, {"session_id": sid, "name": s["name"], "team": []}))
+            entry.update({
+                "rank": s["rank"],
+                "battle_wins": s["wins"],
+                "battle_losses": s["losses"],
+                "battle_draws": s["draws"],
+                "battle_points": s["points"],
+                "battle_remaining_hp": s["remaining_hp_total"],
+                "matches_played": s["matches_played"],
+            })
+            final_list.append(entry)
+
+        # Include any player missing from standings at the end
+        for sid, entry in base_entries.items():
+            if sid not in standings_by_sid:
+                entry["rank"] = len(final_list) + 1
+                final_list.append(entry)
+
+        return final_list

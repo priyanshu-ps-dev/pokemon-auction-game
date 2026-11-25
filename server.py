@@ -17,7 +17,8 @@ import json
 import asyncio
 import mimetypes
 import time
-from urllib.parse import urlparse, parse_qs
+from typing import Any
+from urllib.parse import urlparse, parse_qs, unquote
 
 from websockets.asyncio.server import serve, ServerConnection, Response
 from websockets.http11 import Headers
@@ -33,7 +34,12 @@ ANIME_DB_PATH = os.path.join(DATA_DIR, "anime_platform.db")
 # Import database manager & avatar generator
 from src.anime_database import AnimeDatabaseManager
 from src.avatar_generator import generate_character_svg
+from src.battle_manager import BattleManager
+from src.live_battle_session import LiveBattleSession
+from src.player_profiles import PlayerProfileStore
 anime_db = AnimeDatabaseManager(ANIME_JSON_PATH, ANIME_DB_PATH)
+battle_manager = BattleManager()
+profile_store = PlayerProfileStore()
 
 # Legacy compatibility cache
 with open(POKEMON_JSON_PATH, "r", encoding="utf-8") as f:
@@ -158,52 +164,33 @@ async def run_room_auction_loop(room: Room):
             if len(active_now) < 2:
                 break
 
-            # 3. AUCTION RESOLUTION
-            if room.highest_bidder_id and room.highest_bidder_id in room.players:
-                # Character is SOLD
-                winner = room.players[room.highest_bidder_id]
-                winning_bid = room.current_bid
+            # 3. ATOMIC & IDEMPOTENT AUCTION RESOLUTION
+            async with room.auction_lock:
+                settlement = room.settle_current_round(room.auction_character_count)
 
-                # Deduct room-specific purse
-                winner.purse -= winning_bid
-                # Award character to team
-                winner.team.append(room.current_character_full)
-                room.consecutive_unsold_count = 0
-
-                room.auction_history.append({
-                    "character": sanitized_char,
-                    "winner_id": winner.session_id,
-                    "winner_name": winner.name,
-                    "winning_bid": winning_bid,
-                    "status": "SOLD"
-                })
-
+            if settlement and settlement["status"] == "SOLD":
+                winner = settlement["winner"]
+                winning_bid = settlement["winning_bid"]
                 sold_data = {
+                    "settlement_id": settlement["settlement_id"],
+                    "round_id": settlement["round_id"],
                     "winner_id": winner.session_id,
                     "winner_name": winner.name,
                     "winning_bid": winning_bid,
-                    "character": sanitized_char,
-                    "pokemon": sanitized_char,
+                    "character": settlement["character"],
+                    "pokemon": settlement["character"],
                     "remaining_purse": winner.purse,
                     "team_count": winner.team_count,
                     "room_state": room.to_state_dict()
                 }
                 await broadcast_to_room(room, "auction_sold", sold_data)
                 await broadcast_to_room(room, "auction_won", sold_data)
-            else:
-                # Character UNSOLD
-                room.consecutive_unsold_count += 1
-                room.auction_history.append({
-                    "character": sanitized_char,
-                    "winner_id": None,
-                    "winner_name": None,
-                    "winning_bid": 0,
-                    "status": "UNSOLD"
-                })
-
+            elif settlement:
                 await broadcast_to_room(room, "auction_unsold", {
-                    "character": sanitized_char,
-                    "pokemon": sanitized_char,
+                    "settlement_id": settlement["settlement_id"],
+                    "round_id": settlement["round_id"],
+                    "character": settlement["character"],
+                    "pokemon": settlement["character"],
                     "consecutive_unsold": room.consecutive_unsold_count,
                     "room_state": room.to_state_dict()
                 })
@@ -227,13 +214,162 @@ async def run_room_auction_loop(room: Room):
             await broadcast_to_room(room, "room_state", room.to_state_dict())
             await asyncio.sleep(2.5)
 
-        # 4. MATCH COMPLETED!
+        # 4. AUCTION COMPLETE -> BATTLE SIMULATION -> FINAL LEADERBOARD
+        room.status = "BATTLE"
+        await broadcast_to_room(room, "battle_started", {
+            "match_id": room.match_id,
+            "finish_reason": finish_reason,
+            "battle_control_mode": room.battle_control_mode,
+            "tournament_format": room.tournament_format,
+            "room_state": room.to_state_dict()
+        })
+
+        active_players = [p for p in room.players.values() if not p.is_withdrawn]
+        if room.battle_control_mode in ("player_vs_ai", "player_vs_player") and len(active_players) == 2:
+            pa, pb = active_players[0], active_players[1]
+            built_a = [battle_manager.build_combatant(c)[1] for c in pa.team]
+            built_b = [battle_manager.build_combatant(c)[1] for c in pb.team]
+            current_match_id = room.match_id
+            images_map = {
+                str(c.get("id", "")): c.get("image", "")
+                for c in (pa.team + pb.team)
+            }
+            live_sess = LiveBattleSession(
+                pa.session_id, built_a,
+                pb.session_id, built_b,
+                control_mode=room.battle_control_mode,
+                images_by_id=images_map,
+                match_id=current_match_id,
+            )
+            room.active_live_battle = live_sess
+
+            async def _send_prompt(pid: str, prompt_data: dict):
+                if room.match_id != current_match_id or live_sess.is_invalidated:
+                    return
+                pl = room.players.get(pid)
+                if pl and pl.ws is not None:
+                    try:
+                        enriched = dict(prompt_data)
+                        enriched["player_a_name"] = pa.name
+                        enriched["player_b_name"] = pb.name
+                        await pl.ws.send(json.dumps({"type": "battle_turn_prompt", "data": enriched}, ensure_ascii=False))
+                    except Exception:
+                        pass
+
+            async def _broadcast_turn(turn_entry: dict):
+                if room.match_id != current_match_id or live_sess.is_invalidated:
+                    return
+                await broadcast_to_room(room, "battle_turn_resolved", {
+                    "match_id": current_match_id,
+                    "player_a_name": pa.name,
+                    "player_b_name": pb.name,
+                    "turn_entry": turn_entry,
+                })
+
+            res = await live_sess.run_interactive(send_prompt=_send_prompt, broadcast_turn=_broadcast_turn)
+            room.active_live_battle = None
+            if live_sess.is_invalidated or room.match_id != current_match_id:
+                return
+
+            # Build authoritative battle_results directly from the interactive session outcome
+            a_wins = 1 if res.winner_id == pa.session_id else 0
+            b_wins = 1 if res.winner_id == pb.session_id else 0
+            draws = 1 if (res.is_draw or res.winner_id is None) else 0
+            standings = []
+            for p, w, l, hp in (
+                (pa, a_wins, b_wins, res.player_a_remaining_hp),
+                (pb, b_wins, a_wins, res.player_b_remaining_hp),
+            ):
+                standings.append({
+                    "session_id": p.session_id,
+                    "name": p.name,
+                    "avatar": p.avatar,
+                    "is_withdrawn": p.is_withdrawn,
+                    "wins": w,
+                    "losses": l,
+                    "draws": draws,
+                    "points": (w * 3) + draws,
+                    "remaining_hp_total": hp,
+                    "matches_played": 1,
+                    "team_count": len(p.team),
+                })
+            for wp in room.players.values():
+                if wp.is_withdrawn:
+                    standings.append({
+                        "session_id": wp.session_id,
+                        "name": wp.name,
+                        "avatar": wp.avatar,
+                        "is_withdrawn": True,
+                        "wins": 0, "losses": 0, "draws": 0, "points": 0,
+                        "remaining_hp_total": 0, "matches_played": 0, "team_count": len(wp.team),
+                    })
+            standings.sort(key=lambda s: (not s["is_withdrawn"], s["points"], s["wins"], s["remaining_hp_total"]), reverse=True)
+            for r_idx, s in enumerate(standings, start=1):
+                s["rank"] = r_idx
+
+            battle_results = {
+                "format": "direct_1v1",
+                "match_id": current_match_id,
+                "total_matches": 1,
+                "standings": standings,
+                "champion": standings[0] if standings else None,
+                "matches": [{
+                    "player_a_id": pa.session_id,
+                    "player_a_name": pa.name,
+                    "player_b_id": pb.session_id,
+                    "player_b_name": pb.name,
+                    "player_a_team": [{"id": str(c.get("id", "")), "name": c.get("name", ""), "image": c.get("image", "")} for c in pa.team],
+                    "player_b_team": [{"id": str(c.get("id", "")), "name": c.get("name", ""), "image": c.get("image", "")} for c in pb.team],
+                    "winner_id": res.winner_id,
+                    "is_draw": res.is_draw,
+                    "reason": res.reason,
+                    "turns_played": res.turns_played,
+                    "seed": res.seed,
+                    "player_a_remaining_hp": res.player_a_remaining_hp,
+                    "player_b_remaining_hp": res.player_b_remaining_hp,
+                    "turn_log": res.turn_log,
+                }],
+                "bracket": None,
+            }
+        else:
+            battle_results = await battle_manager.run_tournament_async(
+                list(room.players.values()),
+                match_id=room.match_id,
+                tournament_format=room.tournament_format
+            )
+
+        room.battle_results = battle_results
+        profile_store.record_tournament_results(battle_results)
+
+        for idx, m in enumerate(battle_results.get("matches", []), start=1):
+            await broadcast_to_room(room, "battle_progress", {
+                "match_index": idx,
+                "total_matches": battle_results.get("total_matches", 0),
+                "player_a_id": m["player_a_id"],
+                "player_a_name": m["player_a_name"],
+                "player_b_id": m["player_b_id"],
+                "player_b_name": m["player_b_name"],
+                "winner_id": m["winner_id"],
+                "is_draw": m["is_draw"],
+                "reason": m["reason"],
+                "turns_played": m["turns_played"]
+            })
+
+        await broadcast_to_room(room, "battle_results", {
+            "match_id": room.match_id,
+            "format": battle_results.get("format"),
+            "champion": battle_results.get("champion"),
+            "standings": battle_results.get("standings", []),
+            "total_matches": battle_results.get("total_matches", 0)
+        })
+
         room.status = "GAME_OVER"
-        leaderboard = room_manager.calculate_final_leaderboard(room)
+        leaderboard = room_manager.calculate_battle_leaderboard(room, battle_results)
 
         finish_data = {
             "leaderboard": leaderboard,
             "winner": leaderboard[0] if leaderboard else None,
+            "battle_results": battle_results,
             "room_state": room.to_state_dict(),
             "finish_reason": finish_reason
         }
@@ -243,7 +379,10 @@ async def run_room_auction_loop(room: Room):
     except asyncio.CancelledError:
         pass
     except Exception as e:
-        print(f"Error in auction loop for room {room.room_code}: {e}")
+        print(f"[AuctionLoopError] room={room.room_code} match={room.match_id} round={room.auction_character_count}: {e}")
+        await broadcast_to_room(room, "room_event", {
+            "message": f"Auction loop encountered an error in round {room.auction_character_count}: {e}"
+        })
 
 
 async def ws_handler(websocket: ServerConnection):
@@ -272,6 +411,8 @@ async def ws_handler(websocket: ServerConnection):
                 anime_mode = data.get("anime_mode", "all")
                 selected_anime = data.get("selected_anime", [])
                 forms_mode = data.get("forms_mode", "SINGLE_BASE")
+                battle_control_mode = data.get("battle_control_mode", "ai_vs_ai")
+                tournament_format = data.get("tournament_format", "round_robin")
 
                 room = room_manager.create_room(
                     host_name, host_avatar, session_id,
@@ -280,7 +421,9 @@ async def ws_handler(websocket: ServerConnection):
                     min_bid=min_bid,
                     anime_mode=anime_mode,
                     selected_anime=selected_anime,
-                    forms_mode=forms_mode
+                    forms_mode=forms_mode,
+                    battle_control_mode=battle_control_mode,
+                    tournament_format=tournament_format
                 )
                 client_room_code = room.room_code
                 client_session_id = session_id
@@ -328,7 +471,13 @@ async def ws_handler(websocket: ServerConnection):
                     }
                 }))
 
-                # Broadcast updated lobby to all
+                # If reconnecting mid-battle, re-send active turn prompt for this player
+                if room.status == "BATTLE" and room.active_live_battle and p:
+                    if room.active_live_battle.is_human_controlled(session_id):
+                        prompt_data = room.active_live_battle.build_player_prompt(session_id)
+                        await websocket.send(json.dumps({"type": "battle_turn_prompt", "data": prompt_data}, ensure_ascii=False))
+
+                # Broadcast updated state to all
                 await broadcast_to_room(room, "room_state", room.to_state_dict())
 
             # 3. TOGGLE READY
@@ -363,6 +512,14 @@ async def ws_handler(websocket: ServerConnection):
                     }))
                     continue
 
+                existing_task = room_auction_tasks.get(room.room_code)
+                if room.status != "LOBBY" or (existing_task and not existing_task.done()):
+                    await websocket.send(json.dumps({
+                        "type": "error",
+                        "data": {"message": "Auction has already started for this room."}
+                    }))
+                    continue
+
                 # Lock the dynamic fixed auction pool for the match
                 active_count = len([p for p in room.players.values() if not p.is_withdrawn])
                 calculated_pool = get_max_auction_characters(active_count)
@@ -389,101 +546,110 @@ async def ws_handler(websocket: ServerConnection):
                 if not room or room.status != "AUCTION":
                     continue
 
-                bidder = room.players.get(client_session_id)
-                if not bidder:
-                    continue
+                async with room.auction_lock:
+                    if room.status != "AUCTION" or room.auction_character_count in room.settled_rounds:
+                        await websocket.send(json.dumps({
+                            "type": "bid_error",
+                            "data": {"message": "Round already settled!"}
+                        }))
+                        continue
 
-                if bidder.is_withdrawn:
-                    await websocket.send(json.dumps({
-                        "type": "bid_error",
-                        "data": {"message": "You have withdrawn from this match and cannot bid!"}
-                    }))
-                    continue
+                    bidder = room.players.get(client_session_id)
+                    if not bidder:
+                        continue
 
-                if bidder.has_skipped:
-                    await websocket.send(json.dumps({
-                        "type": "bid_error",
-                        "data": {"message": "You skipped this character and cannot place a bid!"}
-                    }))
-                    continue
+                    if bidder.is_withdrawn:
+                        await websocket.send(json.dumps({
+                            "type": "bid_error",
+                            "data": {"message": "You have withdrawn from this match and cannot bid!"}
+                        }))
+                        continue
 
-                try:
-                    amount = int(data.get("amount", 0))
-                except (ValueError, TypeError):
-                    await websocket.send(json.dumps({
-                        "type": "bid_error",
-                        "data": {"message": "Invalid bid amount!"}
-                    }))
-                    continue
+                    if bidder.has_skipped:
+                        await websocket.send(json.dumps({
+                            "type": "bid_error",
+                            "data": {"message": "You skipped this character and cannot place a bid!"}
+                        }))
+                        continue
 
-                if amount <= 0:
-                    await websocket.send(json.dumps({
-                        "type": "bid_error",
-                        "data": {"message": "Bid must be a positive amount!"}
-                    }))
-                    continue
+                    try:
+                        amount = int(data.get("amount", 0))
+                    except (ValueError, TypeError):
+                        await websocket.send(json.dumps({
+                            "type": "bid_error",
+                            "data": {"message": "Invalid bid amount!"}
+                        }))
+                        continue
 
-                if bidder.is_team_full:
-                    await websocket.send(json.dumps({
-                        "type": "bid_error",
-                        "data": {"message": "Your team is already full (6/6 Characters)!"}
-                    }))
-                    continue
+                    if amount <= 0:
+                        await websocket.send(json.dumps({
+                            "type": "bid_error",
+                            "data": {"message": "Bid must be a positive amount!"}
+                        }))
+                        continue
 
-                if client_session_id == room.highest_bidder_id:
-                    await websocket.send(json.dumps({
-                        "type": "bid_error",
-                        "data": {"message": "You already hold the highest bid!"}
-                    }))
-                    continue
+                    if bidder.is_team_full:
+                        await websocket.send(json.dumps({
+                            "type": "bid_error",
+                            "data": {"message": "Your team is already full (6/6 Characters)!"}
+                        }))
+                        continue
 
-                # Minimum required bid: opening bid if 0, else current_bid + 1 (flexible increment!)
-                min_required = room.min_bid if room.current_bid == 0 else room.current_bid + 1
-                if amount < min_required:
-                    await websocket.send(json.dumps({
-                        "type": "bid_error",
-                        "data": {"message": f"Bid must be at least ₹{min_required}."}
-                    }))
-                    continue
+                    if client_session_id == room.highest_bidder_id:
+                        await websocket.send(json.dumps({
+                            "type": "bid_error",
+                            "data": {"message": "You already hold the highest bid!"}
+                        }))
+                        continue
 
-                max_allowed = room.calculate_max_bid_for_player(bidder)
-                if amount > max_allowed:
-                    await websocket.send(json.dumps({
-                        "type": "bid_error",
-                        "data": {"message": f"Insufficient balance! Available purse: ₹{bidder.purse}."}
-                    }))
-                    continue
+                    # Minimum required bid: opening bid if 0, else current_bid + 1 (flexible increment!)
+                    min_required = room.min_bid if room.current_bid == 0 else room.current_bid + 1
+                    if amount < min_required:
+                        await websocket.send(json.dumps({
+                            "type": "bid_error",
+                            "data": {"message": f"Bid must be at least ₹{min_required}."}
+                        }))
+                        continue
 
-                # Bid is valid!
-                room.current_bid = amount
-                room.highest_bidder_id = client_session_id
-                bid_record = {
-                    "bidderId": client_session_id,
-                    "bidderName": bidder.name,
-                    "bidAmount": amount,
-                    "auctionId": f"{room.room_code}_round_{room.auction_character_count}",
-                    "roomId": room.room_code,
-                    "timestamp": time.time()
-                }
-                room.last_bid_record = bid_record
-                # Reset countdown timer to 15s
-                room.timer_end_timestamp = time.time() + room.countdown_seconds
-                room.timer_seconds_left = room.countdown_seconds
+                    max_allowed = room.calculate_max_bid_for_player(bidder)
+                    if amount > max_allowed:
+                        await websocket.send(json.dumps({
+                            "type": "bid_error",
+                            "data": {"message": f"Insufficient balance! Available purse: ₹{bidder.purse}."}
+                        }))
+                        continue
 
-                await broadcast_to_room(room, "bid_success", {
-                    "current_bid": amount,
-                    "highest_bidder_id": client_session_id,
-                    "highest_bidder_name": bidder.name,
-                    "highest_bidder_avatar": bidder.avatar,
-                    "bidderId": client_session_id,
-                    "bidderName": bidder.name,
-                    "bidAmount": amount,
-                    "auctionId": bid_record["auctionId"],
-                    "roomId": room.room_code,
-                    "timestamp": bid_record["timestamp"],
-                    "timer_seconds_left": room.countdown_seconds,
-                    "room_state": room.to_state_dict()
-                })
+                    # Bid is valid!
+                    room.current_bid = amount
+                    room.highest_bidder_id = client_session_id
+                    bid_record = {
+                        "bidderId": client_session_id,
+                        "bidderName": bidder.name,
+                        "bidAmount": amount,
+                        "auctionId": f"{room.room_code}_round_{room.auction_character_count}",
+                        "roomId": room.room_code,
+                        "timestamp": time.time()
+                    }
+                    room.last_bid_record = bid_record
+                    # Reset countdown timer to 15s
+                    room.timer_end_timestamp = time.time() + room.countdown_seconds
+                    room.timer_seconds_left = room.countdown_seconds
+                    bid_payload = {
+                        "current_bid": amount,
+                        "highest_bidder_id": client_session_id,
+                        "highest_bidder_name": bidder.name,
+                        "highest_bidder_avatar": bidder.avatar,
+                        "bidderId": client_session_id,
+                        "bidderName": bidder.name,
+                        "bidAmount": amount,
+                        "auctionId": bid_record["auctionId"],
+                        "roomId": room.room_code,
+                        "timestamp": bid_record["timestamp"],
+                        "timer_seconds_left": room.countdown_seconds,
+                        "room_state": room.to_state_dict()
+                    }
+
+                await broadcast_to_room(room, "bid_success", bid_payload)
 
             # 6. CHAT MESSAGE
             elif action == "chat":
@@ -509,35 +675,48 @@ async def ws_handler(websocket: ServerConnection):
                 room = room_manager.rooms.get(client_room_code)
                 if not room or room.status != "AUCTION":
                     continue
-                p = room.players.get(client_session_id)
-                if not p:
-                    continue
-                if p.is_withdrawn:
+
+                skip_payload = None
+                all_skipped_payload = None
+                error_msg = None
+                async with room.auction_lock:
+                    if room.status != "AUCTION":
+                        continue
+                    p = room.players.get(client_session_id)
+                    if not p:
+                        continue
+                    if p.is_withdrawn:
+                        error_msg = "You have withdrawn from this match."
+                    elif not p.has_skipped:
+                        success, msg, all_skipped = room.record_skip(client_session_id)
+                        if success:
+                            state_snap = room.to_state_dict()
+                            skip_payload = {
+                                "session_id": client_session_id,
+                                "player_name": p.name,
+                                "all_skipped": all_skipped,
+                                "room_state": state_snap
+                            }
+                            if all_skipped:
+                                all_skipped_payload = {
+                                    "message": f"All eligible trainers skipped {room.current_character_sanitized.get('name', 'character')}! Round ended early.",
+                                    "character": room.current_character_sanitized,
+                                    "pokemon": room.current_character_sanitized,
+                                    "room_state": state_snap
+                                }
+                                if room.skip_event and not room.skip_event.is_set():
+                                    room.skip_event.set()
+
+                if error_msg:
                     await websocket.send(json.dumps({
                         "type": "error",
-                        "data": {"message": "You have withdrawn from this match."}
+                        "data": {"message": error_msg}
                     }))
                     continue
-                if p.has_skipped:
-                    continue
-
-                success, msg, all_skipped = room.record_skip(client_session_id)
-                if success:
-                    await broadcast_to_room(room, "character_skipped", {
-                        "session_id": client_session_id,
-                        "player_name": p.name,
-                        "all_skipped": all_skipped,
-                        "room_state": room.to_state_dict()
-                    })
-                    if all_skipped:
-                        await broadcast_to_room(room, "all_skipped_round_ended", {
-                            "message": f"All eligible trainers skipped {room.current_character_sanitized.get('name', 'character')}! Round ended early.",
-                            "character": room.current_character_sanitized,
-                            "pokemon": room.current_character_sanitized,
-                            "room_state": room.to_state_dict()
-                        })
-                        if room.skip_event and not room.skip_event.is_set():
-                            room.skip_event.set()
+                if skip_payload:
+                    await broadcast_to_room(room, "character_skipped", skip_payload)
+                if all_skipped_payload:
+                    await broadcast_to_room(room, "all_skipped_round_ended", all_skipped_payload)
 
             # 8. WITHDRAW FROM MATCH
             elif action == "withdraw_match":
@@ -546,38 +725,47 @@ async def ws_handler(websocket: ServerConnection):
                 room = room_manager.rooms.get(client_room_code)
                 if not room:
                     continue
-                p = room.players.get(client_session_id)
-                if not p or p.is_withdrawn:
-                    continue
 
-                success, msg, new_host_id, should_end = room.withdraw_player(client_session_id)
-                if success:
-                    await broadcast_to_room(room, "player_withdrawn", {
-                        "session_id": client_session_id,
-                        "player_name": p.name,
-                        "new_host_id": new_host_id,
-                        "should_end_match": should_end,
-                        "room_state": room.to_state_dict()
-                    })
-                    if new_host_id:
-                        new_host = room.players.get(new_host_id)
-                        await broadcast_to_room(room, "host_transferred", {
+                withdraw_payload = None
+                host_transfer_payload = None
+                async with room.auction_lock:
+                    p = room.players.get(client_session_id)
+                    if not p or p.is_withdrawn:
+                        continue
+
+                    success, msg, new_host_id, should_end = room.withdraw_player(client_session_id)
+                    if success:
+                        # If withdrawn player held current high bid, clear it before snapshot
+                        if room.highest_bidder_id == client_session_id:
+                            room.highest_bidder_id = None
+                            room.current_bid = 0
+
+                        withdraw_payload = {
+                            "session_id": client_session_id,
+                            "player_name": p.name,
                             "new_host_id": new_host_id,
-                            "new_host_name": new_host.name if new_host else "Trainer",
-                            "message": f"Host status transferred to {new_host.name if new_host else 'Trainer'}."
-                        })
+                            "should_end_match": should_end,
+                            "room_state": room.to_state_dict()
+                        }
+                        if new_host_id:
+                            new_host = room.players.get(new_host_id)
+                            host_transfer_payload = {
+                                "new_host_id": new_host_id,
+                                "new_host_name": new_host.name if new_host else "Trainer",
+                                "message": f"Host status transferred to {new_host.name if new_host else 'Trainer'}."
+                            }
 
-                    # If withdrawn player held current high bid, clear it
-                    if room.highest_bidder_id == client_session_id:
-                        room.highest_bidder_id = None
-                        room.current_bid = 0
+                        if should_end:
+                            if room.skip_event and not room.skip_event.is_set():
+                                room.skip_event.set()
+                        elif room.all_eligible_players_skipped():
+                            if room.skip_event and not room.skip_event.is_set():
+                                room.skip_event.set()
 
-                    if should_end:
-                        if room.skip_event and not room.skip_event.is_set():
-                            room.skip_event.set()
-                    elif room.all_eligible_players_skipped():
-                        if room.skip_event and not room.skip_event.is_set():
-                            room.skip_event.set()
+                if withdraw_payload:
+                    await broadcast_to_room(room, "player_withdrawn", withdraw_payload)
+                if host_transfer_payload:
+                    await broadcast_to_room(room, "host_transferred", host_transfer_payload)
 
             # 9. REQUEST REMATCH (Host only)
             elif action == "request_rematch":
@@ -643,6 +831,8 @@ async def ws_handler(websocket: ServerConnection):
                         "room_state": room.to_state_dict()
                     })
                 elif all_accepted:
+                    if room.active_live_battle and hasattr(room.active_live_battle, "invalidate"):
+                        room.active_live_battle.invalidate()
                     old_task = room_auction_tasks.get(room.room_code)
                     if old_task and not old_task.done():
                         old_task.cancel()
@@ -668,6 +858,23 @@ async def ws_handler(websocket: ServerConnection):
                         "votes": room.rematch_votes,
                         "room_state": room.to_state_dict()
                     })
+
+            # 11B. SUBMIT LIVE BATTLE ACTION
+            elif action == "submit_battle_action":
+                if not client_room_code or not client_session_id:
+                    continue
+                room = room_manager.rooms.get(client_room_code)
+                if not room or not room.active_live_battle:
+                    await websocket.send(json.dumps({
+                        "type": "battle_action_error",
+                        "data": {"message": "No interactive battle is currently active."}
+                    }))
+                    continue
+                ok, msg = room.active_live_battle.submit_action(client_session_id, data)
+                await websocket.send(json.dumps({
+                    "type": "battle_action_ack" if ok else "battle_action_error",
+                    "data": {"success": ok, "message": msg}
+                }))
 
             # 11. EXIT ROOM
             elif action == "exit_room":
@@ -775,14 +982,16 @@ def process_http_request(connection, request):
     # Dynamic SVG Avatar Generator Endpoint (Guarantees zero broken images)
     if path.startswith("/api/avatar/"):
         parts = path.split("/")
-        cid = parts[3] if len(parts) > 3 else "default"
+        cid = unquote(parts[3]) if len(parts) > 3 else "default"
         char = anime_db.get_character_by_id(cid)
         if not char:
+            is_marvel = cid.startswith("marvel_")
             char = {
                 "id": cid,
                 "name": cid.replace("_", " ").title(),
-                "anime_id": "anime",
-                "anime_name": "Anime Character",
+                "universe": "marvel" if is_marvel else "anime",
+                "anime_id": "marvel" if is_marvel else "anime",
+                "anime_name": "Marvel Comics" if is_marvel else "Anime Character",
                 "power_tier": "A"
             }
         svg_content = generate_character_svg(char)
@@ -832,6 +1041,11 @@ def process_http_request(connection, request):
         power_tier = query.get("power_tier", [None])[0]
         rarity = query.get("rarity", [None])[0]
         species = query.get("species", [None])[0]
+        category = query.get("category", [None])[0]
+        affiliation = query.get("affiliation", [None])[0]
+        continuity = query.get("continuity", [None])[0]
+        combat_eligible = query.get("combat_eligible", [None])[0]
+        has_artwork = query.get("has_artwork", [None])[0]
         sort = query.get("sort", ["power_desc"])[0]
         try:
             limit = int(query.get("limit", [50])[0])
@@ -846,6 +1060,11 @@ def process_http_request(connection, request):
             power_tier=power_tier,
             rarity=rarity,
             species=species,
+            category=category,
+            affiliation=affiliation,
+            continuity=continuity,
+            combat_eligible=combat_eligible,
+            has_artwork=has_artwork,
             sort=sort,
             limit=limit,
             offset=offset
@@ -913,6 +1132,14 @@ def process_http_request(connection, request):
     if path == "/api/admin/import/stop":
         success, msg = anime_db.import_manager.stop_job()
         return json_response(200, "OK", {"success": success, "message": msg})
+
+    # Player persistent profiles endpoint
+    if path.startswith("/api/profiles/") and len(path.split("/")) > 3:
+        player_id = path.split("/")[3]
+        prof = profile_store.get_profile(player_id)
+        if prof:
+            return json_response(200, "OK", prof)
+        return json_response(404, "Not Found", {"error": f"Profile {player_id} not found"})
 
     # Legacy Pokemon API endpoints
     if path == "/api/pokemon" or path.startswith("/api/pokemon/"):
