@@ -18,7 +18,7 @@ import asyncio
 import mimetypes
 import time
 from typing import Any
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse, parse_qs, unquote
 
 from websockets.asyncio.server import serve, ServerConnection, Response
 from websockets.http11 import Headers
@@ -982,14 +982,16 @@ def process_http_request(connection, request):
     # Dynamic SVG Avatar Generator Endpoint (Guarantees zero broken images)
     if path.startswith("/api/avatar/"):
         parts = path.split("/")
-        cid = parts[3] if len(parts) > 3 else "default"
+        cid = unquote(parts[3]) if len(parts) > 3 else "default"
         char = anime_db.get_character_by_id(cid)
         if not char:
+            is_marvel = cid.startswith("marvel_")
             char = {
                 "id": cid,
                 "name": cid.replace("_", " ").title(),
-                "anime_id": "anime",
-                "anime_name": "Anime Character",
+                "universe": "marvel" if is_marvel else "anime",
+                "anime_id": "marvel" if is_marvel else "anime",
+                "anime_name": "Marvel Comics" if is_marvel else "Anime Character",
                 "power_tier": "A"
             }
         svg_content = generate_character_svg(char)
@@ -1039,6 +1041,11 @@ def process_http_request(connection, request):
         power_tier = query.get("power_tier", [None])[0]
         rarity = query.get("rarity", [None])[0]
         species = query.get("species", [None])[0]
+        category = query.get("category", [None])[0]
+        affiliation = query.get("affiliation", [None])[0]
+        continuity = query.get("continuity", [None])[0]
+        combat_eligible = query.get("combat_eligible", [None])[0]
+        has_artwork = query.get("has_artwork", [None])[0]
         sort = query.get("sort", ["power_desc"])[0]
         try:
             limit = int(query.get("limit", [50])[0])
@@ -1053,6 +1060,11 @@ def process_http_request(connection, request):
             power_tier=power_tier,
             rarity=rarity,
             species=species,
+            category=category,
+            affiliation=affiliation,
+            continuity=continuity,
+            combat_eligible=combat_eligible,
+            has_artwork=has_artwork,
             sort=sort,
             limit=limit,
             offset=offset

@@ -1,0 +1,60 @@
+{
+  "version": "2.0.0",
+  "import_mode": "public_multi_source_resumable",
+  "last_import_timestamp": "2026-11-25T05:04:35.637693+00:00",
+  "sources": {
+    "curated_seed": {
+      "records": 28,
+      "status": "complete"
+    },
+    "superhero_api_mit": {
+      "records": 295,
+      "status": "complete"
+    },
+    "wikidata_sparql_cc0": {
+      "records": 1459,
+      "last_successful_offset": 1500,
+      "completed": true,
+      "failed_pages": []
+    },
+    "wikipedia_categories_cc_by_sa": {
+      "records": 1308,
+      "completed": true,
+      "failed_categories": [
+        "Category:Fantastic_Four_characters",
+        "Category:Guardians_of_the_Galaxy_characters",
+        "Category:Inhumans_characters",
+        "Category:Eternals_(comics)_characters",
+        "Category:Defenders_(comics)_characters"
+      ]
+    },
+    "official_marvel_api": {
+      "status": "skipped_no_credentials"
+    }
+  },
+  "total_discovered_before_merge": 3090,
+  "unique_ids": 2285,
+  "duplicates_merged": 805,
+  "failed_pages": [],
+  "last_successful_offset": 1500,
+  "image_coverage": {
+    "verified_cdn": 298,
+    "missing_artwork_placeholder": 1987
+  },
+  "combat_verification_coverage": {
+    "combat_eligible": 26,
+    "combat_incomplete_or_discovery_only": 2259
+  },
+  "category_counts": {
+    "Heroes": 461,
+    "Other / unclassified": 1269,
+    "Villains": 530,
+    "Mutants": 391,
+    "Antiheroes": 11,
+    "Aliens": 41,
+    "Cosmic": 81,
+    "Supporting characters": 2,
+    "Supernatural": 26
+  },
+  "errors": []
+}
