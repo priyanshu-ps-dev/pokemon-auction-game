@@ -589,6 +589,966 @@
       "description": "",
       "source": "Local Folder Import",
       "license": ""
+    },
+    {
+      "id": "one-piece-big-mom",
+      "name": "Big Mom",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/big_mom.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-boa-hancock",
+      "name": "Boa Hancock",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/boa_hancock.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-brook",
+      "name": "Brook",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/brook.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-buggy",
+      "name": "Buggy",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/buggy.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-charlotte-katakuri",
+      "name": "Charlotte Katakuri",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/charlotte_katakuri.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-crocodile",
+      "name": "Crocodile",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/crocodile.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-donquixote-doflamingo",
+      "name": "Donquixote Doflamingo",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/donquixote_doflamingo.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-enel",
+      "name": "Enel",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/enel.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-eustass-kid",
+      "name": "Eustass Kid",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/eustass_kid.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-franky",
+      "name": "Franky",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/franky.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-gol-d-roger",
+      "name": "Gol D Roger",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/gol_d_roger.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-jinbe",
+      "name": "Jinbe",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/jinbe.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-monkey-d-luffy",
+      "name": "Monkey D Luffy",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/monkey_d_luffy.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-nami",
+      "name": "Nami",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/nami.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-nico-robin",
+      "name": "Nico Robin",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/nico_robin.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-rob-lucci",
+      "name": "Rob Lucci",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/rob_lucci.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-roronoa-zoro",
+      "name": "Roronoa Zoro",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/roronoa_zoro.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-sabo",
+      "name": "Sabo",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/sabo.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-sanji",
+      "name": "Sanji",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/sanji.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-silvers-rayleigh",
+      "name": "Silvers Rayleigh",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/silvers_rayleigh.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-tony-tony-chopper",
+      "name": "Tony Tony Chopper",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/tony_tony_chopper.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-trafalgar-d-water-law",
+      "name": "Trafalgar D Water Law",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/trafalgar_d_water_law.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-usopp",
+      "name": "Usopp",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/usopp.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "one-piece-yamato",
+      "name": "Yamato",
+      "anime": "One Piece",
+      "franchise_slug": "one-piece",
+      "image": "/assets/avatars/one-piece/yamato.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-arcanine",
+      "name": "Arcanine",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/arcanine.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-arceus",
+      "name": "Arceus",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/arceus.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-blaziken",
+      "name": "Blaziken",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/blaziken.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-charizard",
+      "name": "Charizard",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/charizard.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-darkrai",
+      "name": "Darkrai",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/darkrai.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-dialga",
+      "name": "Dialga",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/dialga.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-dragonite",
+      "name": "Dragonite",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/dragonite.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-eevee",
+      "name": "Eevee",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/eevee.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-garchomp",
+      "name": "Garchomp",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/garchomp.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-gengar",
+      "name": "Gengar",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/gengar.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-giratina",
+      "name": "Giratina",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/giratina.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-greninja",
+      "name": "Greninja",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/greninja.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-gyarados",
+      "name": "Gyarados",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/gyarados.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-ho-oh",
+      "name": "Ho Oh",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/ho_oh.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-koraidon",
+      "name": "Koraidon",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/koraidon.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-kyurem",
+      "name": "Kyurem",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/kyurem.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-lucario",
+      "name": "Lucario",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/lucario.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-lugia",
+      "name": "Lugia",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/lugia.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-lunala",
+      "name": "Lunala",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/lunala.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-mega-charizard-x",
+      "name": "Mega Charizard X",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/mega_charizard_x.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-mega-charizard-y",
+      "name": "Mega Charizard Y",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/mega_charizard_y.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-mega-garchomp",
+      "name": "Mega Garchomp",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/mega_garchomp.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-mega-gengar",
+      "name": "Mega Gengar",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/mega_gengar.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-mega-lucario",
+      "name": "Mega Lucario",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/mega_lucario.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-metagross",
+      "name": "Metagross",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/metagross.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-mew",
+      "name": "Mew",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/mew.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-mewtwo",
+      "name": "Mewtwo",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/mewtwo.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-miraidon",
+      "name": "Miraidon",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/miraidon.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-necrozma",
+      "name": "Necrozma",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/necrozma.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-palkia",
+      "name": "Palkia",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/palkia.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-pikachu",
+      "name": "Pikachu",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/pikachu.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-primal-kyogre",
+      "name": "Primal Kyogre",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/primal_kyogre.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-rayquaza",
+      "name": "Rayquaza",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/rayquaza.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-reshiram",
+      "name": "Reshiram",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/reshiram.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-sceptile",
+      "name": "Sceptile",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/sceptile.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-snorlax",
+      "name": "Snorlax",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/snorlax.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-solgaleo",
+      "name": "Solgaleo",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/solgaleo.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-tyranitar",
+      "name": "Tyranitar",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/tyranitar.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-zacian",
+      "name": "Zacian",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/zacian.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-zamazenta",
+      "name": "Zamazenta",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/zamazenta.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-zekrom",
+      "name": "Zekrom",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/zekrom.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-zygarde",
+      "name": "Zygarde",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/zygarde.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-ant-man",
+      "name": "Ant Man",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/ant_man.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-black-widow",
+      "name": "Black Widow",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/black_widow.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-captain-marvel",
+      "name": "Captain Marvel",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/captain_marvel.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-carnage",
+      "name": "Carnage",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/carnage.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-cyclops",
+      "name": "Cyclops",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/cyclops.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-daredevil",
+      "name": "Daredevil",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/daredevil.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-deadpool",
+      "name": "Deadpool",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/deadpool.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-doctor-octopus",
+      "name": "Doctor Octopus",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/doctor_octopus.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-falcon",
+      "name": "Falcon",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/falcon.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-galactus",
+      "name": "Galactus",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/galactus.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-ghost-rider",
+      "name": "Ghost Rider",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/ghost_rider.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-green-goblin",
+      "name": "Green Goblin",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/green_goblin.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-hawkeye",
+      "name": "Hawkeye",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/hawkeye.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-hulk",
+      "name": "Hulk",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/hulk.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-kang",
+      "name": "Kang",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/kang.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-loki",
+      "name": "Loki",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/loki.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-magneto",
+      "name": "Magneto",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/magneto.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-moon-knight",
+      "name": "Moon Knight",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/moon_knight.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-mystique",
+      "name": "Mystique",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/mystique.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-scarlet-witch",
+      "name": "Scarlet Witch",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/scarlet_witch.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-silver-surfer",
+      "name": "Silver Surfer",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/silver_surfer.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-star-lord",
+      "name": "Star Lord",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/star_lord.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-storm",
+      "name": "Storm",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/storm.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-thanos",
+      "name": "Thanos",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/thanos.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-ultron",
+      "name": "Ultron",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/ultron.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-venom",
+      "name": "Venom",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/venom.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-vision",
+      "name": "Vision",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/vision.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-winter-soldier",
+      "name": "Winter Soldier",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/winter_soldier.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "marvel-wolverine",
+      "name": "Wolverine",
+      "anime": "Marvel",
+      "franchise_slug": "marvel",
+      "image": "/assets/avatars/marvel/wolverine.jpg",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
+    },
+    {
+      "id": "pokemon-ultra-necrozma",
+      "name": "Ultra Necrozma",
+      "anime": "Pokémon",
+      "franchise_slug": "pokemon",
+      "image": "/assets/avatars/pokemon/ultra_necrozma.png",
+      "description": "",
+      "source": "Local Folder Import",
+      "license": ""
     }
   ]
 }

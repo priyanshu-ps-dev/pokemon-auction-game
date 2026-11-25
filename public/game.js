@@ -607,7 +607,7 @@ function applyLocalAvatarManifest(data) {
 
   const badge = document.getElementById('avatar-lib-total-badge');
   if (badge) {
-    badge.textContent = `${avatarLibraryState.characters.length} Custom • ${TRAINER_AVATARS.length} Default`;
+    badge.textContent = `${avatarLibraryState.characters.length} Characters`;
   }
   const adminCount = document.getElementById('avatar-admin-count');
   if (adminCount) {
@@ -625,7 +625,7 @@ function renderAvatarCategoryFilters() {
   if (!container) return;
   container.innerHTML = '';
 
-  const totalCount = avatarLibraryState.characters.length + TRAINER_AVATARS.length;
+  const totalCount = avatarLibraryState.characters.length;
   const pills = [
     { key: 'ALL', label: `ALL CHARACTERS (${totalCount})` }
   ];
@@ -636,8 +636,6 @@ function renderAvatarCategoryFilters() {
       pills.push({ key: cat.name, label: `${cat.name.toUpperCase()} (${cat.count})` });
     }
   });
-
-  pills.push({ key: 'DEFAULT', label: `DEFAULT TRAINERS (${TRAINER_AVATARS.length})` });
 
   pills.forEach(p => {
     const btn = document.createElement('button');
@@ -659,35 +657,18 @@ function getFilteredAvatarEntries() {
   const cat = avatarLibraryState.activeCategory;
   const entries = [];
 
-  if (cat !== 'DEFAULT') {
-    avatarLibraryState.characters.forEach(ch => {
-      if (cat !== 'ALL' && ch.anime !== cat) return;
-      if (q && !ch.name.toLowerCase().includes(q) && !ch.anime.toLowerCase().includes(q)) return;
-      entries.push({
-        isCustom: true,
-        value: ch.image,
-        id: ch.id,
-        name: ch.name,
-        anime: ch.anime,
-        image: ch.image
-      });
+  avatarLibraryState.characters.forEach(ch => {
+    if (cat !== 'ALL' && ch.anime !== cat) return;
+    if (q && !ch.name.toLowerCase().includes(q) && !ch.anime.toLowerCase().includes(q)) return;
+    entries.push({
+      isCustom: true,
+      value: ch.image,
+      id: ch.id,
+      name: ch.name,
+      anime: ch.anime,
+      image: ch.image
     });
-  }
-
-  if (cat === 'ALL' || cat === 'DEFAULT') {
-    TRAINER_AVATARS.forEach(tr => {
-      if (q && !tr.name.toLowerCase().includes(q) && !'default trainer pokemon'.includes(q)) return;
-      entries.push({
-        isCustom: false,
-        value: tr.id,
-        id: tr.id,
-        name: tr.name,
-        anime: 'Default Trainer',
-        color: tr.color,
-        icon: tr.icon
-      });
-    });
-  }
+  });
 
   return entries;
 }
