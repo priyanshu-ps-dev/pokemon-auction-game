@@ -4614,21 +4614,21 @@ body.in-arena-match:has(#arena-results.active) .landing-bg-overlay {
 }
 
 #arena-stage .neon-panel-pink {
-  background: linear-gradient(165deg, rgba(255, 255, 255, 0.1) 0%, rgba(16, 14, 52, 0.26) 55%, rgba(10, 10, 38, 0.34) 100%);
+  background: linear-gradient(165deg, rgba(16, 14, 52, 0.64) 0%, rgba(10, 12, 40, 0.74) 100%);
   border: 1.5px solid rgba(244, 63, 158, 0.78);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
     0 0 22px rgba(236, 72, 153, 0.28),
     inset 0 0 18px rgba(236, 72, 153, 0.08);
 }
 
 #arena-stage .neon-panel-cyan {
-  background: linear-gradient(165deg, rgba(255, 255, 255, 0.11) 0%, rgba(8, 24, 62, 0.26) 55%, rgba(5, 14, 40, 0.34) 100%);
+  background: linear-gradient(165deg, rgba(8, 20, 56, 0.64) 0%, rgba(5, 13, 38, 0.74) 100%);
   border: 1.5px solid rgba(34, 211, 238, 0.8);
-  backdrop-filter: blur(16px) saturate(1.7);
-  -webkit-backdrop-filter: blur(16px) saturate(1.7);
+  backdrop-filter: blur(18px) saturate(1.55);
+  -webkit-backdrop-filter: blur(18px) saturate(1.55);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
     0 0 22px rgba(34, 211, 238, 0.3),
     inset 0 0 18px rgba(34, 211, 238, 0.08);
 }
@@ -5033,8 +5033,8 @@ body.in-arena-match:has(#arena-results.active) .landing-bg-overlay {
 #arena-stage .btn-quick-bid {
   padding: 0.52rem 0.35rem;
   border-radius: 9px;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(56, 189, 248, 0.35);
+  background: rgba(8, 18, 52, 0.65);
+  border: 1px solid rgba(56, 189, 248, 0.42);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
   color: #e2e8f0;
   font-family: 'Chakra Petch', sans-serif;
@@ -5042,6 +5042,12 @@ body.in-arena-match:has(#arena-results.active) .landing-bg-overlay {
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+#arena-stage .btn-quick-bid:disabled {
+  opacity: 0.62;
+  color: #cbd5e1;
+  cursor: not-allowed;
 }
 
 #arena-stage .btn-quick-bid:hover:not(:disabled) {
@@ -5081,8 +5087,8 @@ body.in-arena-match:has(#arena-results.active) .landing-bg-overlay {
   width: 100%;
   padding: 0.62rem 0.85rem 0.62rem 2rem;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1.5px solid rgba(56, 189, 248, 0.45);
+  background: rgba(6, 14, 42, 0.68);
+  border: 1.5px solid rgba(56, 189, 248, 0.5);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
   color: #ffffff;
   font-family: 'Chakra Petch', sans-serif;
