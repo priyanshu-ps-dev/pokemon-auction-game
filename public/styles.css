@@ -6716,3 +6716,95 @@ html, body {
     align-items: stretch;
   }
 }
+
+/* Kick Player & Back to Lobby Controls */
+.btn-back-lobby {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  color: #e2e8f0;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-back-lobby:hover {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(248, 113, 113, 0.75);
+  color: #ffffff;
+}
+
+.btn-back-lobby--sm {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.75rem;
+}
+
+.btn-kick-player {
+  margin-left: auto;
+  padding: 0.28rem 0.6rem;
+  border-radius: 7px;
+  background: rgba(220, 38, 38, 0.18);
+  border: 1px solid rgba(248, 113, 113, 0.65);
+  color: #fca5a5;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-kick-player:hover {
+  background: #dc2626;
+  border-color: #f87171;
+  color: #ffffff;
+}
+
+.btn-kick-player--sm {
+  padding: 0.2rem 0.48rem;
+  font-size: 0.68rem;
+}
+
+.room-toast-banner {
+  position: fixed;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10500;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem 1.15rem;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid #38bdf8;
+  color: #f8fafc;
+  font-size: 0.92rem;
+  font-weight: 600;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+}
+
+.room-toast-banner.is-error {
+  border-color: #ef4444;
+  background: rgba(127, 29, 29, 0.95);
+}
+
+.room-toast-banner.is-success {
+  border-color: #10b981;
+  background: rgba(6, 78, 59, 0.95);
+}
+
+.room-toast-close {
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}

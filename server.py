@@ -558,6 +558,10 @@ async def ws_handler(websocket: ServerConnection):
 
                     bidder = room.players.get(client_session_id)
                     if not bidder:
+                        await websocket.send(json.dumps({
+                            "type": "bid_error",
+                            "data": {"message": "You are no longer in this room." if client_session_id not in room.kicked_session_ids else "You have been removed from this room by the host."}
+                        }))
                         continue
 
                     if bidder.is_withdrawn:
@@ -686,8 +690,8 @@ async def ws_handler(websocket: ServerConnection):
                         continue
                     p = room.players.get(client_session_id)
                     if not p:
-                        continue
-                    if p.is_withdrawn:
+                        error_msg = "You have been removed from this room by the host." if client_session_id in room.kicked_session_ids else "You are no longer in this room."
+                    elif p.is_withdrawn:
                         error_msg = "You have withdrawn from this match."
                     elif not p.has_skipped:
                         success, msg, all_skipped = room.record_skip(client_session_id)
@@ -993,36 +997,133 @@ async def ws_handler(websocket: ServerConnection):
                     "data": {"success": ok, "message": msg}
                 }))
 
-            # 11. EXIT ROOM
-            elif action == "exit_room":
+            # 11. EXIT / LEAVE ROOM
+            elif action in ("exit_room", "leave_room"):
                 if not client_room_code or not client_session_id:
                     continue
                 room = room_manager.rooms.get(client_room_code)
                 if not room:
+                    await websocket.send(json.dumps({
+                        "type": "room_left",
+                        "data": {"message": "You left the room."}
+                    }))
+                    client_room_code = None
                     continue
-                p = room.players.pop(client_session_id, None)
-                if not p:
-                    room.spectators.pop(client_session_id, None)
-                else:
-                    if p.is_host:
-                        connected = [pl for pl in room.players.values() if pl.is_connected and not pl.is_withdrawn]
-                        if connected:
-                            connected[0].is_host = True
+
+                leave_info = None
+                state_snap = None
+                async with room.auction_lock:
+                    ok, msg, info = room_manager.leave_room(client_room_code, client_session_id)
+                    if ok:
+                        leave_info = info
+                        if not info.get("room_deleted"):
+                            if info.get("should_end_match") or info.get("all_skipped"):
+                                if room.skip_event and not room.skip_event.is_set():
+                                    room.skip_event.set()
+                            state_snap = room.to_state_dict()
+                        else:
+                            if room.skip_event and not room.skip_event.is_set():
+                                room.skip_event.set()
+
+                if leave_info:
+                    if leave_info.get("room_deleted"):
+                        old_task = room_auction_tasks.pop(client_room_code, None)
+                        if old_task and not old_task.done():
+                            old_task.cancel()
+                    else:
+                        if leave_info.get("new_host_id"):
                             await broadcast_to_room(room, "host_transferred", {
-                                "new_host_id": connected[0].session_id,
-                                "new_host_name": connected[0].name,
-                                "message": f"Host status transferred to {connected[0].name}."
+                                "new_host_id": leave_info["new_host_id"],
+                                "new_host_name": leave_info["new_host_name"],
+                                "message": f"Host status transferred to {leave_info['new_host_name']}."
                             })
-                    await broadcast_to_room(room, "player_left", {
-                        "session_id": client_session_id,
-                        "player_name": p.name,
-                        "room_state": room.to_state_dict()
-                    })
+                        if not leave_info.get("was_spectator"):
+                            await broadcast_to_room(room, "player_left", {
+                                "session_id": client_session_id,
+                                "player_name": leave_info["player"].name,
+                                "room_state": state_snap
+                            })
+
                 await websocket.send(json.dumps({
                     "type": "room_left",
                     "data": {"message": "You left the room."}
                 }))
                 client_room_code = None
+
+            # 12. KICK PLAYER (Host only)
+            elif action == "kick_player":
+                if not client_room_code or not client_session_id:
+                    await websocket.send(json.dumps({
+                        "type": "error",
+                        "data": {"message": "You are not currently in a room."}
+                    }))
+                    continue
+
+                room = room_manager.rooms.get(client_room_code)
+                if not room:
+                    await websocket.send(json.dumps({
+                        "type": "error",
+                        "data": {"message": "Room not found."}
+                    }))
+                    continue
+
+                target_session_id = (data.get("target_session_id") or "").strip()
+                if not target_session_id:
+                    await websocket.send(json.dumps({
+                        "type": "error",
+                        "data": {"message": "Target player is required."}
+                    }))
+                    continue
+
+                kick_ok = False
+                kick_msg = ""
+                kick_info = None
+                state_snap = None
+                async with room.auction_lock:
+                    kick_ok, kick_msg, kick_info = room.kick_player(client_session_id, target_session_id)
+                    if kick_ok and kick_info:
+                        if kick_info.get("should_end_match") or kick_info.get("all_skipped"):
+                            if room.skip_event and not room.skip_event.is_set():
+                                room.skip_event.set()
+                        state_snap = room.to_state_dict()
+
+                if not kick_ok or not kick_info:
+                    await websocket.send(json.dumps({
+                        "type": "error",
+                        "data": {"message": kick_msg or "Unable to kick player."}
+                    }))
+                    continue
+
+                target_player = kick_info["target_player"]
+                if target_player.ws:
+                    try:
+                        await target_player.ws.send(json.dumps({
+                            "type": "player_kicked",
+                            "data": {
+                                "room_code": room.room_code,
+                                "target_session_id": target_session_id,
+                                "message": "You have been removed from this room by the host."
+                            }
+                        }))
+                    except Exception:
+                        pass
+                    target_player.ws = None
+
+                await websocket.send(json.dumps({
+                    "type": "kick_success",
+                    "data": {
+                        "target_session_id": target_session_id,
+                        "target_name": target_player.name,
+                        "message": f"{target_player.name} has been removed from the room."
+                    }
+                }))
+
+                await broadcast_to_room(room, "player_left", {
+                    "session_id": target_session_id,
+                    "player_name": target_player.name,
+                    "kicked": True,
+                    "room_state": state_snap
+                })
 
             # 7. ADMIN WEBSOCKET ACTIONS
             elif action == "admin_toggle_character":
