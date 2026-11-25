@@ -1919,13 +1919,10 @@ function updateBidButtonStates(me, roomState) {
     skipBadge.style.display = hasSkipped ? 'inline-block' : 'none';
   }
 
-  // Auto-set placeholder and min value
+  // Update min and placeholder without overwriting the player's entered bid amount
   if (!disabled && customInput) {
     customInput.min = minRequired;
     customInput.placeholder = `Min ₹${minRequired}`;
-    if (!customInput.value || parseInt(customInput.value, 10) < minRequired) {
-      customInput.value = minRequired;
-    }
   }
 
   if (submitBtn) {
