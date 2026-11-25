@@ -505,5 +505,91 @@ class TestFourPlayerWebSocketReliability(unittest.IsolatedAsyncioTestCase):
                 await ws.close()
 
 
+class TestFrontendBidInputPreservation(unittest.TestCase):
+    def test_21_incoming_higher_bid_does_not_overwrite_custom_bid_input(self):
+        """Incoming bid_success/auction_tick updates leader & quick-bids without overwriting custom-bid-input."""
+        import subprocess
+        js_path = os.path.join(BASE_DIR, "public", "game.js")
+        node_script = r"""
+const fs = require('fs');
+const vm = require('vm');
+const src = fs.readFileSync(process.argv[1], 'utf8');
+
+const elements = {};
+function makeEl(id, extra = {}) {
+  const el = Object.assign({
+    id, value: '', min: 0, placeholder: '', textContent: '', disabled: false,
+    style: {}, dataset: {}, classList: { toggle() {}, add() {}, remove() {} }
+  }, extra);
+  elements[id] = el;
+  return el;
+}
+makeEl('current-bid-amount', { textContent: '0' });
+makeEl('current-bidder-name', { textContent: '' });
+makeEl('next-valid-bid-display', { textContent: '' });
+makeEl('btn-quick-min');
+makeEl('btn-quick-p5');
+makeEl('btn-quick-p10');
+makeEl('btn-quick-p25');
+makeEl('btn-quick-p50');
+const customInput = makeEl('custom-bid-input', { value: '45' });
+const submitBtn = makeEl('submit-bid-btn');
+makeEl('btn-skip-character');
+makeEl('skip-status-badge');
+
+const quickBtns = [elements['btn-quick-min'], elements['btn-quick-p5'], elements['btn-quick-p10'], elements['btn-quick-p25'], elements['btn-quick-p50']];
+
+const sandbox = {
+  gameState: {
+    sessionId: 'sess_p2',
+    isWithdrawn: false,
+    roomState: {
+      status: 'AUCTION',
+      min_bid: 10,
+      current_bid: 60,
+      highest_bidder_id: 'sess_p1',
+      highest_bidder_name: 'PlayerOne',
+      players: [
+        { session_id: 'sess_p1', name: 'PlayerOne', purse: 500, team_count: 0, is_withdrawn: false, has_skipped: false },
+        { session_id: 'sess_p2', name: 'PlayerTwo', purse: 500, team_count: 0, is_withdrawn: false, has_skipped: false }
+      ]
+    }
+  },
+  document: {
+    getElementById: (id) => elements[id] || null,
+    querySelectorAll: (sel) => (sel === '.btn-quick-bid' ? quickBtns : [])
+  }
+};
+vm.createContext(sandbox);
+const start = src.indexOf('function updateBidStatus(');
+const end = src.indexOf('// Showcase Toast Overlay');
+if (start < 0 || end < 0) throw new Error('Could not locate bid update functions');
+vm.runInContext(src.slice(start, end), sandbox);
+
+// Simulate incoming higher bid (60 from sess_p1) while PlayerTwo has '45' in custom-bid-input
+sandbox.updateBidStatus(60, 'sess_p1', 'PlayerOne', 'red');
+sandbox.updateBidButtonStates(sandbox.gameState.roomState.players[1], sandbox.gameState.roomState);
+
+if (customInput.value !== '45') throw new Error('Expected customInput.value to remain 45, got ' + customInput.value);
+if (String(customInput.min) !== '61') throw new Error('Expected customInput.min to update to 61, got ' + customInput.min);
+if (elements['current-bid-amount'].textContent !== '60') throw new Error('Expected current-bid-amount 60');
+if (!elements['current-bidder-name'].textContent.includes('PlayerOne')) throw new Error('Expected PlayerOne leading');
+if (Number(elements['btn-quick-p5'].dataset.amount) !== 65) throw new Error('Expected +5 quick bid 65');
+if (submitBtn.disabled !== false) throw new Error('Expected PlayerTwo submit button enabled');
+
+// Verify leading player sees disabled button while also preserving input
+sandbox.gameState.sessionId = 'sess_p1';
+customInput.value = '80';
+sandbox.updateBidButtonStates(sandbox.gameState.roomState.players[0], sandbox.gameState.roomState);
+if (customInput.value !== '80') throw new Error('Expected leader customInput.value to remain 80');
+if (submitBtn.disabled !== true || submitBtn.textContent !== 'YOU ARE HIGHEST BIDDER') {
+  throw new Error('Expected leader button disabled with YOU ARE HIGHEST BIDDER');
+}
+console.log('FRONTEND_BID_INPUT_PRESERVATION_OK');
+"""
+        res = subprocess.run(["node", "-e", node_script, js_path], capture_output=True, text=True, check=True)
+        self.assertIn("FRONTEND_BID_INPUT_PRESERVATION_OK", res.stdout)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
