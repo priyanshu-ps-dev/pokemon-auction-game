@@ -1,0 +1,448 @@
+{
+  "metadata": {
+    "generated_at": "2026-11-25T05:01:02.877680+00:00",
+    "total_abilities": 44
+  },
+  "abilities": {
+    "mab_marvel_616_spider_man_spider_sense": {
+      "id": "mab_marvel_616_spider_man_spider_sense",
+      "character_id": "marvel_616_spider_man",
+      "universe": "marvel",
+      "name": "Spider-Sense",
+      "ability_type": "passive",
+      "description": "Precognitive danger detection",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_spider_man_superhuman_agility": {
+      "id": "mab_marvel_616_spider_man_superhuman_agility",
+      "character_id": "marvel_616_spider_man",
+      "universe": "marvel",
+      "name": "Superhuman Agility",
+      "ability_type": "defensive",
+      "description": "Evasive reflexes",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_iron_man_powered_armor_plating": {
+      "id": "mab_marvel_616_iron_man_powered_armor_plating",
+      "character_id": "marvel_616_iron_man",
+      "universe": "marvel",
+      "name": "Powered Armor Plating",
+      "ability_type": "defensive",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_iron_man_jarvis_friday_tactical_targeting": {
+      "id": "mab_marvel_616_iron_man_jarvis_friday_tactical_targeting",
+      "character_id": "marvel_616_iron_man",
+      "universe": "marvel",
+      "name": "J.A.R.V.I.S. / FRIDAY Tactical Targeting",
+      "ability_type": "passive",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_captain_america_super_soldier_physiology": {
+      "id": "mab_marvel_616_captain_america_super_soldier_physiology",
+      "character_id": "marvel_616_captain_america",
+      "universe": "marvel",
+      "name": "Super-Soldier Physiology",
+      "ability_type": "passive",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_captain_america_vibranium_shield_deflection": {
+      "id": "mab_marvel_616_captain_america_vibranium_shield_deflection",
+      "character_id": "marvel_616_captain_america",
+      "universe": "marvel",
+      "name": "Vibranium Shield Deflection",
+      "ability_type": "defensive",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_thor_asgardian_godhood": {
+      "id": "mab_marvel_616_thor_asgardian_godhood",
+      "character_id": "marvel_616_thor",
+      "universe": "marvel",
+      "name": "Asgardian Godhood",
+      "ability_type": "passive",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_thor_weather_storm_mastery": {
+      "id": "mab_marvel_616_thor_weather_storm_mastery",
+      "character_id": "marvel_616_thor",
+      "universe": "marvel",
+      "name": "Weather & Storm Mastery",
+      "ability_type": "special_power",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_hulk_gamma_healing_factor": {
+      "id": "mab_marvel_616_hulk_gamma_healing_factor",
+      "character_id": "marvel_616_hulk",
+      "universe": "marvel",
+      "name": "Gamma Healing Factor",
+      "ability_type": "healing_support",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_hulk_rage_scaled_strength": {
+      "id": "mab_marvel_616_hulk_rage_scaled_strength",
+      "character_id": "marvel_616_hulk",
+      "universe": "marvel",
+      "name": "Rage-Scaled Strength",
+      "ability_type": "passive",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_doctor_strange_sorcerer_supreme_mastery": {
+      "id": "mab_marvel_616_doctor_strange_sorcerer_supreme_mastery",
+      "character_id": "marvel_616_doctor_strange",
+      "universe": "marvel",
+      "name": "Sorcerer Supreme Mastery",
+      "ability_type": "special_power",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_doctor_strange_astral_projection": {
+      "id": "mab_marvel_616_doctor_strange_astral_projection",
+      "character_id": "marvel_616_doctor_strange",
+      "universe": "marvel",
+      "name": "Astral Projection",
+      "ability_type": "passive",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_scarlet_witch_chaos_magic": {
+      "id": "mab_marvel_616_scarlet_witch_chaos_magic",
+      "character_id": "marvel_616_scarlet_witch",
+      "universe": "marvel",
+      "name": "Chaos Magic",
+      "ability_type": "special_power",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_scarlet_witch_probability_manipulation": {
+      "id": "mab_marvel_616_scarlet_witch_probability_manipulation",
+      "character_id": "marvel_616_scarlet_witch",
+      "universe": "marvel",
+      "name": "Probability Manipulation",
+      "ability_type": "passive",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_wolverine_mutant_healing_factor": {
+      "id": "mab_marvel_616_wolverine_mutant_healing_factor",
+      "character_id": "marvel_616_wolverine",
+      "universe": "marvel",
+      "name": "Mutant Healing Factor",
+      "ability_type": "healing_support",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_wolverine_adamantium_skeleton": {
+      "id": "mab_marvel_616_wolverine_adamantium_skeleton",
+      "character_id": "marvel_616_wolverine",
+      "universe": "marvel",
+      "name": "Adamantium Skeleton",
+      "ability_type": "defensive",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_deadpool_accelerated_healing_factor": {
+      "id": "mab_marvel_616_deadpool_accelerated_healing_factor",
+      "character_id": "marvel_616_deadpool",
+      "universe": "marvel",
+      "name": "Accelerated Healing Factor",
+      "ability_type": "healing_support",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_deadpool_unpredictable_combat_style": {
+      "id": "mab_marvel_616_deadpool_unpredictable_combat_style",
+      "character_id": "marvel_616_deadpool",
+      "universe": "marvel",
+      "name": "Unpredictable Combat Style",
+      "ability_type": "passive",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_captain_marvel_energy_absorption": {
+      "id": "mab_marvel_616_captain_marvel_energy_absorption",
+      "character_id": "marvel_616_captain_marvel",
+      "universe": "marvel",
+      "name": "Energy Absorption",
+      "ability_type": "defensive",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_captain_marvel_cosmic_flight": {
+      "id": "mab_marvel_616_captain_marvel_cosmic_flight",
+      "character_id": "marvel_616_captain_marvel",
+      "universe": "marvel",
+      "name": "Cosmic Flight",
+      "ability_type": "passive",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_black_panther_kinetic_absorption_suit": {
+      "id": "mab_marvel_616_black_panther_kinetic_absorption_suit",
+      "character_id": "marvel_616_black_panther",
+      "universe": "marvel",
+      "name": "Kinetic Absorption Suit",
+      "ability_type": "defensive",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_black_panther_heart_shaped_herb_enhancement": {
+      "id": "mab_marvel_616_black_panther_heart_shaped_herb_enhancement",
+      "character_id": "marvel_616_black_panther",
+      "universe": "marvel",
+      "name": "Heart-Shaped Herb Enhancement",
+      "ability_type": "passive",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_ant_man_size_shifting_pym_particles": {
+      "id": "mab_marvel_616_ant_man_size_shifting_pym_particles",
+      "character_id": "marvel_616_ant_man",
+      "universe": "marvel",
+      "name": "Size Shifting (Pym Particles)",
+      "ability_type": "special_power",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_daredevil_hyper_acute_radar_sense": {
+      "id": "mab_marvel_616_daredevil_hyper_acute_radar_sense",
+      "character_id": "marvel_616_daredevil",
+      "universe": "marvel",
+      "name": "Hyper-Acute Radar Sense",
+      "ability_type": "passive",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_vision_density_control_intangibility": {
+      "id": "mab_marvel_616_vision_density_control_intangibility",
+      "character_id": "marvel_616_vision",
+      "universe": "marvel",
+      "name": "Density Control & Intangibility",
+      "ability_type": "defensive",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_thanos_eternal_deviant_physiology": {
+      "id": "mab_marvel_616_thanos_eternal_deviant_physiology",
+      "character_id": "marvel_616_thanos",
+      "universe": "marvel",
+      "name": "Eternal-Deviant Physiology",
+      "ability_type": "passive",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_thanos_telepathic_resistance": {
+      "id": "mab_marvel_616_thanos_telepathic_resistance",
+      "character_id": "marvel_616_thanos",
+      "universe": "marvel",
+      "name": "Telepathic Resistance",
+      "ability_type": "defensive",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_loki_frost_giant_asgardian_resilience": {
+      "id": "mab_marvel_616_loki_frost_giant_asgardian_resilience",
+      "character_id": "marvel_616_loki",
+      "universe": "marvel",
+      "name": "Frost Giant / Asgardian Resilience",
+      "ability_type": "defensive",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_loki_master_illusionist": {
+      "id": "mab_marvel_616_loki_master_illusionist",
+      "character_id": "marvel_616_loki",
+      "universe": "marvel",
+      "name": "Master Illusionist",
+      "ability_type": "special_power",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_ultron_primary_adamantium_shell": {
+      "id": "mab_marvel_616_ultron_primary_adamantium_shell",
+      "character_id": "marvel_616_ultron",
+      "universe": "marvel",
+      "name": "Primary Adamantium Shell",
+      "ability_type": "defensive",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_ultron_self_repair_subroutine": {
+      "id": "mab_marvel_616_ultron_self_repair_subroutine",
+      "character_id": "marvel_616_ultron",
+      "universe": "marvel",
+      "name": "Self-Repair Subroutine",
+      "ability_type": "healing_support",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_doctor_doom_titanium_battle_armor": {
+      "id": "mab_marvel_616_doctor_doom_titanium_battle_armor",
+      "character_id": "marvel_616_doctor_doom",
+      "universe": "marvel",
+      "name": "Titanium Battle Armor",
+      "ability_type": "defensive",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_doctor_doom_mastery_of_science_sorcery": {
+      "id": "mab_marvel_616_doctor_doom_mastery_of_science_sorcery",
+      "character_id": "marvel_616_doctor_doom",
+      "universe": "marvel",
+      "name": "Mastery of Science & Sorcery",
+      "ability_type": "special_power",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_magneto_omega_level_magnetism": {
+      "id": "mab_marvel_616_magneto_omega_level_magnetism",
+      "character_id": "marvel_616_magneto",
+      "universe": "marvel",
+      "name": "Omega-Level Magnetism",
+      "ability_type": "special_power",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_magneto_telepathy_blocking_helmet": {
+      "id": "mab_marvel_616_magneto_telepathy_blocking_helmet",
+      "character_id": "marvel_616_magneto",
+      "universe": "marvel",
+      "name": "Telepathy-Blocking Helmet",
+      "ability_type": "defensive",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_green_goblin_goblin_formula_enhancement": {
+      "id": "mab_marvel_616_green_goblin_goblin_formula_enhancement",
+      "character_id": "marvel_616_green_goblin",
+      "universe": "marvel",
+      "name": "Goblin Formula Enhancement",
+      "ability_type": "passive",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_venom_symbiote_regeneration": {
+      "id": "mab_marvel_616_venom_symbiote_regeneration",
+      "character_id": "marvel_616_venom",
+      "universe": "marvel",
+      "name": "Symbiote Regeneration",
+      "ability_type": "healing_support",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_venom_spider_sense_immunity": {
+      "id": "mab_marvel_616_venom_spider_sense_immunity",
+      "character_id": "marvel_616_venom",
+      "universe": "marvel",
+      "name": "Spider-Sense Immunity",
+      "ability_type": "passive",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_red_skull_super_soldier_clone_body": {
+      "id": "mab_marvel_616_red_skull_super_soldier_clone_body",
+      "character_id": "marvel_616_red_skull",
+      "universe": "marvel",
+      "name": "Super-Soldier Clone Body",
+      "ability_type": "passive",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_kang_time_armor_force_field": {
+      "id": "mab_marvel_616_kang_time_armor_force_field",
+      "character_id": "marvel_616_kang",
+      "universe": "marvel",
+      "name": "Time-Armor Force Field",
+      "ability_type": "defensive",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_galactus_power_cosmic_mastery": {
+      "id": "mab_marvel_616_galactus_power_cosmic_mastery",
+      "character_id": "marvel_616_galactus",
+      "universe": "marvel",
+      "name": "Power Cosmic Mastery",
+      "ability_type": "special_power",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_616_galactus_cosmic_entity_durability": {
+      "id": "mab_marvel_616_galactus_cosmic_entity_durability",
+      "character_id": "marvel_616_galactus",
+      "universe": "marvel",
+      "name": "Cosmic Entity Durability",
+      "ability_type": "defensive",
+      "description": null,
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_mcu_iron_man_bleeding_edge_nanotech": {
+      "id": "mab_marvel_mcu_iron_man_bleeding_edge_nanotech",
+      "character_id": "marvel_mcu_iron_man",
+      "universe": "marvel",
+      "name": "Bleeding Edge Nanotech",
+      "ability_type": "defensive",
+      "description": null,
+      "source": "Marvel Cinematic Universe Official Canon",
+      "verification_status": "verified_curated"
+    },
+    "mab_marvel_mcu_thanos_titan_physiology": {
+      "id": "mab_marvel_mcu_thanos_titan_physiology",
+      "character_id": "marvel_mcu_thanos",
+      "universe": "marvel",
+      "name": "Titan Physiology",
+      "ability_type": "defensive",
+      "description": null,
+      "source": "Marvel Cinematic Universe Official Canon",
+      "verification_status": "verified_curated"
+    }
+  }
+}

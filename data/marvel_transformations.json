@@ -1,0 +1,63 @@
+{
+  "metadata": {
+    "generated_at": "2026-11-25T05:01:02.877680+00:00",
+    "total_transformations": 5
+  },
+  "transformations": {
+    "tf_iron_man_hulkbuster": {
+      "id": "tf_iron_man_hulkbuster",
+      "character_id": "marvel_616_iron_man",
+      "universe": "marvel",
+      "name": "Hulkbuster Armor",
+      "requirements": "Heavy Deployment",
+      "combat_effects": "Increased strength and armor plating",
+      "duration_and_limitations": "Lower flight speed",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "tf_thor_odinforce": {
+      "id": "tf_thor_odinforce",
+      "character_id": "marvel_616_thor",
+      "universe": "marvel",
+      "name": "Odinforce / Rune King State",
+      "requirements": "All-Father Awakening",
+      "combat_effects": "Amplified cosmic energy and durability",
+      "duration_and_limitations": "Odinsleep recovery",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "tf_hulk_worldbreaker": {
+      "id": "tf_hulk_worldbreaker",
+      "character_id": "marvel_616_hulk",
+      "universe": "marvel",
+      "name": "World Breaker Hulk",
+      "requirements": "Peak Rage Threshold",
+      "combat_effects": "Massive gamma output and strength surge",
+      "duration_and_limitations": "Uncontrolled collateral",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "tf_cm_binary": {
+      "id": "tf_cm_binary",
+      "character_id": "marvel_616_captain_marvel",
+      "universe": "marvel",
+      "name": "Binary Form",
+      "requirements": "Critical Energy Absorption",
+      "combat_effects": "Stellar-level energy projection and speed boost",
+      "duration_and_limitations": "Requires sustained energy reserve",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    },
+    "tf_antman_giant": {
+      "id": "tf_antman_giant",
+      "character_id": "marvel_616_ant_man",
+      "universe": "marvel",
+      "name": "Giant-Man",
+      "requirements": "Pym Particle Enlargement",
+      "combat_effects": "Increased physical strength and durability",
+      "duration_and_limitations": "High physical stamina drain",
+      "source": "Official Handbook of the Marvel Universe (Earth-616)",
+      "verification_status": "verified_curated"
+    }
+  }
+}

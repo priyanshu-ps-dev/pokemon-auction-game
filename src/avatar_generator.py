@@ -29,14 +29,15 @@ FRANCHISE_PALETTES: Dict[str, Dict[str, str]] = {
     "fairy_tail": {"bg1": "#c2410c", "bg2": "#e11d48", "accent": "#ffedd5", "symbol": "🔥"},
     "haikyuu": {"bg1": "#c2410c", "bg2": "#0284c7", "accent": "#ffedd5", "symbol": "🏐"},
     "blue_lock": {"bg1": "#1e40af", "bg2": "#06b6d4", "accent": "#dbeafe", "symbol": "⚽"},
-    "pokemon": {"bg1": "#2563eb", "bg2": "#eab308", "accent": "#dbeafe", "symbol": "⚡"}
+    "pokemon": {"bg1": "#2563eb", "bg2": "#eab308", "accent": "#dbeafe", "symbol": "⚡"},
+    "marvel": {"bg1": "#b91c1c", "bg2": "#f59e0b", "accent": "#fef08a", "symbol": "M"}
 }
 
 DEFAULT_PALETTE = {"bg1": "#1e293b", "bg2": "#3b82f6", "accent": "#93c5fd", "symbol": "✨"}
 
 
 def generate_character_svg(char: dict) -> str:
-    """Generates an aesthetic SVG illustration avatar for a character."""
+    """Generates a fallback SVG avatar when external artwork is unavailable."""
     anime_id = char.get("anime_id", "pokemon")
     name = char.get("name", "Unknown Character")
     anime_name = char.get("anime_name", "Anime")

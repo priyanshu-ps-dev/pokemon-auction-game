@@ -50,6 +50,34 @@ class AnimeDatabaseManager:
         else:
             self.characters = {c["id"]: c for c in raw_characters}
 
+        # Load Marvel Universe combat-eligible characters (kept separate from anime_database.json)
+        marvel_path = os.path.join(os.path.dirname(self.json_path), "marvel_combat_database.json")
+        if os.path.exists(marvel_path):
+            with open(marvel_path, "r", encoding="utf-8") as mf:
+                mdata = json.load(mf)
+            mchars = mdata.get("characters", {})
+            if isinstance(mchars, dict) and mchars:
+                self.franchises["marvel"] = {
+                    "id": "marvel",
+                    "name": "Marvel Comics",
+                    "japanese_name": "マーベル・コミック",
+                    "genre": ["Superhero", "Action", "Sci-Fi", "Fantasy"],
+                    "energy_system": "Cosmic / Mystic / Mutant / Tech",
+                    "logo_color": "#dc2626",
+                    "description": "Marvel Comics & MCU characters (Data provided by Marvel).",
+                    "is_enabled": True,
+                    "is_active": True,
+                    "character_count": len(mchars),
+                }
+                for cid, mc in mchars.items():
+                    entry = copy.deepcopy(mc)
+                    entry["id"] = cid
+                    entry["universe"] = "marvel"
+                    entry["anime_id"] = "marvel"
+                    entry["anime_name"] = "Marvel Comics"
+                    entry["is_active"] = bool(mc.get("combat_eligible", False))
+                    self.characters[cid] = entry
+
         print(f"[AnimeDB] Loaded {len(self.franchises)} franchises and {len(self.characters)} characters.")
 
     def save_data(self):
@@ -218,6 +246,21 @@ class AnimeDatabaseManager:
                 case "pokemon":
                     if anime_id == "pokemon":
                         eligible.append(char)
+                case "anime_only" | "anime":
+                    if anime_id not in ("pokemon", "marvel"):
+                        eligible.append(char)
+                case "marvel":
+                    if anime_id == "marvel":
+                        eligible.append(char)
+                case "pokemon_anime":
+                    if anime_id != "marvel":
+                        eligible.append(char)
+                case "pokemon_marvel":
+                    if anime_id in ("pokemon", "marvel"):
+                        eligible.append(char)
+                case "anime_marvel":
+                    if anime_id != "pokemon":
+                        eligible.append(char)
                 case "single":
                     if selected_anime and anime_id in selected_anime:
                         eligible.append(char)
@@ -270,6 +313,11 @@ class AnimeDatabaseManager:
         power_tier: Optional[str] = None,
         rarity: Optional[str] = None,
         species: Optional[str] = None,
+        category: Optional[str] = None,
+        affiliation: Optional[str] = None,
+        continuity: Optional[str] = None,
+        combat_eligible: Optional[str] = None,
+        has_artwork: Optional[str] = None,
         sort: str = "power_desc",
         limit: int = 50,
         offset: int = 0
@@ -289,6 +337,31 @@ class AnimeDatabaseManager:
         if species:
             sp = species.lower()
             items = [c for c in items if sp in c.get("species", "").lower() or sp in c.get("race", "").lower()]
+
+        if category:
+            cat_l = category.strip().lower()
+            items = [c for c in items if any(cat_l == str(x).lower() for x in (c.get("categories") or []))]
+
+        if affiliation:
+            aff_l = affiliation.strip().lower()
+            items = [c for c in items if any(aff_l in str(x).lower() for x in (c.get("affiliations") or []))]
+
+        if continuity:
+            cont_l = continuity.strip().lower()
+            items = [c for c in items if cont_l in str(c.get("incarnation") or "").lower()]
+
+        if combat_eligible is not None and str(combat_eligible).strip() != "":
+            want = str(combat_eligible).strip().lower() in ("1", "true", "yes")
+            items = [c for c in items if bool(c.get("is_active", True)) is want]
+
+        if has_artwork is not None and str(has_artwork).strip() != "":
+            want_art = str(has_artwork).strip().lower() in ("1", "true", "yes")
+            def _has_art(c: dict) -> bool:
+                if c.get("image_verification_status") == "missing_artwork_placeholder":
+                    return False
+                img = str(c.get("image") or "")
+                return bool(img) and not img.startswith("/api/avatar/")
+            items = [c for c in items if _has_art(c) is want_art]
 
         if query:
             q = query.strip().lower()
@@ -413,7 +486,7 @@ class AnimeDatabaseManager:
         missing = 0
         for cid, char in self.characters.items():
             img = (char.get("image") or "").strip()
-            if not img or img.startswith("/api/avatar") or "ui-avatars" in img:
+            if not img or ((img.startswith("/api/avatar") or "ui-avatars" in img) and char.get("universe") != "marvel"):
                 missing += 1
             else:
                 char["image_verified"] = 1

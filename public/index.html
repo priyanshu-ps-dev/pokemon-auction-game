@@ -583,7 +583,89 @@
       </div>
     </div>
 
-    <!-- SUB-SCREEN 1D: FINAL LEADERBOARD & VICTORY SCREEN -->
+    <!-- SUB-SCREEN 1D: BATTLE SIMULATION ARENA -->
+    <div id="arena-battle" class="arena-screen">
+      <div class="battle-container">
+        <div class="battle-top-bar">
+          <div class="battle-badge-group">
+            <span class="badge-status" id="battle-format-badge">TOURNAMENT</span>
+            <span class="battle-counter-pill" id="battle-match-counter">Match 1 / 1</span>
+            <span class="battle-counter-pill" id="battle-turn-counter">Turn 0</span>
+          </div>
+          <div class="battle-controls-group">
+            <button id="pause-battle-btn" class="btn btn-outline btn-sm">⏸️ Pause</button>
+            <button id="speed-battle-btn" class="btn btn-outline btn-sm">⏩ 1x</button>
+            <button id="toggle-battle-log-btn" class="btn btn-outline btn-sm">📜 Log</button>
+            <button id="skip-match-btn" class="btn btn-outline btn-sm">⏭️ Next Match</button>
+            <button id="skip-battle-btn" class="btn btn-primary btn-sm">⏩ Skip to Results</button>
+          </div>
+        </div>
+
+        <div class="battle-duel-grid">
+          <div class="battle-fighter-card" id="battle-fighter-a">
+            <div class="fighter-header-row">
+              <span class="fighter-avatar-pill" id="battle-avatar-a">🔴</span>
+              <span class="fighter-trainer" id="battle-player-a-name">Trainer A</span>
+              <span class="fighter-team-dots" id="battle-team-a-dots"></span>
+            </div>
+            <div class="fighter-art-wrap">
+              <img id="battle-art-a" src="" alt="Combatant A" class="fighter-art">
+              <div class="battle-dmg-pop" id="battle-dmg-pop-a"></div>
+            </div>
+            <div class="fighter-name" id="battle-char-a-name">Combatant A</div>
+            <div class="fighter-badges" id="battle-badges-a"></div>
+            <div class="battle-hp-wrap">
+              <div class="battle-hp-bar"><div class="battle-hp-fill" id="battle-hp-fill-a" style="width:100%;"></div></div>
+              <div class="battle-hp-text" id="battle-hp-text-a">100 / 100 HP (100%)</div>
+            </div>
+            <div class="fighter-status-tag" id="battle-status-a" style="display:none;"></div>
+          </div>
+
+          <div class="battle-center-col">
+            <div class="battle-vs-badge">⚔️ VS</div>
+            <div class="battle-action-banner" id="battle-action-banner">Preparing combatants...</div>
+          </div>
+
+          <div class="battle-fighter-card" id="battle-fighter-b">
+            <div class="fighter-header-row">
+              <span class="fighter-avatar-pill" id="battle-avatar-b">🔵</span>
+              <span class="fighter-trainer" id="battle-player-b-name">Trainer B</span>
+              <span class="fighter-team-dots" id="battle-team-b-dots"></span>
+            </div>
+            <div class="fighter-art-wrap">
+              <img id="battle-art-b" src="" alt="Combatant B" class="fighter-art">
+              <div class="battle-dmg-pop" id="battle-dmg-pop-b"></div>
+            </div>
+            <div class="fighter-name" id="battle-char-b-name">Combatant B</div>
+            <div class="fighter-badges" id="battle-badges-b"></div>
+            <div class="battle-hp-wrap">
+              <div class="battle-hp-bar"><div class="battle-hp-fill" id="battle-hp-fill-b" style="width:100%;"></div></div>
+              <div class="battle-hp-text" id="battle-hp-text-b">100 / 100 HP (100%)</div>
+            </div>
+            <div class="fighter-status-tag" id="battle-status-b" style="display:none;"></div>
+          </div>
+        </div>
+
+        <div class="battle-control-panel" id="battle-control-panel" style="display:none;">
+          <div class="battle-control-header">
+            <span id="battle-turn-status" class="battle-turn-status">Your Turn — Choose an Action</span>
+            <span id="battle-action-timer" class="battle-counter-pill">⏱️ 20s</span>
+          </div>
+          <div class="battle-moves-grid" id="battle-moves-grid"></div>
+          <div class="battle-secondary-actions">
+            <div class="battle-switch-row" id="battle-switch-row"></div>
+            <div class="battle-transform-row" id="battle-transform-row"></div>
+          </div>
+        </div>
+
+        <div class="battle-log-card" id="battle-log-card">
+          <h4>Live Battle Event Log</h4>
+          <div class="battle-event-log" id="battle-event-log"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUB-SCREEN 1E: FINAL LEADERBOARD & VICTORY SCREEN -->
     <div id="arena-results" class="arena-screen">
       <div class="results-container">
         <div class="results-layout-split">
@@ -644,12 +726,13 @@
             </div>
           </aside>
 
-          <!-- Right: Existing Match Concluded Content (Preserved) -->
+          <!-- Right: Match Concluded + Battle Championship Results -->
           <div class="results-main-col">
-            <div class="victory-banner">
+            <div class="victory-banner champion-pulse">
               <div class="trophy-icon">🏆</div>
-              <h2 id="victory-banner-title">MATCH CONCLUDED!</h2>
-              <p id="victory-banner-desc">Final tournament standings and complete Pokémon competitive stats revealed below:</p>
+              <h2 id="victory-banner-title">TOURNAMENT CONCLUDED!</h2>
+              <p id="victory-banner-desc">Champion determined by simulated battle results:</p>
+              <div id="battle-champion-banner" class="champion-banner" style="display:none;"></div>
             </div>
 
             <!-- Podium (Top 3) -->
@@ -665,10 +748,10 @@
                   <tr>
                     <th>Rank</th>
                     <th>Trainer</th>
-                    <th>Team Power</th>
+                    <th>Record (W-L-D)</th>
+                    <th>Battle Pts</th>
                     <th>Team Roster</th>
-                    <th>Total BST</th>
-                    <th>Total HP</th>
+                    <th>Team Power</th>
                     <th>Remaining Purse</th>
                     <th>Action</th>
                   </tr>
@@ -677,6 +760,12 @@
                   <!-- Populated dynamically -->
                 </tbody>
               </table>
+            </div>
+
+            <!-- Individual Battle Summaries -->
+            <div class="leaderboard-card" id="battle-matches-card" style="display:none; margin-top:1.2rem;">
+              <h3>Simulated Battle Summaries</h3>
+              <div class="battle-matches-grid" id="battle-matches-summary"></div>
             </div>
 
             <!-- Team Inspection Showcase Drawer (Visible when a player is selected) -->
@@ -776,6 +865,7 @@
 
         <div class="quick-toggles" id="anime-quick-franchises">
           <button class="toggle-btn active" data-franchise="">All Universes</button>
+          <button class="toggle-btn" data-franchise="marvel">Marvel Comics</button>
           <button class="toggle-btn" data-franchise="dragon_ball">Dragon Ball</button>
           <button class="toggle-btn" data-franchise="naruto">Naruto</button>
           <button class="toggle-btn" data-franchise="one_piece">One Piece</button>
@@ -834,6 +924,39 @@
               <option value="Cyborg">Cyborg / Alien</option>
               <option value="Shadow Monarch">Shadow Monarch</option>
               <option value="Pokemon">Pokémon</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label for="anime-category-select">Category / Role</label>
+            <select id="anime-category-select">
+              <option value="">All Categories</option>
+              <option value="Heroes">Heroes</option>
+              <option value="Villains">Villains</option>
+              <option value="Antiheroes">Antiheroes</option>
+              <option value="Mutants">Mutants</option>
+              <option value="Cosmic">Cosmic</option>
+              <option value="Aliens">Aliens</option>
+              <option value="Supernatural">Supernatural</option>
+              <option value="Supporting characters">Supporting Characters</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label for="anime-combat-select">Combat Status</label>
+            <select id="anime-combat-select">
+              <option value="">All Records</option>
+              <option value="true">Combat-Eligible</option>
+              <option value="false">Discovery / Incomplete</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label for="anime-artwork-select">Artwork</label>
+            <select id="anime-artwork-select">
+              <option value="">All Artwork</option>
+              <option value="true">Verified Artwork</option>
+              <option value="false">Missing / Fallback</option>
             </select>
           </div>
 
@@ -991,6 +1114,39 @@
               <option value="Rare">Rare</option>
               <option value="Uncommon">Uncommon</option>
               <option value="Common">Common</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label for="anime-category-select">Category / Role</label>
+            <select id="anime-category-select">
+              <option value="">All Categories</option>
+              <option value="Heroes">Heroes</option>
+              <option value="Villains">Villains</option>
+              <option value="Antiheroes">Antiheroes</option>
+              <option value="Mutants">Mutants</option>
+              <option value="Cosmic">Cosmic</option>
+              <option value="Aliens">Aliens</option>
+              <option value="Supernatural">Supernatural</option>
+              <option value="Supporting characters">Supporting Characters</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label for="anime-combat-select">Combat Status</label>
+            <select id="anime-combat-select">
+              <option value="">All Records</option>
+              <option value="true">Combat-Eligible</option>
+              <option value="false">Discovery / Incomplete</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label for="anime-artwork-select">Artwork</label>
+            <select id="anime-artwork-select">
+              <option value="">All Artwork</option>
+              <option value="true">Verified Artwork</option>
+              <option value="false">Missing / Fallback</option>
             </select>
           </div>
 

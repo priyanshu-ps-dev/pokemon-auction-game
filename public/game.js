@@ -6,11 +6,14 @@
  * hidden stats during bidding, and dramatic final stats reveal.
  */
 
-// Global Game State
+// Global Game State (per-tab sessionStorage prevents multi-tab sessionId collisions while surviving F5 refresh)
+const _savedSessionId = sessionStorage.getItem('pkmn_auction_session_id') || ('sess_' + Math.random().toString(36).substring(2, 10));
+sessionStorage.setItem('pkmn_auction_session_id', _savedSessionId);
+
 const gameState = {
   ws: null,
-  sessionId: localStorage.getItem('pkmn_auction_session_id') || ('sess_' + Math.random().toString(36).substring(2, 10)),
-  roomCode: null,
+  sessionId: _savedSessionId,
+  roomCode: sessionStorage.getItem('pkmn_auction_room_code') || null,
   isHost: false,
   isWithdrawn: false,
   myName: localStorage.getItem('pkmn_auction_name') || 'Trainer Red',
@@ -19,8 +22,6 @@ const gameState = {
   roomState: null,
   timerInterval: null
 };
-
-localStorage.setItem('pkmn_auction_session_id', gameState.sessionId);
 
 // 12 Trainer Avatars
 const TRAINER_AVATARS = [
@@ -90,6 +91,15 @@ function connectWebSocket() {
 
   gameState.ws.onopen = () => {
     console.log('[WS] Connected to Auction Server');
+    const savedRoom = sessionStorage.getItem('pkmn_auction_room_code');
+    if (savedRoom) {
+      console.log(`[WS] Auto-rejoining room ${savedRoom} with session ${gameState.sessionId}`);
+      sendAction('join_room', {
+        room_code: savedRoom,
+        name: gameState.myName,
+        avatar: gameState.myAvatar
+      });
+    }
   };
 
   gameState.ws.onmessage = (event) => {
@@ -110,12 +120,32 @@ function connectWebSocket() {
 // Dispatch Incoming Server Messages
 function handleServerMessage(type, data) {
   switch (type) {
-    case 'room_joined':
+    case 'room_joined': {
       gameState.roomCode = data.room_code;
       gameState.isHost = data.is_host;
-      updateLobbyUI(data.room_state);
-      switchArenaScreen('arena-lobby');
+      gameState.roomState = data.room_state;
+      sessionStorage.setItem('pkmn_auction_room_code', data.room_code);
+      const rs = data.room_state || {};
+      const status = rs.status || 'LOBBY';
+      if (status === 'AUCTION' || status === 'SHOWCASE') {
+        switchArenaScreen('arena-stage');
+        updateStageUI(rs);
+        if (rs.current_pokemon) {
+          renderAuctionCard(rs.current_pokemon);
+        }
+        updateBidStatus(rs.current_bid || 0, rs.highest_bidder_id || null, rs.highest_bidder_name || null, null);
+        updateTimerDisplay(rs.timer_seconds_left != null ? rs.timer_seconds_left : 15);
+      } else if (status === 'BATTLE') {
+        switchArenaScreen('arena-battle');
+        updateStageUI(rs);
+      } else if (status === 'GAME_OVER') {
+        switchArenaScreen('arena-results');
+      } else {
+        updateLobbyUI(rs);
+        switchArenaScreen('arena-lobby');
+      }
       break;
+    }
 
     case 'room_state':
       gameState.roomState = data;
@@ -207,6 +237,8 @@ function handleServerMessage(type, data) {
     case 'rematch_started':
       hideRematchModal();
       gameState.isWithdrawn = false;
+      gameState.currentMatchId = data.match_id || null;
+      resetBattleUI();
       const stageLog = document.getElementById('stage-log-list');
       if (stageLog) stageLog.innerHTML = '';
       addStageLog(`🔄 Rematch started! Match #${data.match_number}`, 'won');
@@ -218,28 +250,50 @@ function handleServerMessage(type, data) {
       gameState.roomCode = null;
       gameState.isHost = false;
       gameState.isWithdrawn = false;
+      sessionStorage.removeItem('pkmn_auction_room_code');
       switchArenaScreen('arena-setup');
       break;
 
-    case 'auction_tick':
-      updateTimerDisplay(data.timer_seconds_left);
-      updateBidStatus(data.current_bid, data.highest_bidder_id, data.highest_bidder_name, data.highest_bidder_avatar);
-      if (gameState.roomState) {
+    case 'auction_tick': {
+      if (data.room_state) {
+        gameState.roomState = data.room_state;
+      } else if (gameState.roomState) {
         gameState.roomState.current_bid = data.current_bid;
         gameState.roomState.highest_bidder_id = data.highest_bidder_id;
         gameState.roomState.highest_bidder_name = data.highest_bidder_name;
+        gameState.roomState.timer_seconds_left = data.timer_seconds_left;
+      }
+      updateTimerDisplay(data.timer_seconds_left);
+      updateBidStatus(data.current_bid, data.highest_bidder_id, data.highest_bidder_name, data.highest_bidder_avatar);
+      if (gameState.roomState && Array.isArray(gameState.roomState.players)) {
+        const me = gameState.roomState.players.find(p => p.session_id === gameState.sessionId);
+        if (me) updateBidButtonStates(me, gameState.roomState);
       }
       if (data.timer_seconds_left <= 3 && data.timer_seconds_left > 0) {
         soundFX.tick();
       }
       break;
+    }
 
-    case 'bid_success':
+    case 'bid_success': {
       soundFX.bid();
+      if (data.room_state) {
+        gameState.roomState = data.room_state;
+      } else if (gameState.roomState) {
+        gameState.roomState.current_bid = data.current_bid;
+        gameState.roomState.highest_bidder_id = data.highest_bidder_id;
+        gameState.roomState.highest_bidder_name = data.highest_bidder_name;
+        gameState.roomState.timer_seconds_left = data.timer_seconds_left;
+      }
       updateBidStatus(data.current_bid, data.highest_bidder_id, data.highest_bidder_name, data.highest_bidder_avatar);
       updateTimerDisplay(data.timer_seconds_left);
+      if (gameState.roomState && Array.isArray(gameState.roomState.players)) {
+        const me = gameState.roomState.players.find(p => p.session_id === gameState.sessionId);
+        if (me) updateBidButtonStates(me, gameState.roomState);
+      }
       addStageLog(`₹ <strong>${data.highest_bidder_name}</strong> bid <strong>₹${data.current_bid.toLocaleString()}</strong>! Timer reset!`, 'bid');
       break;
+    }
 
     case 'bid_error':
       showBiddingError(data.message);
@@ -263,10 +317,61 @@ function handleServerMessage(type, data) {
       addStageLog(`📢 ${data.message}`, 'alert');
       break;
 
+    case 'battle_started':
+      gameState.currentMatchId = data.match_id || gameState.currentMatchId;
+      resetBattleUI();
+      switchArenaScreen('arena-battle');
+      break;
+
+    case 'battle_progress':
+      if (!gameState.battleSkipped) {
+        const mc = document.getElementById('battle-match-counter');
+        if (mc) mc.textContent = `Match ${data.match_index} / ${data.total_matches}`;
+      }
+      break;
+
+    case 'battle_results':
+      if (data.match_id && gameState.currentMatchId && data.match_id !== gameState.currentMatchId) break;
+      gameState.pendingBattleResults = data;
+      break;
+
+    case 'battle_turn_prompt':
+      if (data.match_id && gameState.currentMatchId && data.match_id !== gameState.currentMatchId) break;
+      renderInteractiveTurnPrompt(data);
+      break;
+
+    case 'battle_action_ack':
+      {
+        const st = document.getElementById('battle-turn-status');
+        if (st) st.textContent = '✅ Action submitted! Waiting for opponent...';
+        document.querySelectorAll('.battle-move-btn, .battle-switch-btn, .battle-transform-btn').forEach(b => { b.disabled = true; });
+      }
+      break;
+
+    case 'battle_action_error':
+      alert(data.message || 'Invalid battle action.');
+      break;
+
+    case 'battle_turn_resolved':
+      if (data.match_id && gameState.currentMatchId && data.match_id !== gameState.currentMatchId) break;
+      if (data.turn_entry) {
+        applyResolvedInteractiveTurn(data.turn_entry, data.player_a_name, data.player_b_name);
+      }
+      break;
+
     case 'game_over':
-      soundFX.victory();
-      switchArenaScreen('arena-results');
-      renderLeaderboard(data.leaderboard);
+      {
+        const ctrlPanel = document.getElementById('battle-control-panel');
+        if (ctrlPanel) ctrlPanel.style.display = 'none';
+        const bResults = data.battle_results || gameState.pendingBattleResults;
+        if (bResults && bResults.matches && bResults.matches.length > 0 && !gameState.battleSkipped && gameState.roomState?.battle_control_mode === 'ai_vs_ai') {
+          playBattleSequence(bResults, data);
+        } else {
+          soundFX.victory();
+          switchArenaScreen('arena-results');
+          renderLeaderboard(data.leaderboard, bResults);
+        }
+      }
       break;
 
     case 'chat':
@@ -1099,6 +1204,9 @@ function setupEventListeners() {
       alert('Connecting to server... Please try again in a moment.');
       return;
     }
+    const battleControlMode = (cfg && cfg.battle_control_mode) || document.getElementById('battle-control-select')?.value || 'ai_vs_ai';
+    const tournamentFormat = (cfg && cfg.tournament_format) || document.getElementById('tournament-format-select')?.value || 'round_robin';
+
     gameState.ws.send(JSON.stringify({
       action: 'create_room',
       data: {
@@ -1107,9 +1215,11 @@ function setupEventListeners() {
         session_id: gameState.sessionId,
         starting_purse: cfg.starting_purse || 500,
         min_bid: 10,
-        anime_mode: cfg.anime_mode || 'all',
-        selected_anime: cfg.selected_anime || [],
-        forms_mode: cfg.forms_mode || 'SINGLE_BASE'
+        anime_mode: cfg.anime_mode || selectedAnimeMode || 'all',
+        selected_anime: cfg.selected_anime || Array.from(selectedAnimeFranchises),
+        forms_mode: cfg.forms_mode || 'SINGLE_BASE',
+        battle_control_mode: battleControlMode,
+        tournament_format: tournamentFormat
       }
     }));
   };
@@ -1939,29 +2049,44 @@ function renderMvpPanel(leaderboard) {
 }
 
 // Render Final Leaderboard (REVEAL ALL STATS DRAMATICALLY!)
-function renderLeaderboard(leaderboard) {
+function renderLeaderboard(leaderboard, battleResults = null) {
   renderMvpPanel(leaderboard);
+
+  // 0. Champion Banner from Battle Results
+  const champBanner = document.getElementById('battle-champion-banner');
+  if (champBanner) {
+    if (battleResults && battleResults.champion) {
+      const ch = battleResults.champion;
+      champBanner.style.display = 'inline-block';
+      champBanner.textContent = `🏆 Champion: ${ch.name} (${ch.wins}W - ${ch.losses}L - ${ch.draws}D | ${ch.points} pts)`;
+    } else {
+      champBanner.style.display = 'none';
+    }
+  }
 
   // 1. Render Podium
   const podium = document.getElementById('podium-grid');
   podium.innerHTML = '';
 
   const top3 = leaderboard.slice(0, 3);
-  const places = ['1st', '2nd', '3rd'];
   const medals = ['🥇', '🥈', '🥉'];
 
   top3.forEach((p, idx) => {
     const pod = document.createElement('div');
     pod.className = `podium-card rank-${p.rank || (idx + 1)}`;
     const teamCount = p.pokemon_count || (p.team ? p.team.length : 0);
+    const hasBattle = typeof p.battle_wins === 'number';
+    const headline = hasBattle
+      ? `${p.battle_wins}W-${p.battle_losses}L-${p.battle_draws}D <span class="lbl">${p.battle_points} PTS</span>`
+      : `${p.team_power.toFixed(1)} <span class="lbl">TEAM POWER</span>`;
     pod.innerHTML = `
       <div class="podium-medal">${medals[idx] || '🏅'}</div>
       ${renderAvatarBadgeHtml(p.avatar, 'podium-avatar', p.name)}
       <h3 class="podium-name">${escapeHtml(p.name)}</h3>
-      <div class="podium-power">${p.team_power.toFixed(1)} <span class="lbl">TEAM POWER</span></div>
+      <div class="podium-power">${headline}</div>
       <div class="podium-stats">
         <span>Team: ${teamCount}/6</span> &bull; 
-        <span>BST: ${p.total_bst}</span> &bull; 
+        <span>Power: ${p.team_power.toFixed(1)}</span> &bull; 
         <span>HP: ${p.total_hp || 0}</span>
       </div>
       <div style="font-size:0.8rem; color:#94a3b8; margin-top:0.3rem;">
@@ -1978,6 +2103,10 @@ function renderLeaderboard(leaderboard) {
   leaderboard.forEach(p => {
     const isMe = p.session_id === gameState.sessionId;
     const teamCount = p.pokemon_count || (p.team ? p.team.length : 0);
+    const recordText = typeof p.battle_wins === 'number'
+      ? `${p.battle_wins}W - ${p.battle_losses}L - ${p.battle_draws}D`
+      : '-';
+    const ptsText = typeof p.battle_points === 'number' ? p.battle_points : '-';
 
     const row = document.createElement('tr');
     row.className = isMe ? 'me-row' : '';
@@ -1990,10 +2119,10 @@ function renderLeaderboard(leaderboard) {
           ${p.is_withdrawn ? '<span style="color:#ef4444; font-size:0.75rem; font-weight:700;">(Withdrawn)</span>' : ''}
         </div>
       </td>
+      <td><strong>${recordText}</strong></td>
+      <td><strong style="color:#f59e0b;">${ptsText}</strong></td>
+      <td><span style="color:#10b981; font-weight:600;">${teamCount}/6</span></td>
       <td><strong style="color:#38bdf8; font-size:1.05rem;">${p.team_power.toFixed(1)}</strong></td>
-      <td><span style="color:#10b981; font-weight:600;">${teamCount}/6 Pokémon</span></td>
-      <td>${p.total_bst}</td>
-      <td>${p.total_hp || 0}</td>
       <td>₹${p.remaining_purse.toLocaleString()}</td>
       <td>
         <button class="btn btn-outline btn-sm inspect-team-btn" data-session="${p.session_id}">
@@ -2003,6 +2132,31 @@ function renderLeaderboard(leaderboard) {
     `;
     tbody.appendChild(row);
   });
+
+  // 3. Render Individual Battle Summaries
+  const matchesCard = document.getElementById('battle-matches-card');
+  const matchesGrid = document.getElementById('battle-matches-summary');
+  if (matchesCard && matchesGrid) {
+    if (battleResults && Array.isArray(battleResults.matches) && battleResults.matches.length > 0) {
+      matchesCard.style.display = 'block';
+      matchesGrid.innerHTML = battleResults.matches.map((m, idx) => {
+        const winnerName = m.is_draw
+          ? 'Draw'
+          : (m.winner_id === m.player_a_id ? m.player_a_name : m.player_b_name);
+        return `
+          <div class="battle-match-summary-card">
+            <div style="font-weight:800; color:#38bdf8; margin-bottom:0.25rem;">
+              Match ${idx + 1}: ${escapeHtml(m.player_a_name)} vs ${escapeHtml(m.player_b_name)}
+            </div>
+            <div>Winner: <strong style="color:#10b981;">${escapeHtml(winnerName)}</strong></div>
+            <div style="color:#94a3b8; font-size:0.8rem;">Turns: ${m.turns_played} &bull; ${escapeHtml(m.reason)}</div>
+          </div>
+        `;
+      }).join('');
+    } else {
+      matchesCard.style.display = 'none';
+    }
+  }
 
   // Attach inspect click handlers
   document.querySelectorAll('.inspect-team-btn').forEach(btn => {
@@ -2068,11 +2222,14 @@ function inspectPlayerTeam(player) {
         : '';
 
       let statsLine = '';
-      if ('strength' in st || 'attack_power' in st) {
+      if ('combat_skill' in st || 'energy_projection' in st) {
+        statsLine = `STR: ${st.strength || 0} &bull; SPD: ${st.speed || 0} &bull; DUR: ${st.durability || 0}<br>INT: ${st.intelligence || 0} &bull; SKL: ${st.combat_skill || 0} &bull; ENG: ${st.energy_projection || 0}`;
+      } else if ('strength' in st || 'attack_power' in st) {
         statsLine = `STR: ${st.strength || 0} &bull; ATK: ${st.attack_power || 0} &bull; SPD: ${st.speed || 0}<br>DUR: ${st.durability || 0} &bull; DEF: ${st.defense || 0} &bull; BIQ: ${st.battle_iq || 0}`;
       } else {
         statsLine = `HP: ${st.hp || 0} &bull; ATK: ${st.attack || 0} &bull; DEF: ${st.defense || 0}<br>SPA: ${st.special_attack || 0} &bull; SPD: ${st.special_defense || 0} &bull; SPE: ${st.speed || 0}`;
       }
+      const attrHtml = p.attribution ? `<div style="font-size:0.62rem; color:#64748b; margin-top:0.25rem;">${escapeHtml(p.attribution)}</div>` : '';
 
       card.innerHTML = `
         <span class="card-tier-badge ${tierClass}">${p.power_tier || p.tier || 'A'}</span>
@@ -2090,6 +2247,7 @@ function inspectPlayerTeam(player) {
         <div style="font-size:0.68rem; color:#94a3b8; font-family:'JetBrains Mono'; text-align:left; background:rgba(0,0,0,0.3); padding:0.4rem; border-radius:6px; line-height:1.4;">
           ${statsLine}
         </div>
+        ${attrHtml}
       `;
       grid.appendChild(card);
     });
@@ -2422,6 +2580,9 @@ const animeDatabaseModule = {
       power_tier: '',
       rarity: '',
       species: '',
+      category: '',
+      combat_eligible: '',
+      has_artwork: '',
       sort: 'power_desc'
     }
   },
@@ -2493,6 +2654,9 @@ const animeDatabaseModule = {
     const tierSelect = document.getElementById('anime-tier-select');
     const raritySelect = document.getElementById('anime-rarity-select');
     const speciesSelect = document.getElementById('anime-species-select');
+    const categorySelect = document.getElementById('anime-category-select');
+    const combatSelect = document.getElementById('anime-combat-select');
+    const artworkSelect = document.getElementById('anime-artwork-select');
     const sortSelect = document.getElementById('anime-sort-select');
     const resetBtn = document.getElementById('anime-reset-filters-btn');
     const prevBtn = document.getElementById('anime-prev-page-btn');
@@ -2568,6 +2732,30 @@ const animeDatabaseModule = {
       });
     }
 
+    if (categorySelect) {
+      categorySelect.addEventListener('change', (e) => {
+        this.state.filters.category = e.target.value;
+        this.state.currentPage = 1;
+        this.fetchCharacters();
+      });
+    }
+
+    if (combatSelect) {
+      combatSelect.addEventListener('change', (e) => {
+        this.state.filters.combat_eligible = e.target.value;
+        this.state.currentPage = 1;
+        this.fetchCharacters();
+      });
+    }
+
+    if (artworkSelect) {
+      artworkSelect.addEventListener('change', (e) => {
+        this.state.filters.has_artwork = e.target.value;
+        this.state.currentPage = 1;
+        this.fetchCharacters();
+      });
+    }
+
     if (sortSelect) {
       sortSelect.addEventListener('change', (e) => {
         this.state.filters.sort = e.target.value;
@@ -2584,6 +2772,9 @@ const animeDatabaseModule = {
         if (tierSelect) tierSelect.value = '';
         if (raritySelect) raritySelect.value = '';
         if (speciesSelect) speciesSelect.value = '';
+        if (categorySelect) categorySelect.value = '';
+        if (combatSelect) combatSelect.value = '';
+        if (artworkSelect) artworkSelect.value = '';
         if (sortSelect) sortSelect.value = 'power_desc';
 
         quickButtons.forEach(b => b.classList.remove('active'));
@@ -2596,6 +2787,9 @@ const animeDatabaseModule = {
           power_tier: '',
           rarity: '',
           species: '',
+          category: '',
+          combat_eligible: '',
+          has_artwork: '',
           sort: 'power_desc'
         };
         this.state.currentPage = 1;
@@ -2639,6 +2833,9 @@ const animeDatabaseModule = {
     if (this.state.filters.power_tier) p.set('power_tier', this.state.filters.power_tier);
     if (this.state.filters.rarity) p.set('rarity', this.state.filters.rarity);
     if (this.state.filters.species) p.set('species', this.state.filters.species);
+    if (this.state.filters.category) p.set('category', this.state.filters.category);
+    if (this.state.filters.combat_eligible) p.set('combat_eligible', this.state.filters.combat_eligible);
+    if (this.state.filters.has_artwork) p.set('has_artwork', this.state.filters.has_artwork);
     if (this.state.filters.sort) p.set('sort', this.state.filters.sort);
 
     try {
@@ -2889,6 +3086,386 @@ const animeDatabaseModule = {
 };
 
 window.animeDatabaseModule = animeDatabaseModule;
+
+// ============================================================================
+// PHASE 3: FRONTEND BATTLE SEQUENCE PLAYBACK & ANIMATIONS
+// ============================================================================
+function _resolveBattleArt(snap, teamRoster) {
+  if (snap && snap.image) return snap.image;
+  if (snap && Array.isArray(teamRoster)) {
+    const found = teamRoster.find(c => c.id === snap.id || c.name === snap.name);
+    if (found && found.image) return found.image;
+  }
+  if (snap && snap.id && String(snap.id).startsWith('pkmn_')) {
+    const pid = String(snap.id).split('_')[1];
+    return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pid}.png`;
+  }
+  return snap ? `/api/avatar/${encodeURIComponent(snap.id || snap.name || 'default')}` : '';
+}
+
+function _updateBattleFighterCard(side, snap, trainerName, teamRoster, prevName, remainingCount) {
+  const card = document.getElementById(`battle-fighter-${side}`);
+  const trainerEl = document.getElementById(`battle-player-${side}-name`);
+  const artEl = document.getElementById(`battle-art-${side}`);
+  const nameEl = document.getElementById(`battle-char-${side}-name`);
+  const badgesEl = document.getElementById(`battle-badges-${side}`);
+  const hpFill = document.getElementById(`battle-hp-fill-${side}`);
+  const hpText = document.getElementById(`battle-hp-text-${side}`);
+  const statusEl = document.getElementById(`battle-status-${side}`);
+  const dotsEl = document.getElementById(`battle-team-${side}-dots`);
+
+  if (trainerEl) trainerEl.textContent = trainerName || 'Trainer';
+  if (dotsEl && Array.isArray(teamRoster)) {
+    const total = teamRoster.length;
+    const alive = typeof remainingCount === 'number' ? remainingCount : total;
+    dotsEl.innerHTML = Array.from({ length: total }, (_, i) =>
+      `<span class="dot ${i < alive ? '' : 'fainted'}"></span>`
+    ).join('');
+  }
+  if (!snap) return;
+
+  if (nameEl) nameEl.textContent = snap.name || 'Combatant';
+  if (artEl) artEl.src = _resolveBattleArt(snap, teamRoster);
+
+  if (badgesEl) {
+    const types = Array.isArray(snap.types) ? snap.types : [];
+    const sysTag = snap.system ? `<span class="badge">${escapeHtml(snap.system.toUpperCase())}</span>` : '';
+    const typeTags = types.map(t => `<span class="badge">${escapeHtml(t)}</span>`).join('');
+    badgesEl.innerHTML = sysTag + typeTags;
+  }
+
+  const maxHp = Math.max(1, snap.max_hp || 100);
+  const curHp = Math.max(0, snap.current_hp ?? maxHp);
+  const pct = Math.max(0, Math.min(100, Math.round((curHp / maxHp) * 100)));
+  if (hpFill) {
+    hpFill.style.width = `${pct}%`;
+    hpFill.classList.remove('hp-mid', 'hp-low');
+    if (pct <= 25) hpFill.classList.add('hp-low');
+    else if (pct <= 55) hpFill.classList.add('hp-mid');
+  }
+  if (hpText) hpText.textContent = `${curHp} / ${maxHp} HP (${pct}%)`;
+
+  if (statusEl) {
+    if (snap.status) {
+      statusEl.style.display = 'inline-block';
+      statusEl.textContent = snap.status;
+      _triggerBattleAnim(`battle-fighter-${side}`, 'anim-status');
+    } else {
+      statusEl.style.display = 'none';
+    }
+  }
+
+  if (card) {
+    card.classList.remove('anim-faint', 'anim-switch');
+    if (snap.fainted || curHp <= 0) {
+      card.classList.add('anim-faint');
+    } else if (prevName && prevName !== snap.name) {
+      card.classList.add('anim-switch');
+    }
+  }
+}
+
+function _showDamagePopup(side, dmg, isCrit, eff) {
+  const pop = document.getElementById(`battle-dmg-pop-${side}`);
+  if (!pop || !dmg) return;
+  let label = `-${dmg}`;
+  pop.classList.remove('crit', 'super', 'anim-dmg-float');
+  if (isCrit) {
+    label += ' CRIT!';
+    pop.classList.add('crit');
+  } else if (eff > 1.0) {
+    label += ' SUPER!';
+    pop.classList.add('super');
+  }
+  pop.textContent = label;
+  void pop.offsetWidth;
+  pop.classList.add('anim-dmg-float');
+}
+
+function _triggerBattleAnim(elementId, cls) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  el.classList.remove(cls);
+  void el.offsetWidth;
+  el.classList.add(cls);
+}
+
+async function playBattleSequence(battleResults, finishData) {
+  switchArenaScreen('arena-battle');
+  const formatBadge = document.getElementById('battle-format-badge');
+  const matchCounter = document.getElementById('battle-match-counter');
+  const turnCounter = document.getElementById('battle-turn-counter');
+  const actionBanner = document.getElementById('battle-action-banner');
+  const logEl = document.getElementById('battle-event-log');
+  const logCard = document.getElementById('battle-log-card');
+  const pauseBtn = document.getElementById('pause-battle-btn');
+  const speedBtn = document.getElementById('speed-battle-btn');
+  const toggleLogBtn = document.getElementById('toggle-battle-log-btn');
+  const skipMatchBtn = document.getElementById('skip-match-btn');
+  const skipBtn = document.getElementById('skip-battle-btn');
+
+  if (formatBadge) formatBadge.textContent = (battleResults.format || 'BATTLE').replace('_', ' ').toUpperCase();
+  if (logEl) logEl.innerHTML = '';
+
+  let isPaused = false;
+  let speedMult = 1;
+  let skipCurrentMatch = false;
+
+  const finishPlayback = () => {
+    soundFX.victory();
+    switchArenaScreen('arena-results');
+    renderLeaderboard(finishData.leaderboard, battleResults);
+  };
+
+  if (pauseBtn) {
+    pauseBtn.textContent = '⏸️ Pause';
+    pauseBtn.onclick = () => {
+      isPaused = !isPaused;
+      pauseBtn.textContent = isPaused ? '▶️ Resume' : '⏸️ Pause';
+    };
+  }
+  if (speedBtn) {
+    speedBtn.textContent = '⏩ 1x';
+    speedBtn.onclick = () => {
+      speedMult = speedMult === 1 ? 2 : (speedMult === 2 ? 4 : 1);
+      speedBtn.textContent = `⏩ ${speedMult}x`;
+    };
+  }
+  if (toggleLogBtn && logCard) {
+    toggleLogBtn.onclick = () => {
+      logCard.style.display = logCard.style.display === 'none' ? 'block' : 'none';
+    };
+  }
+  if (skipMatchBtn) {
+    skipMatchBtn.onclick = () => { skipCurrentMatch = true; };
+  }
+  if (skipBtn) {
+    skipBtn.onclick = () => {
+      gameState.battleSkipped = true;
+      finishPlayback();
+    };
+  }
+
+  const matches = battleResults.matches || [];
+  for (let mIdx = 0; mIdx < matches.length; mIdx++) {
+    if (gameState.battleSkipped) return;
+    skipCurrentMatch = false;
+    const match = matches[mIdx];
+    if (matchCounter) matchCounter.textContent = `Match ${mIdx + 1} / ${matches.length}`;
+
+    let prevA = null;
+    let prevB = null;
+    const turns = match.turn_log || [];
+
+    if (turns.length === 0) {
+      if (actionBanner) actionBanner.textContent = `${match.player_a_name} vs ${match.player_b_name}: ${match.reason}`;
+      if (logEl) {
+        const div = document.createElement('div');
+        div.className = 'battle-log-entry';
+        div.textContent = `Match ${mIdx + 1}: ${match.player_a_name} vs ${match.player_b_name} — ${match.reason}`;
+        logEl.prepend(div);
+      }
+      await new Promise(r => setTimeout(r, Math.round(600 / speedMult)));
+      continue;
+    }
+
+    const baseMs = turns.length > 20 ? 220 : 420;
+    for (let tIdx = 0; tIdx < turns.length; tIdx++) {
+      if (gameState.battleSkipped) return;
+      if (skipCurrentMatch) break;
+      while (isPaused && !gameState.battleSkipped && !skipCurrentMatch) {
+        await new Promise(r => setTimeout(r, 120));
+      }
+
+      const t = turns[tIdx];
+      if (turnCounter) turnCounter.textContent = `Turn ${t.turn}`;
+
+      _updateBattleFighterCard('a', t.active_a, match.player_a_name, match.player_a_team, prevA, t.remaining_a);
+      _updateBattleFighterCard('b', t.active_b, match.player_b_name, match.player_b_team, prevB, t.remaining_b);
+      prevA = t.active_a ? t.active_a.name : prevA;
+      prevB = t.active_b ? t.active_b.name : prevB;
+
+      const evText = (t.events || []).join(' • ');
+      if (actionBanner && evText) actionBanner.textContent = evText;
+
+      const details = t.action_details || [];
+      for (const d of details) {
+        if (d.event_type === 'transform') {
+          _triggerBattleAnim(`battle-fighter-${d.side}`, 'anim-transform');
+        } else if (d.event_type === 'attack') {
+          const atkCls = d.side === 'a' ? 'anim-attack-left' : 'anim-attack-right';
+          _triggerBattleAnim(`battle-fighter-${d.side}`, atkCls);
+          if (d.category === 'elemental') _triggerBattleAnim(`battle-fighter-${d.side}`, 'anim-elemental');
+          if (d.category === 'ranged') _triggerBattleAnim(`battle-fighter-${d.side}`, 'anim-ranged');
+          _triggerBattleAnim(`battle-fighter-${d.target_side}`, 'anim-hit');
+          _showDamagePopup(d.target_side, d.damage, d.is_crit, d.effectiveness || 1);
+        }
+      }
+
+      if (logEl && evText) {
+        const entry = document.createElement('div');
+        entry.className = 'battle-log-entry';
+        entry.textContent = `[M${mIdx + 1} T${t.turn}] ${evText}`;
+        logEl.prepend(entry);
+        if (logEl.children.length > 40) logEl.lastChild.remove();
+      }
+
+      await new Promise(r => setTimeout(r, Math.max(60, Math.round(baseMs / speedMult))));
+    }
+  }
+
+  if (!gameState.battleSkipped) {
+    await new Promise(r => setTimeout(r, 450));
+    finishPlayback();
+  }
+}
+
+// ============================================================================
+// PHASE 5: INTERACTIVE BATTLE CONTROL HANDLERS
+// ============================================================================
+let _battlePromptTimer = null;
+
+function resetBattleUI() {
+  if (_battlePromptTimer) {
+    clearInterval(_battlePromptTimer);
+    _battlePromptTimer = null;
+  }
+  gameState.pendingBattleResults = null;
+  gameState.battleSkipped = false;
+
+  const ctrlPanel = document.getElementById('battle-control-panel');
+  if (ctrlPanel) ctrlPanel.style.display = 'none';
+  for (const id of ['battle-event-log', 'battle-moves-grid', 'battle-switch-row', 'battle-transform-row', 'battle-badges-a', 'battle-badges-b', 'battle-team-a-dots', 'battle-team-b-dots']) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '';
+  }
+  const turnCounter = document.getElementById('battle-turn-counter');
+  if (turnCounter) turnCounter.textContent = 'Turn 0';
+  const matchCounter = document.getElementById('battle-match-counter');
+  if (matchCounter) matchCounter.textContent = 'Match 1 / 1';
+  const actionBanner = document.getElementById('battle-action-banner');
+  if (actionBanner) actionBanner.textContent = 'Preparing combatants...';
+
+  for (const side of ['a', 'b']) {
+    const card = document.getElementById(`battle-fighter-${side}`);
+    if (card) card.classList.remove('anim-faint', 'anim-switch', 'anim-hit', 'anim-attack-left', 'anim-attack-right', 'anim-transform', 'anim-elemental', 'anim-ranged', 'anim-status');
+    const nameEl = document.getElementById(`battle-char-${side}-name`);
+    if (nameEl) nameEl.textContent = 'Loading...';
+    const artEl = document.getElementById(`battle-art-${side}`);
+    if (artEl) artEl.src = '';
+    const hpFill = document.getElementById(`battle-hp-fill-${side}`);
+    if (hpFill) {
+      hpFill.style.width = '100%';
+      hpFill.classList.remove('hp-mid', 'hp-low');
+    }
+    const hpText = document.getElementById(`battle-hp-text-${side}`);
+    if (hpText) hpText.textContent = 'HP';
+    const statusEl = document.getElementById(`battle-status-${side}`);
+    if (statusEl) statusEl.style.display = 'none';
+  }
+}
+
+function renderInteractiveTurnPrompt(promptData) {
+  switchArenaScreen('arena-battle');
+  if (promptData.match_id) gameState.currentMatchId = promptData.match_id;
+
+  // Immediately render active combatants for the current match (prevents stale previous-match UI!)
+  const mySide = promptData.side === 'b' ? 'b' : 'a';
+  const oppSide = mySide === 'a' ? 'b' : 'a';
+  const myTrainer = mySide === 'a' ? (promptData.player_a_name || gameState.myName) : (promptData.player_b_name || gameState.myName);
+  const oppTrainer = oppSide === 'a' ? (promptData.player_a_name || 'Opponent') : (promptData.player_b_name || 'Opponent');
+  if (promptData.your_active) {
+    _updateBattleFighterCard(mySide, promptData.your_active, myTrainer, null, null, promptData.your_remaining);
+  }
+  if (promptData.opponent_active) {
+    _updateBattleFighterCard(oppSide, promptData.opponent_active, oppTrainer, null, null, promptData.opponent_remaining);
+  }
+  const panel = document.getElementById('battle-control-panel');
+  const statusEl = document.getElementById('battle-turn-status');
+  const timerEl = document.getElementById('battle-action-timer');
+  const movesGrid = document.getElementById('battle-moves-grid');
+  const switchRow = document.getElementById('battle-switch-row');
+  const transformRow = document.getElementById('battle-transform-row');
+  const turnCounter = document.getElementById('battle-turn-counter');
+
+  if (turnCounter) turnCounter.textContent = `Turn ${promptData.turn + 1}`;
+  if (panel) panel.style.display = 'block';
+  if (statusEl) statusEl.textContent = promptData.opponent_submitted ? '⚡ Opponent ready! Your Turn' : '⚔️ Your Turn — Select Action';
+
+  if (_battlePromptTimer) clearInterval(_battlePromptTimer);
+  let secs = Math.round(promptData.timeout_seconds || 20);
+  if (timerEl) timerEl.textContent = `⏱️ ${secs}s`;
+  _battlePromptTimer = setInterval(() => {
+    secs = Math.max(0, secs - 1);
+    if (timerEl) timerEl.textContent = `⏱️ ${secs}s`;
+    if (secs <= 0) clearInterval(_battlePromptTimer);
+  }, 1000);
+
+  if (movesGrid) {
+    movesGrid.innerHTML = '';
+    (promptData.available_moves || []).forEach(m => {
+      const btn = document.createElement('button');
+      btn.className = 'battle-move-btn';
+      const ppInfo = m.pp !== null && m.pp !== undefined ? `PP ${m.pp}/${m.max_pp || m.pp}` : m.category;
+      btn.innerHTML = `<strong>${escapeHtml(m.name)}</strong><div style="font-size:0.78rem; color:#94a3b8;">${escapeHtml(m.type)} &bull; ${escapeHtml(String(ppInfo))}</div>`;
+      btn.onclick = () => {
+        gameState.ws.send(JSON.stringify({
+          action: 'submit_battle_action',
+          data: { action_type: 'attack', move_id: m.id, match_id: gameState.currentMatchId }
+        }));
+      };
+      movesGrid.appendChild(btn);
+    });
+  }
+
+  if (switchRow) {
+    switchRow.innerHTML = '';
+    (promptData.available_switches || []).forEach(sw => {
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-outline btn-sm battle-switch-btn';
+      btn.textContent = `🔄 ${sw.name} (${sw.current_hp}/${sw.max_hp})`;
+      btn.onclick = () => {
+        gameState.ws.send(JSON.stringify({
+          action: 'submit_battle_action',
+          data: { action_type: 'switch', switch_index: sw.index, match_id: gameState.currentMatchId }
+        }));
+      };
+      switchRow.appendChild(btn);
+    });
+  }
+
+  if (transformRow) {
+    transformRow.innerHTML = '';
+    (promptData.available_transformations || []).forEach(tf => {
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-primary btn-sm battle-transform-btn';
+      btn.textContent = `✨ Transform: ${tf.name}`;
+      btn.onclick = () => {
+        gameState.ws.send(JSON.stringify({
+          action: 'submit_battle_action',
+          data: { action_type: 'transform', transformation_id: tf.id, match_id: gameState.currentMatchId }
+        }));
+      };
+      transformRow.appendChild(btn);
+    });
+  }
+}
+
+function applyResolvedInteractiveTurn(t, nameA, nameB) {
+  if (_battlePromptTimer) clearInterval(_battlePromptTimer);
+  _updateBattleFighterCard('a', t.active_a, nameA, null, null, t.remaining_a);
+  _updateBattleFighterCard('b', t.active_b, nameB, null, null, t.remaining_b);
+  const actionBanner = document.getElementById('battle-action-banner');
+  const logEl = document.getElementById('battle-event-log');
+  const evText = (t.events || []).join(' • ');
+  if (actionBanner && evText) actionBanner.textContent = evText;
+  if (logEl && evText) {
+    const entry = document.createElement('div');
+    entry.className = 'battle-log-entry';
+    entry.textContent = `[T${t.turn}] ${evText}`;
+    logEl.prepend(entry);
+  }
+}
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', initArena);
