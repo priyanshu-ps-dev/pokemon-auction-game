@@ -42,7 +42,6 @@ anime_db = AnimeDatabaseManager(ANIME_JSON_PATH, ANIME_DB_PATH)
 local_avatars = LocalAvatarLibrary(PUBLIC_DIR)
 battle_manager = BattleManager()
 profile_store = PlayerProfileStore()
-SERVER_BOOT_ID = f"{os.getpid()}_{int(time.time() * 1000)}"
 
 # Legacy compatibility cache
 with open(POKEMON_JSON_PATH, "r", encoding="utf-8") as f:
@@ -73,6 +72,52 @@ async def broadcast_to_room(room: Room, message_type: str, data: dict):
                 await p.ws.send(payload)
             except Exception:
                 pass
+
+
+async def _run_interactive_1v1(room: Room, pa, pb, current_match_id: str):
+    """Runs a single interactive LiveBattleSession 1v1 between pa and pb."""
+    built_a = [battle_manager.build_combatant(c)[1] for c in pa.team]
+    built_b = [battle_manager.build_combatant(c)[1] for c in pb.team]
+    images_map = {
+        str(c.get("id", "")): c.get("image", "")
+        for c in (pa.team + pb.team)
+    }
+    live_sess = LiveBattleSession(
+        pa.session_id, built_a,
+        pb.session_id, built_b,
+        control_mode=room.battle_control_mode,
+        images_by_id=images_map,
+        match_id=current_match_id,
+    )
+    room.active_live_battle = live_sess
+
+    async def _send_prompt(pid: str, prompt_data: dict):
+        if room.match_id != current_match_id or live_sess.is_invalidated:
+            return
+        pl = room.players.get(pid)
+        if pl and pl.ws is not None:
+            try:
+                enriched = dict(prompt_data)
+                enriched["player_a_name"] = pa.name
+                enriched["player_b_name"] = pb.name
+                await pl.ws.send(json.dumps({"type": "battle_turn_prompt", "data": enriched}, ensure_ascii=False))
+            except Exception:
+                pass
+
+    async def _broadcast_turn(turn_entry: dict):
+        if room.match_id != current_match_id or live_sess.is_invalidated:
+            return
+        await broadcast_to_room(room, "battle_turn_resolved", {
+            "match_id": current_match_id,
+            "player_a_name": pa.name,
+            "player_b_name": pb.name,
+            "turn_entry": turn_entry,
+        })
+
+    res = await live_sess.run_interactive(send_prompt=_send_prompt, broadcast_turn=_broadcast_turn)
+    room.active_live_battle = None
+    aborted = live_sess.is_invalidated or room.match_id != current_match_id
+    return res, aborted
 
 
 async def run_room_auction_loop(room: Room):
@@ -228,95 +273,62 @@ async def run_room_auction_loop(room: Room):
         })
 
         active_players = [p for p in room.players.values() if not p.is_withdrawn]
-        if room.battle_control_mode in ("player_vs_ai", "player_vs_player") and len(active_players) == 2:
-            pa, pb = active_players[0], active_players[1]
-            built_a = [battle_manager.build_combatant(c)[1] for c in pa.team]
-            built_b = [battle_manager.build_combatant(c)[1] for c in pb.team]
+        if room.battle_control_mode in ("player_vs_ai", "player_vs_player") and len(active_players) >= 2:
             current_match_id = room.match_id
-            images_map = {
-                str(c.get("id", "")): c.get("image", "")
-                for c in (pa.team + pb.team)
-            }
-            live_sess = LiveBattleSession(
-                pa.session_id, built_a,
-                pb.session_id, built_b,
-                control_mode=room.battle_control_mode,
-                images_by_id=images_map,
-                match_id=current_match_id,
-            )
-            room.active_live_battle = live_sess
-
-            async def _send_prompt(pid: str, prompt_data: dict):
-                if room.match_id != current_match_id or live_sess.is_invalidated:
-                    return
-                pl = room.players.get(pid)
-                if pl and pl.ws is not None:
-                    try:
-                        enriched = dict(prompt_data)
-                        enriched["player_a_name"] = pa.name
-                        enriched["player_b_name"] = pb.name
-                        await pl.ws.send(json.dumps({"type": "battle_turn_prompt", "data": enriched}, ensure_ascii=False))
-                    except Exception:
-                        pass
-
-            async def _broadcast_turn(turn_entry: dict):
-                if room.match_id != current_match_id or live_sess.is_invalidated:
-                    return
-                await broadcast_to_room(room, "battle_turn_resolved", {
-                    "match_id": current_match_id,
-                    "player_a_name": pa.name,
-                    "player_b_name": pb.name,
-                    "turn_entry": turn_entry,
-                })
-
-            res = await live_sess.run_interactive(send_prompt=_send_prompt, broadcast_turn=_broadcast_turn)
-            room.active_live_battle = None
-            if live_sess.is_invalidated or room.match_id != current_match_id:
-                return
-
-            # Build authoritative battle_results directly from the interactive session outcome
-            a_wins = 1 if res.winner_id == pa.session_id else 0
-            b_wins = 1 if res.winner_id == pb.session_id else 0
-            draws = 1 if (res.is_draw or res.winner_id is None) else 0
-            standings = []
-            for p, w, l, hp in (
-                (pa, a_wins, b_wins, res.player_a_remaining_hp),
-                (pb, b_wins, a_wins, res.player_b_remaining_hp),
-            ):
-                standings.append({
+            standings_map = {
+                p.session_id: {
                     "session_id": p.session_id,
                     "name": p.name,
                     "avatar": p.avatar,
                     "is_withdrawn": p.is_withdrawn,
-                    "wins": w,
-                    "losses": l,
-                    "draws": draws,
-                    "points": (w * 3) + draws,
-                    "remaining_hp_total": hp,
-                    "matches_played": 1,
+                    "wins": 0,
+                    "losses": 0,
+                    "draws": 0,
+                    "points": 0,
+                    "remaining_hp_total": 0,
+                    "matches_played": 0,
                     "team_count": len(p.team),
-                })
-            for wp in room.players.values():
-                if wp.is_withdrawn:
-                    standings.append({
-                        "session_id": wp.session_id,
-                        "name": wp.name,
-                        "avatar": wp.avatar,
-                        "is_withdrawn": True,
-                        "wins": 0, "losses": 0, "draws": 0, "points": 0,
-                        "remaining_hp_total": 0, "matches_played": 0, "team_count": len(wp.team),
-                    })
-            standings.sort(key=lambda s: (not s["is_withdrawn"], s["points"], s["wins"], s["remaining_hp_total"]), reverse=True)
-            for r_idx, s in enumerate(standings, start=1):
-                s["rank"] = r_idx
+                }
+                for p in room.players.values()
+            }
+            matches = []
+            bracket_rounds = []
+            is_bracket = room.tournament_format in ("bracket", "championship_bracket") and len(active_players) > 2
 
-            battle_results = {
-                "format": "direct_1v1",
-                "match_id": current_match_id,
-                "total_matches": 1,
-                "standings": standings,
-                "champion": standings[0] if standings else None,
-                "matches": [{
+            def _record_match_outcome(pa, pb, res, round_label=None):
+                standings_map[pa.session_id]["matches_played"] += 1
+                standings_map[pb.session_id]["matches_played"] += 1
+                standings_map[pa.session_id]["remaining_hp_total"] += res.player_a_remaining_hp
+                standings_map[pb.session_id]["remaining_hp_total"] += res.player_b_remaining_hp
+                if is_bracket:
+                    if res.winner_id == pb.session_id:
+                        winner, loser = pb, pa
+                    elif res.winner_id == pa.session_id:
+                        winner, loser = pa, pb
+                    else:
+                        winner, loser = (pa, pb) if res.player_a_remaining_hp >= res.player_b_remaining_hp else (pb, pa)
+                    standings_map[winner.session_id]["wins"] += 1
+                    standings_map[winner.session_id]["points"] += 3
+                    standings_map[loser.session_id]["losses"] += 1
+                else:
+                    if res.is_draw or res.winner_id is None:
+                        standings_map[pa.session_id]["draws"] += 1
+                        standings_map[pb.session_id]["draws"] += 1
+                        standings_map[pa.session_id]["points"] += 1
+                        standings_map[pb.session_id]["points"] += 1
+                        winner = None
+                    elif res.winner_id == pa.session_id:
+                        standings_map[pa.session_id]["wins"] += 1
+                        standings_map[pb.session_id]["losses"] += 1
+                        standings_map[pa.session_id]["points"] += 3
+                        winner = pa
+                    else:
+                        standings_map[pb.session_id]["wins"] += 1
+                        standings_map[pa.session_id]["losses"] += 1
+                        standings_map[pb.session_id]["points"] += 3
+                        winner = pb
+
+                rec = {
                     "player_a_id": pa.session_id,
                     "player_a_name": pa.name,
                     "player_b_id": pb.session_id,
@@ -331,8 +343,92 @@ async def run_room_auction_loop(room: Room):
                     "player_a_remaining_hp": res.player_a_remaining_hp,
                     "player_b_remaining_hp": res.player_b_remaining_hp,
                     "turn_log": res.turn_log,
-                }],
-                "bracket": None,
+                }
+                if round_label:
+                    rec["round"] = round_label
+                matches.append(rec)
+                return winner, rec
+
+            if len(active_players) == 2:
+                pa, pb = active_players[0], active_players[1]
+                res, aborted = await _run_interactive_1v1(room, pa, pb, current_match_id)
+                if aborted:
+                    return
+                _record_match_outcome(pa, pb, res)
+                battle_format = "direct_1v1"
+            elif is_bracket:
+                battle_format = "championship_bracket"
+                current_pool = list(active_players)
+                round_num = 1
+                total_est = max(1, len(active_players) - 1)
+                match_counter = 0
+                while len(current_pool) > 1:
+                    round_label = "Final" if len(current_pool) == 2 else ("Semifinals" if len(current_pool) <= 4 else f"Round {round_num}")
+                    next_pool = []
+                    round_matches = []
+                    idx = 0
+                    while idx < len(current_pool):
+                        if idx + 1 >= len(current_pool):
+                            bye_p = current_pool[idx]
+                            next_pool.append(bye_p)
+                            round_matches.append({"bye": True, "player_id": bye_p.session_id, "player_name": bye_p.name})
+                            idx += 1
+                            continue
+                        pa, pb = current_pool[idx], current_pool[idx + 1]
+                        idx += 2
+                        match_counter += 1
+                        await broadcast_to_room(room, "battle_progress", {
+                            "is_match_start": True,
+                            "match_index": match_counter,
+                            "total_matches": total_est,
+                            "player_a_id": pa.session_id,
+                            "player_a_name": pa.name,
+                            "player_b_id": pb.session_id,
+                            "player_b_name": pb.name,
+                            "round": round_label,
+                        })
+                        res, aborted = await _run_interactive_1v1(room, pa, pb, current_match_id)
+                        if aborted:
+                            return
+                        winner, rec = _record_match_outcome(pa, pb, res, round_label=round_label)
+                        next_pool.append(winner)
+                        round_matches.append(rec)
+                    bracket_rounds.append({"round": round_label, "matches": round_matches})
+                    current_pool = next_pool
+                    round_num += 1
+            else:
+                battle_format = "round_robin"
+                n = len(active_players)
+                pairings = [(active_players[i], active_players[j]) for i in range(n) for j in range(i + 1, n)]
+                total_m = len(pairings)
+                for m_idx, (pa, pb) in enumerate(pairings, start=1):
+                    await broadcast_to_room(room, "battle_progress", {
+                        "is_match_start": True,
+                        "match_index": m_idx,
+                        "total_matches": total_m,
+                        "player_a_id": pa.session_id,
+                        "player_a_name": pa.name,
+                        "player_b_id": pb.session_id,
+                        "player_b_name": pb.name,
+                    })
+                    res, aborted = await _run_interactive_1v1(room, pa, pb, current_match_id)
+                    if aborted:
+                        return
+                    _record_match_outcome(pa, pb, res)
+
+            standings = list(standings_map.values())
+            standings.sort(key=lambda s: (not s["is_withdrawn"], s["points"], s["wins"], s["remaining_hp_total"]), reverse=True)
+            for r_idx, s in enumerate(standings, start=1):
+                s["rank"] = r_idx
+
+            battle_results = {
+                "format": battle_format,
+                "match_id": current_match_id,
+                "total_matches": len(matches),
+                "standings": standings,
+                "champion": standings[0] if standings else None,
+                "matches": matches,
+                "bracket": {"rounds": bracket_rounds} if is_bracket else None,
             }
         else:
             battle_results = await battle_manager.run_tournament_async(
@@ -1270,8 +1366,7 @@ def process_http_request(connection, request):
             "characters_with_power_data": stats["characters_with_power_data"],
             "default_purse": DEFAULT_STARTING_PURSE,
             "multiplayer_status": "ready",
-            "active_rooms": len(room_manager.rooms),
-            "server_boot_id": SERVER_BOOT_ID
+            "active_rooms": len(room_manager.rooms)
         }
         return json_response(200, "OK", payload)
 
