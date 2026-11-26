@@ -42,6 +42,7 @@ anime_db = AnimeDatabaseManager(ANIME_JSON_PATH, ANIME_DB_PATH)
 local_avatars = LocalAvatarLibrary(PUBLIC_DIR)
 battle_manager = BattleManager()
 profile_store = PlayerProfileStore()
+SERVER_BOOT_ID = f"{os.getpid()}_{int(time.time() * 1000)}"
 
 # Legacy compatibility cache
 with open(POKEMON_JSON_PATH, "r", encoding="utf-8") as f:
@@ -1269,7 +1270,8 @@ def process_http_request(connection, request):
             "characters_with_power_data": stats["characters_with_power_data"],
             "default_purse": DEFAULT_STARTING_PURSE,
             "multiplayer_status": "ready",
-            "active_rooms": len(room_manager.rooms)
+            "active_rooms": len(room_manager.rooms),
+            "server_boot_id": SERVER_BOOT_ID
         }
         return json_response(200, "OK", payload)
 
