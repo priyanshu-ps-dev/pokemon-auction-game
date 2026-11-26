@@ -1902,21 +1902,21 @@ function renderAuctionCard(poke) {
   const round = gameState.roomState ? (gameState.roomState.auction_pokemon_count || 1) : 1;
   const maxPool = gameState.roomState ? (gameState.roomState.max_auction_pokemon || 16) : 16;
   if (window.AuctionCharacterTicketUI && typeof window.AuctionCharacterTicketUI.renderCharacter === 'function') {
-    window.AuctionCharacterTicketUI.renderCharacter(poke, round, maxPool);
+    window.AuctionCharacterTicketUI.renderCharacter(displayPoke, round, maxPool);
     return;
   }
 
   const card = document.getElementById('active-pokemon-card');
-  const typeBadges = (poke.types && poke.types.length)
-    ? poke.types.map(t => `<span class="type-badge type-${t.toLowerCase()}">${t}</span>`).join('')
+  const typeBadges = (displayPoke.types && displayPoke.types.length)
+    ? displayPoke.types.map(t => `<span class="type-badge type-${t.toLowerCase()}">${t}</span>`).join('')
     : '';
 
-  const animeBadge = poke.anime_name
-    ? `<span class="anime-badge ${poke.anime_id || ''}">${escapeHtml(poke.anime_name)}</span>`
+  const animeBadge = displayPoke.anime_name
+    ? `<span class="anime-badge ${displayPoke.anime_id || ''}">${escapeHtml(displayPoke.anime_name)}</span>`
     : '';
 
-  const formBadge = (poke.current_form && poke.current_form !== 'Base')
-    ? `<div class="form-pill">⚡ ${escapeHtml(poke.current_form)}</div>`
+  const formBadge = (displayPoke.current_form && displayPoke.current_form !== 'Base')
+    ? `<div class="form-pill">⚡ ${escapeHtml(displayPoke.current_form)}</div>`
     : '';
 
   card.className = `active-auction-card`;
@@ -1925,10 +1925,10 @@ function renderAuctionCard(poke) {
       ${animeBadge}
     </div>
     <div class="auction-hero-img-wrap">
-      <img src="${poke.image}" alt="${poke.name}" class="auction-hero-img" onerror="this.onerror=null; this.src='/api/avatar/' + (poke.id || poke.name.toLowerCase().replace(/\\s+/g, '_'));">
+      <img src="${displayPoke.image}" alt="${displayPoke.name}" class="auction-hero-img" onerror="this.onerror=null; this.src='/api/avatar/' + (displayPoke.id || displayPoke.name.toLowerCase().replace(/\\s+/g, '_'));">
     </div>
 
-    <h2 class="auction-poke-name">${escapeHtml(poke.name)}</h2>
+    <h2 class="auction-poke-name">${escapeHtml(displayPoke.name)}</h2>
     ${formBadge}
     ${typeBadges ? `<div class="type-pill-list" style="justify-content:center; margin-top:0.5rem; margin-bottom:0.5rem;">${typeBadges}</div>` : ''}
     <div style="font-size:0.75rem; color:#64748b; margin-top:0.4rem;">Stats hidden &bull; Revealed after tournament</div>
@@ -2012,6 +2012,12 @@ function updateDynamicQuickBids() {
   }
 
   const minBtn = document.getElementById('btn-quick-min');
+  if (!poke) return;
+  gameState.lastAuctionCharacter = poke;
+  const displayPoke = (typeof window.getAuctionDisplayImage === 'function')
+    ? { ...poke, image: window.getAuctionDisplayImage(poke) }
+    : poke;
+
   const p5Btn = document.getElementById('btn-quick-p5');
   const p10Btn = document.getElementById('btn-quick-p10');
   const p25Btn = document.getElementById('btn-quick-p25');
