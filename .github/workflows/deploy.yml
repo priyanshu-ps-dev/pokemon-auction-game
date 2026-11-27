@@ -61,3 +61,18 @@ jobs:
       - name: Pokemon Server Start/Restart karo via PM2 (Port 5050)
         run: |
           pm2 restart pokemon-game || pm2 start "python3 server.py" --name "pokemon-game"
+
+      - name: Public Cloudflare Tunnel Start/Restart karo
+        run: |
+          if ! command -v cloudflared >/dev/null 2>&1; then
+            curl -fsSL --retry 3 \
+              https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
+              -o /usr/local/bin/cloudflared
+            chmod +x /usr/local/bin/cloudflared
+          fi
+          pm2 delete pokemon-tunnel || true
+          pm2 start "cloudflared tunnel --url http://127.0.0.1:5050 --no-autoupdate --protocol http2" \
+            --name pokemon-tunnel
+          sleep 12
+          pm2 logs pokemon-tunnel --lines 80 --nostream
+          pm2 save
