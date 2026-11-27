@@ -5,7 +5,7 @@ Unified server handling:
 - Static file serving (Pokédex & Cross-Anime Multiplayer Arena)
 - Multi-Anime REST API (/api/anime, /api/characters, /api/stats, /api/pokemon)
 - Real-time WebSocket rooms (/ws) with authoritative timers and flexible bidding
-- Room-isolated purse management (Default ₹500)
+- Room-isolated purse management (Default $100)
 - Hidden competitive stats during auction & dramatic final cross-anime reveal
 - 5 Game Modes: All Anime, Pokémon Only, Single Franchise, Multiple Franchises, Custom Pool
 - Transformations Modes: SINGLE_BASE vs SEPARATE_ENTRIES
@@ -17,6 +17,9 @@ import json
 import asyncio
 import mimetypes
 import time
+import secrets
+import re
+from collections import deque
 from typing import Any
 from urllib.parse import urlparse, parse_qs, unquote
 
@@ -36,6 +39,7 @@ from src.anime_database import AnimeDatabaseManager
 from src.avatar_generator import generate_character_svg
 from src.local_avatars import LocalAvatarLibrary
 from src.battle_manager import BattleManager
+from src.battle_report import describe_tournament
 from src.live_battle_session import LiveBattleSession
 from src.player_profiles import PlayerProfileStore
 anime_db = AnimeDatabaseManager(ANIME_JSON_PATH, ANIME_DB_PATH)
@@ -51,16 +55,52 @@ POKEMON_BY_ID = {p["id"]: p for p in POKEMON_DATABASE}
 # Import room manager
 from src.room_manager import (
     RoomManager, Room, Player, TEAM_CAPACITY,
-    AUCTION_COUNTDOWN_SECONDS, DEFAULT_STARTING_PURSE, OPENING_MIN_BID,
+    AUCTION_COUNTDOWN_SECONDS, DEFAULT_STARTING_PURSE, OPENING_MIN_BID, MAX_STARTING_PURSE,
     sanitize_character_for_auction, sanitize_pokemon_for_auction,
     get_max_auction_characters, get_max_auction_pokemon
 )
 
 room_manager = RoomManager(anime_db)
-PORT = 5050
+PORT = int(sys.argv[1]) if __name__ == "__main__" and len(sys.argv) > 1 else 5050
 
 # Map of room_code -> active auction asyncio.Task
 room_auction_tasks: dict[str, asyncio.Task] = {}
+
+RECONNECT_GRACE_SECONDS = float(os.getenv("ARENA_RECONNECT_GRACE_SECONDS", "120"))
+MAX_ROOMS = 200
+AUCTION_INTERMISSION_SECONDS = 2.5
+ADMIN_TOKEN = os.getenv("ARENA_ADMIN_TOKEN", "")
+
+
+def is_admin(headers):
+    supplied = headers.get("Authorization", "")
+    return bool(ADMIN_TOKEN) and secrets.compare_digest(
+        supplied.encode(), f"Bearer {ADMIN_TOKEN}".encode()
+    )
+
+
+def sanitize_avatar(value):
+    if re.fullmatch(r"(?:/)?assets/avatars/[a-zA-Z0-9_/-]+\.(?:png|jpg|jpeg|webp|avif)", value):
+        return "/" + value.lstrip("/")
+    return value if re.fullmatch(r"[a-zA-Z0-9_-]{1,100}", value) else "red"
+
+
+async def expire_disconnected_player(room, player):
+    await asyncio.sleep(RECONNECT_GRACE_SECONDS)
+    async with room.auction_lock:
+        if room_manager.rooms.get(room.room_code) is not room or player.ws is not None:
+            return
+        ok, _, info = room_manager.leave_room(room.room_code, player.session_id)
+        if not ok:
+            return
+        if room.skip_event and (info.get("should_end_match") or info.get("all_skipped")):
+            room.skip_event.set()
+        if info.get("room_deleted"):
+            task = room_auction_tasks.pop(room.room_code, None)
+            if task:
+                task.cancel()
+            return
+    await broadcast_to_room(room, "room_state", room.to_state_dict())
 
 
 async def broadcast_to_room(room: Room, message_type: str, data: dict):
@@ -90,6 +130,7 @@ async def _run_interactive_1v1(room: Room, pa, pb, current_match_id: str):
         match_id=current_match_id,
     )
     room.active_live_battle = live_sess
+    room.live_progress = None
 
     async def _send_prompt(pid: str, prompt_data: dict):
         if room.match_id != current_match_id or live_sess.is_invalidated:
@@ -107,12 +148,13 @@ async def _run_interactive_1v1(room: Room, pa, pb, current_match_id: str):
     async def _broadcast_turn(turn_entry: dict):
         if room.match_id != current_match_id or live_sess.is_invalidated:
             return
-        await broadcast_to_room(room, "battle_turn_resolved", {
+        room.live_progress = {
             "match_id": current_match_id,
             "player_a_name": pa.name,
             "player_b_name": pb.name,
             "turn_entry": turn_entry,
-        })
+        }
+        await broadcast_to_room(room, "battle_turn_resolved", room.live_progress)
 
     res = await live_sess.run_interactive(send_prompt=_send_prompt, broadcast_turn=_broadcast_turn)
     room.active_live_battle = None
@@ -185,19 +227,10 @@ async def run_room_auction_loop(room: Room):
                 remaining = room.timer_end_timestamp - now
                 room.timer_seconds_left = max(0, int(round(remaining)))
 
-                highest_bidder_name = None
-                highest_bidder_avatar = None
-                if room.highest_bidder_id and room.highest_bidder_id in room.players:
-                    p = room.players[room.highest_bidder_id]
-                    highest_bidder_name = p.name
-                    highest_bidder_avatar = p.avatar
-
                 await broadcast_to_room(room, "auction_tick", {
                     "timer_seconds_left": room.timer_seconds_left,
-                    "current_bid": room.current_bid,
-                    "highest_bidder_id": room.highest_bidder_id,
-                    "highest_bidder_name": highest_bidder_name,
-                    "highest_bidder_avatar": highest_bidder_avatar
+                    "round_id": room.auction_character_count,
+                    "match_id": room.match_id
                 })
 
                 if remaining <= 0 or (room.skip_event and room.skip_event.is_set()):
@@ -260,7 +293,7 @@ async def run_room_auction_loop(room: Room):
             # Brief intermission before next character
             room.status = "SHOWCASE"
             await broadcast_to_room(room, "room_state", room.to_state_dict())
-            await asyncio.sleep(2.5)
+            await asyncio.sleep(AUCTION_INTERMISSION_SECONDS)
 
         # 4. AUCTION COMPLETE -> BATTLE SIMULATION -> FINAL LEADERBOARD
         room.status = "BATTLE"
@@ -437,8 +470,9 @@ async def run_room_auction_loop(room: Room):
                 tournament_format=room.tournament_format
             )
 
+        describe_tournament(battle_results, room.players.values())
         room.battle_results = battle_results
-        profile_store.record_tournament_results(battle_results)
+        await asyncio.to_thread(profile_store.record_tournament_results, battle_results)
 
         for idx, m in enumerate(battle_results.get("matches", []), start=1):
             await broadcast_to_room(room, "battle_progress", {
@@ -472,111 +506,187 @@ async def run_room_auction_loop(room: Room):
             "room_state": room.to_state_dict(),
             "finish_reason": finish_reason
         }
+        room.finish_data = finish_data
         await broadcast_to_room(room, "match_finished", finish_data)
         await broadcast_to_room(room, "game_over", finish_data)
 
     except asyncio.CancelledError:
-        pass
+        raise
     except Exception as e:
         print(f"[AuctionLoopError] room={room.room_code} match={room.match_id} round={room.auction_character_count}: {e}")
-        await broadcast_to_room(room, "room_event", {
-            "message": f"Auction loop encountered an error in round {room.auction_character_count}: {e}"
-        })
+        room.status = "LOBBY"
+        room.current_character_full = None
+        room.timer_end_timestamp = 0
+        for player in room.players.values():
+            player.purse = room.starting_purse
+            player.team.clear()
+        room.used_character_ids.clear()
+        room.settled_rounds.clear()
+        room.settlement_ledger.clear()
+        room.auction_history.clear()
+        room.auction_character_count = room.current_bid = 0
+        room.highest_bidder_id = None
+        await broadcast_to_room(room, "room_event", {"message": "The auction ended unexpectedly. The lobby is ready to restart."})
+        await broadcast_to_room(room, "room_state", room.to_state_dict())
+    finally:
+        if room_auction_tasks.get(room.room_code) is asyncio.current_task():
+            room_auction_tasks.pop(room.room_code, None)
 
 
 async def ws_handler(websocket: ServerConnection):
     """Handles incoming WebSocket connection."""
     client_session_id = None
     client_room_code = None
+    recent_messages = deque()
+
+    async def send_error(message, message_type="error"):
+        await websocket.send(json.dumps({"type": message_type, "data": {"message": message}}))
 
     try:
         async for raw_msg in websocket:
+            now = time.monotonic()
+            while recent_messages and recent_messages[0] <= now - 10:
+                recent_messages.popleft()
+            if len(recent_messages) >= 80:
+                await websocket.close(1008, "Message rate limit exceeded")
+                break
+            recent_messages.append(now)
+
             try:
                 msg = json.loads(raw_msg)
-            except json.JSONDecodeError:
+            except (ValueError, UnicodeError, RecursionError):
+                await send_error("Invalid JSON message.")
+                continue
+            if not isinstance(msg, dict) or not isinstance(msg.get("action"), str):
+                await send_error("Invalid message format.")
+                continue
+            action = msg["action"]
+            data = msg.get("data", {})
+            if not isinstance(data, dict):
+                await send_error("Invalid message data.")
                 continue
 
-            action = msg.get("action")
-            data = msg.get("data", {})
+            if action.startswith(("admin_", "avatar_admin_")) and not is_admin(websocket.request.headers):
+                await send_error("Administrator access required.")
+                continue
 
-            # 1. CREATE ROOM
-            if action == "create_room":
-                host_name = data.get("name", "Trainer Red").strip() or "Trainer Red"
-                host_avatar = data.get("avatar", "red")
-                session_id = data.get("session_id", "")
-                starting_purse = int(data.get("starting_purse", DEFAULT_STARTING_PURSE))
-                countdown_seconds = int(data.get("countdown_seconds", AUCTION_COUNTDOWN_SECONDS))
-                min_bid = int(data.get("min_bid", OPENING_MIN_BID))
-                anime_mode = data.get("anime_mode", "all")
-                selected_anime = data.get("selected_anime", [])
-                forms_mode = data.get("forms_mode", "SINGLE_BASE")
-                battle_control_mode = data.get("battle_control_mode", "ai_vs_ai")
-                tournament_format = data.get("tournament_format", "round_robin")
-
-                room = room_manager.create_room(
-                    host_name, host_avatar, session_id,
-                    starting_purse=starting_purse,
-                    countdown_seconds=countdown_seconds,
-                    min_bid=min_bid,
-                    anime_mode=anime_mode,
-                    selected_anime=selected_anime,
-                    forms_mode=forms_mode,
-                    battle_control_mode=battle_control_mode,
-                    tournament_format=tournament_format
-                )
-                client_room_code = room.room_code
-                client_session_id = session_id
-                player = room.players[session_id]
-                player.ws = websocket
-
-                await websocket.send(json.dumps({
-                    "type": "room_joined",
-                    "data": {
-                        "room_code": room.room_code,
-                        "session_id": session_id,
-                        "is_host": True,
-                        "room_state": room.to_state_dict()
-                    }
-                }))
-
-            # 2. JOIN ROOM
-            elif action == "join_room":
-                code = data.get("room_code", "").strip().upper()
-                player_name = data.get("name", "Trainer Blue").strip() or "Trainer Blue"
-                player_avatar = data.get("avatar", "blue")
-                session_id = data.get("session_id", "")
-
-                room, err = room_manager.join_room(code, player_name, player_avatar, session_id)
-                if not room:
-                    await websocket.send(json.dumps({
-                        "type": "error",
-                        "data": {"message": err}
-                    }))
+            if client_room_code:
+                active_room = room_manager.rooms.get(client_room_code)
+                active_player = active_room.get_player(client_session_id) if active_room else None
+                if active_player and active_player.ws is not websocket:
+                    await websocket.close(4001, "Session resumed in another tab")
+                    break
+                if not active_player and action in ("create_room", "join_room", "resume_room"):
+                    kicked = active_room and client_session_id in active_room.kicked_session_ids
+                    target = data.get("room_code")
+                    if kicked and isinstance(target, str) and target.strip().upper() == client_room_code:
+                        await send_error("You have been removed from this room by the host.")
+                        continue
+                    client_room_code = client_session_id = None
+                elif not active_player and action != "submit_battle_action":
+                    await send_error("You are no longer in this room.")
                     continue
 
-                client_room_code = room.room_code
-                client_session_id = session_id
-                p = room.get_player(session_id)
-                if p:
-                    p.ws = websocket
 
+            if action in ("create_room", "join_room", "resume_room"):
+                if client_room_code:
+                    await send_error("Leave the current room first.")
+                    continue
+                room_code = data.get("room_code", "")
+                if not isinstance(room_code, str):
+                    await send_error("Invalid room code.")
+                    continue
+                room_code = room_code.strip().upper()
+                if action == "resume_room":
+                    room = room_manager.rooms.get(room_code)
+                    sid = data.get("session_id")
+                    token = data.get("reconnect_token")
+                    player = room.get_player(sid) if room and isinstance(sid, str) else None
+                    if not player or not isinstance(token, str) or not secrets.compare_digest(
+                        player.reconnect_token.encode(), token.encode()
+                    ):
+                        await send_error("Room session expired or is invalid.", "resume_error")
+                        continue
+                else:
+                    name = data.get("name", "Trainer")
+                    avatar = data.get("avatar", "red")
+                    if not isinstance(name, str) or not isinstance(avatar, str):
+                        await send_error("Name and avatar must be text.")
+                        continue
+                    name = name.strip()[:32] or "Trainer"
+                    avatar = sanitize_avatar(avatar)
+                    sid = secrets.token_hex(16)
+                    if action == "create_room":
+                        if len(room_manager.rooms) >= MAX_ROOMS:
+                            await send_error("The server has reached its room limit.")
+                            continue
+                        purse = data.get("starting_purse", DEFAULT_STARTING_PURSE)
+                        seconds = data.get("countdown_seconds", AUCTION_COUNTDOWN_SECONDS)
+                        floor = data.get("min_bid", OPENING_MIN_BID)
+                        mode = data.get("anime_mode", "all")
+                        selected = data.get("selected_anime", [])
+                        control = data.get("battle_control_mode", "ai_vs_ai")
+                        tournament = data.get("tournament_format", "round_robin")
+                        if tournament == "championship_bracket":
+                            tournament = "bracket"
+                        control = {"pvai": "player_vs_ai", "pvp": "player_vs_player"}.get(control, control) if isinstance(control, str) else None
+                        if type(seconds) is not int or not 1 <= seconds <= 60:
+                            await send_error("Auction countdown must be between 1 and 60 seconds.")
+                            continue
+                        if (mode in ("single", "multiple") and not selected) or (mode not in ("all", "anime", "anime_only", "marvel", "pokemon",
+                                         "pokemon_standard", "pokemon_legendary", "pokemon_anime",
+                                         "pokemon_marvel", "anime_marvel", "single", "multiple")
+                            or not isinstance(selected, list) or len(selected) > 32
+                            or any(not isinstance(item, str) or item not in anime_db.franchises for item in selected)
+                            or control not in ("ai_vs_ai", "player_vs_ai", "player_vs_player", "pvai", "pvp")
+                            or tournament not in ("round_robin", "bracket")):
+                            await send_error("Invalid room settings.")
+                            continue
+                        try:
+                            room = room_manager.create_room(
+                                name, avatar, sid, starting_purse=purse, countdown_seconds=seconds,
+                                min_bid=floor, anime_mode=mode, selected_anime=selected,
+                                battle_control_mode=control, tournament_format=tournament,
+                            )
+                        except ValueError as error:
+                            await send_error(str(error))
+                            continue
+                        if not room.character_pool:
+                            room_manager.rooms.pop(room.room_code, None)
+                            await send_error("No eligible characters match this draft selection.")
+                            continue
+                    else:
+                        room, message = room_manager.join_room(room_code, name, avatar, sid)
+                        if not room:
+                            await send_error(message)
+                            continue
+                    player = room.get_player(sid)
+
+                old_socket = player.ws
+                player.ws = websocket
+                player.is_connected = True
+                if player.disconnect_task:
+                    player.disconnect_task.cancel()
+                    player.disconnect_task = None
+                client_room_code = room.room_code
+                client_session_id = sid
+                if old_socket is not None and old_socket is not websocket:
+                    asyncio.create_task(old_socket.close(4001, "Session resumed in another tab"))
                 await websocket.send(json.dumps({
                     "type": "room_joined",
                     "data": {
-                        "room_code": room.room_code,
-                        "session_id": session_id,
-                        "is_host": p.is_host if p else False,
-                        "room_state": room.to_state_dict()
+                        "room_code": room.room_code, "session_id": sid,
+                        "reconnect_token": player.reconnect_token,
+                        "is_host": player.is_host, "room_state": room.to_state_dict(),
+                        "auction_history": room.auction_history, "chat_history": room.chat_history,
+                        "finish_data": room.finish_data, "live_progress": room.live_progress,
                     }
                 }))
-
-                # If reconnecting mid-battle, re-send active turn prompt for this player
-                if room.status == "BATTLE" and room.active_live_battle and p:
-                    if room.active_live_battle.is_human_controlled(session_id):
-                        prompt_data = room.active_live_battle.build_player_prompt(session_id)
-                        await websocket.send(json.dumps({"type": "battle_turn_prompt", "data": prompt_data}, ensure_ascii=False))
-
-                # Broadcast updated state to all
+                if room.active_live_battle and room.active_live_battle.is_human_controlled(sid):
+                    prompt = room.active_live_battle.build_player_prompt(sid)
+                    if room.live_progress:
+                        prompt.update({key: room.live_progress[key] for key in ("player_a_name", "player_b_name")})
+                    await websocket.send(json.dumps({"type": "battle_turn_prompt", "data": prompt}))
                 await broadcast_to_room(room, "room_state", room.to_state_dict())
 
             # 3. TOGGLE READY
@@ -584,7 +694,7 @@ async def ws_handler(websocket: ServerConnection):
                 if not client_room_code or not client_session_id:
                     continue
                 room = room_manager.rooms.get(client_room_code)
-                if room and client_session_id in room.players:
+                if room and room.status == "LOBBY" and client_session_id in room.players:
                     p = room.players[client_session_id]
                     p.is_ready = not p.is_ready
                     await broadcast_to_room(room, "room_state", room.to_state_dict())
@@ -604,7 +714,7 @@ async def ws_handler(websocket: ServerConnection):
                     }))
                     continue
 
-                if len(room.players) < 2:
+                if room.connected_players_count < 2:
                     await websocket.send(json.dumps({
                         "type": "error",
                         "data": {"message": "Need at least 2 players to start the auction."}
@@ -624,6 +734,7 @@ async def ws_handler(websocket: ServerConnection):
                 calculated_pool = get_max_auction_characters(active_count)
                 if not room.character_pool:
                     room_manager.initialize_room_pool(room)
+                room.status = "STARTING"
                 if len(room.character_pool) < calculated_pool:
                     room.max_auction_characters = len(room.character_pool)
                     await broadcast_to_room(room, "room_event", {
@@ -646,7 +757,8 @@ async def ws_handler(websocket: ServerConnection):
                     continue
 
                 async with room.auction_lock:
-                    if room.status != "AUCTION" or room.auction_character_count in room.settled_rounds:
+                    if (room.status != "AUCTION" or room.auction_character_count in room.settled_rounds
+                        or time.time() >= room.timer_end_timestamp or (room.skip_event and room.skip_event.is_set())):
                         await websocket.send(json.dumps({
                             "type": "bid_error",
                             "data": {"message": "Round already settled!"}
@@ -675,13 +787,14 @@ async def ws_handler(websocket: ServerConnection):
                         }))
                         continue
 
-                    try:
-                        amount = int(data.get("amount", 0))
-                    except (ValueError, TypeError):
-                        await websocket.send(json.dumps({
-                            "type": "bid_error",
-                            "data": {"message": "Invalid bid amount!"}
-                        }))
+                    amount = data.get("amount")
+                    if type(amount) is not int:
+                        await send_error("Enter a whole-dollar bid.", "bid_error")
+                        continue
+                    if data.get("match_id") != room.match_id or data.get(
+                        "round_id"
+                    ) != room.auction_character_count:
+                        await send_error("This bid belongs to an earlier auction lot.", "bid_error")
                         continue
 
                     if amount <= 0:
@@ -710,7 +823,7 @@ async def ws_handler(websocket: ServerConnection):
                     if amount < min_required:
                         await websocket.send(json.dumps({
                             "type": "bid_error",
-                            "data": {"message": f"Bid must be at least ₹{min_required}."}
+                            "data": {"message": f"Bid must be at least ${min_required}."}
                         }))
                         continue
 
@@ -718,7 +831,7 @@ async def ws_handler(websocket: ServerConnection):
                     if amount > max_allowed:
                         await websocket.send(json.dumps({
                             "type": "bid_error",
-                            "data": {"message": f"Insufficient balance! Available purse: ₹{bidder.purse}."}
+                            "data": {"message": f"Maximum bid after reserving funds for open slots: ${max_allowed}."}
                         }))
                         continue
 
@@ -764,12 +877,15 @@ async def ws_handler(websocket: ServerConnection):
                 sender = room.get_player(client_session_id)
                 text = str(data.get("text", "")).strip()[:150]
                 if sender and text:
-                    await broadcast_to_room(room, "chat", {
+                    message = {
                         "sender_name": sender.name,
                         "sender_avatar": sender.avatar,
                         "text": text,
                         "time": time.strftime("%H:%M")
-                    })
+                    }
+                    room.chat_history.append(message)
+                    del room.chat_history[:-50]
+                    await broadcast_to_room(room, "chat", message)
 
             # 7. SKIP CURRENT CHARACTER
             elif action == "skip_character":
@@ -833,7 +949,7 @@ async def ws_handler(websocket: ServerConnection):
                             if new_name:
                                 p.name = new_name
                             if new_avatar:
-                                p.avatar = new_avatar
+                                p.avatar = sanitize_avatar(new_avatar)
                             await broadcast_to_room(room, "room_state", room.to_state_dict())
 
             # 10. LOCAL ANIME AVATAR LIBRARY MANAGEMENT (Zero External APIs)
@@ -1190,7 +1306,8 @@ async def ws_handler(websocket: ServerConnection):
                     }))
                     continue
 
-                target_session_id = (data.get("target_session_id") or "").strip()
+                target_session_id = data.get("target_session_id")
+                target_session_id = target_session_id.strip() if isinstance(target_session_id, str) else ""
                 if not target_session_id:
                     await websocket.send(json.dumps({
                         "type": "error",
@@ -1283,15 +1400,11 @@ async def ws_handler(websocket: ServerConnection):
             room = room_manager.rooms.get(client_room_code)
             if room:
                 p = room.get_player(client_session_id)
-                if p:
+                if p and p.ws is websocket:
                     p.is_connected = False
                     p.ws = None
-                if room.status == "LOBBY" and p and p.is_host:
-                    connected = [pl for pl in room.players.values() if pl.is_connected and pl != p]
-                    if connected:
-                        p.is_host = False
-                        connected[0].is_host = True
-                await broadcast_to_room(room, "room_state", room.to_state_dict())
+                    p.disconnect_task = asyncio.create_task(expire_disconnected_player(room, p))
+                    await broadcast_to_room(room, "room_state", room.to_state_dict())
 
 
 def json_response(status_code: int, status_text: str, data: Any) -> Response:
@@ -1318,7 +1431,15 @@ def process_http_request(connection, request):
     query = parse_qs(parsed.query)
 
     if path == "/ws":
+        origin = request.headers.get("Origin")
+        allowed = {item.strip() for item in os.getenv("ARENA_ALLOWED_ORIGINS", "").split(",") if item.strip()}
+        host = request.headers.get("Host", "")
+        if origin and origin not in allowed | {f"http://{host}", f"https://{host}"}:
+            return json_response(403, "Forbidden", {"error": "Origin is not allowed."})
         return None
+
+    if path.startswith("/api/admin/") and not is_admin(request.headers):
+        return json_response(403, "Forbidden", {"error": "Administrator access required."})
 
     # Dynamic SVG Avatar Generator Endpoint (Guarantees zero broken images)
     if path.startswith("/api/avatar/"):
@@ -1375,6 +1496,23 @@ def process_http_request(connection, request):
         franchises = anime_db.get_all_franchises()
         return json_response(200, "OK", franchises)
 
+    if path == "/api/auction-catalog":
+        q = query.get("q", [""])[0].casefold()[:100]
+        franchise = query.get("anime_id", [""])[0]
+        try:
+            offset = max(0, int(query.get("offset", ["0"])[0]))
+        except ValueError:
+            return json_response(400, "Bad Request", {"error": "Invalid offset"})
+        matches = [
+            character for character in anime_db.get_characters_for_mode()
+            if (not franchise or character["anime_id"] == franchise)
+            and q in character["name"].casefold()
+        ]
+        return json_response(200, "OK", {
+            "characters": [sanitize_character_for_auction(c) for c in matches[offset:offset + 25]],
+            "total": len(matches),
+        })
+
     # Search, Filter, Sort & Paginate Characters
     if path == "/api/characters":
         q = query.get("q", [""])[0]
@@ -1407,8 +1545,8 @@ def process_http_request(connection, request):
             combat_eligible=combat_eligible,
             has_artwork=has_artwork,
             sort=sort,
-            limit=limit,
-            offset=offset
+            limit=max(1, min(200, limit)),
+            offset=max(0, offset)
         )
         return json_response(200, "OK", res)
 
@@ -1503,9 +1641,9 @@ def process_http_request(connection, request):
 
     # Static file routing
     file_rel = "index.html" if path in ["", "/"] else path.lstrip("/")
-    file_path = os.path.join(PUBLIC_DIR, file_rel)
-    if not os.path.exists(file_path):
-        file_path = os.path.join(DATA_DIR, file_rel)
+    file_path = os.path.realpath(os.path.join(PUBLIC_DIR, unquote(file_rel)))
+    if os.path.commonpath((PUBLIC_DIR, file_path)) != PUBLIC_DIR:
+        return json_response(404, "Not Found", {"error": "Not Found"})
 
     if os.path.exists(file_path) and os.path.isfile(file_path):
         mime, _ = mimetypes.guess_type(file_path)
@@ -1566,6 +1704,9 @@ async def main():
         ws_handler,
         "0.0.0.0",
         PORT,
+        max_size=2**20,
+        ping_interval=20,
+        ping_timeout=20,
         process_request=process_http_request
     )
     print(f"Server ready on port {PORT}. Press Ctrl+C to stop.")

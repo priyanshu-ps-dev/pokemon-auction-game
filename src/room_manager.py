@@ -9,17 +9,20 @@ and hidden-stat auctioning with dramatic final reveal.
 import asyncio
 import json
 import random
+import secrets
 import time
 import uuid
+from collections import defaultdict, deque
 from typing import Dict, List, Optional, Set, Any
 
 # Constants
 MIN_PLAYERS_TO_START = 2
 MAX_PLAYERS_PER_ROOM = 8
-DEFAULT_STARTING_PURSE = 500  # Default ₹500 per player
+DEFAULT_STARTING_PURSE = 100
+MAX_STARTING_PURSE = 100
 TEAM_CAPACITY = 6
 AUCTION_COUNTDOWN_SECONDS = 15
-OPENING_MIN_BID = 10  # Opening bid ₹10
+OPENING_MIN_BID = 1
 MIN_BID_INCREMENT = 1  # Flexible bidding: any positive increment >= 1
 
 def get_max_auction_characters(player_count: int) -> int:
@@ -81,6 +84,8 @@ sanitize_pokemon_for_auction = sanitize_character_for_auction
 class Player:
     def __init__(self, session_id: str, name: str, avatar: str, is_host: bool = False, starting_purse: int = DEFAULT_STARTING_PURSE):
         self.session_id = session_id
+        self.reconnect_token = secrets.token_urlsafe(32)
+        self.disconnect_task: Optional[asyncio.Task] = None
         self.name = name
         self.avatar = avatar
         self.is_host = is_host
@@ -139,7 +144,7 @@ class Player:
             bst = self.total_bst
             hp = self.total_hp
         else:
-            sanitized_team = [sanitize_character_for_auction(p) for p in self.team]
+            sanitized_team = [{**sanitize_character_for_auction(p), "auction_cost": p.get("auction_cost")} for p in self.team]
             power = None
             bst = None
             hp = None
@@ -186,6 +191,7 @@ class Room:
         self.battle_control_mode = battle_control_mode
         self.tournament_format = tournament_format
         self.active_live_battle: Optional[Any] = None
+        self.live_progress: Optional[dict] = None
         
         # Anime game mode configurations
         self.anime_mode = anime_mode  # 'all', 'single', 'multiple', 'pokemon', 'custom'
@@ -214,6 +220,7 @@ class Room:
         self.match_id: str = f"{room_code}_m1"
         self.match_history: List[dict] = []
         self.battle_results: Optional[dict] = None
+        self.finish_data: Optional[dict] = None
         self.used_character_ids: Set[Any] = set()
         self.consecutive_unsold_count: int = 0
         self.auction_history: List[dict] = []
@@ -289,7 +296,7 @@ class Room:
         """Players who are not withdrawn, have empty team slots, and enough funds for min bid."""
         return [
             p for p in self.players.values()
-            if not p.is_withdrawn and not p.is_team_full and p.purse >= self.min_bid and p.is_connected
+            if not p.is_withdrawn and not p.is_team_full and p.purse >= self.min_bid
         ]
 
     def all_eligible_players_skipped(self) -> bool:
@@ -419,7 +426,7 @@ class Room:
         Resets match state for a fresh rematch while preserving room ID, settings, and connected players.
         Archives previous match into match_history.
         """
-        leaderboard = room_manager.calculate_final_leaderboard(self)
+        leaderboard = room_manager.calculate_battle_leaderboard(self, self.battle_results)
         self.match_history.append({
             "match_id": self.match_id,
             "match_number": self.match_number,
@@ -442,7 +449,9 @@ class Room:
         if self.active_live_battle and hasattr(self.active_live_battle, "invalidate"):
             self.active_live_battle.invalidate()
         self.active_live_battle = None
+        self.live_progress = None
         self.battle_results = None
+        self.finish_data = None
         self.current_character_full = None
         self.last_bid_record = None
         self.current_bid = 0
@@ -497,7 +506,7 @@ class Room:
             winning_bid = int(self.current_bid)
             if not winner.is_team_full and winner.purse >= winning_bid and winning_bid > 0:
                 winner.purse -= winning_bid
-                winner.team.append(self.current_character_full)
+                winner.team.append({**self.current_character_full, "auction_cost": winning_bid})
                 self.consecutive_unsold_count = 0
 
                 tx = {
@@ -570,7 +579,8 @@ class Room:
         """
         if player.is_team_full or player.is_withdrawn or player.has_skipped:
             return 0
-        return max(0, player.purse)
+        reserve = max(0, TEAM_CAPACITY - player.team_count - 1) * self.min_bid
+        return max(0, player.purse - reserve)
 
     def to_state_dict(self) -> dict:
         """
@@ -604,6 +614,7 @@ class Room:
             "max_auction_characters": self.max_auction_characters,
             "auction_pokemon_count": self.auction_character_count,
             "auction_character_count": self.auction_character_count,
+            "lot_settled": self.auction_character_count in self.settled_rounds,
             "pool_exhausted": self.auction_character_count >= self.max_auction_characters,
             "players": [p.to_dict(reveal_stats=reveal_stats) for p in self.players.values()],
             "match_id": self.match_id,
@@ -619,6 +630,8 @@ class Room:
             "highest_bidder_name": highest_bidder_name,
             "highest_bidder_avatar": highest_bidder_avatar,
             "timer_seconds_left": max(0, int(self.timer_seconds_left)),
+            "timer_deadline": self.timer_end_timestamp,
+            "countdown_seconds": self.countdown_seconds,
             "all_teams_full": self.all_teams_full,
             "consecutive_unsold": self.consecutive_unsold_count
         }
@@ -646,7 +659,7 @@ class RoomManager:
         """Generates a unique 6-character room code (e.g. ANME-842)."""
         chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
         while True:
-            suffix = "".join(random.choices(chars, k=4))
+            suffix = "".join(secrets.choice(chars) for _ in range(4))
             code = f"ANME-{suffix}"
             if code not in self.rooms:
                 return code
@@ -665,6 +678,10 @@ class RoomManager:
         battle_control_mode: str = "ai_vs_ai",
         tournament_format: str = "round_robin"
     ) -> Room:
+        if type(starting_purse) is not int or not TEAM_CAPACITY <= starting_purse <= MAX_STARTING_PURSE:
+            raise ValueError(f"Starting budget must be a whole number from ${TEAM_CAPACITY} to ${MAX_STARTING_PURSE}.")
+        if type(min_bid) is not int or not OPENING_MIN_BID <= min_bid <= starting_purse // TEAM_CAPACITY:
+            raise ValueError("Opening bid must leave enough budget for six slots.")
         code = self.generate_room_code()
         host = Player(session_id=session_id, name=host_name, avatar=host_avatar, is_host=True, starting_purse=starting_purse)
         room = Room(
@@ -700,8 +717,19 @@ class RoomManager:
             else:
                 room.character_pool = list(self.character_database)
 
-        # Shuffle pool for variety
         random.shuffle(room.character_pool)
+        groups = defaultdict(deque)
+        for character in room.character_pool:
+            universe = character.get("anime_id")
+            group = universe if universe in ("pokemon", "marvel") else "anime"
+            groups[group].append(character)
+        if len(groups) > 1:
+            buckets = list(groups.values())
+            random.shuffle(buckets)
+            room.character_pool = []
+            while buckets:
+                room.character_pool.extend(bucket.popleft() for bucket in buckets)
+                buckets = [bucket for bucket in buckets if bucket]
 
     def join_room(self, room_code: str, player_name: str, player_avatar: str, session_id: str) -> tuple[Optional[Room], str]:
         code = room_code.strip().upper()
@@ -712,18 +740,15 @@ class RoomManager:
         if session_id in room.kicked_session_ids:
             return None, "You have been removed from this room by the host."
 
-        # Check existing reconnection in this room
-        if session_id in room.players:
-            existing = room.players[session_id]
-            existing.name = player_name
-            existing.avatar = player_avatar
-            existing.is_connected = True
-            return room, "Reconnected to existing room session."
+        if room.get_player(session_id):
+            return None, "This session already exists. Use its reconnect credential."
 
         if room.status == "GAME_OVER":
             return None, "This auction room has already ended."
 
         if room.status != "LOBBY":
+            if len(room.spectators) >= MAX_PLAYERS_PER_ROOM:
+                return None, "The spectator list is full."
             # Allow joining as spectator
             spectator = Player(session_id=session_id, name=player_name, avatar=player_avatar, is_host=False, starting_purse=room.starting_purse)
             room.spectators[session_id] = spectator
@@ -805,21 +830,12 @@ class RoomManager:
 
     def select_random_character(self, room: Room) -> Optional[dict]:
         """Server-authoritative random selection from unused pool."""
-        if not room.character_pool:
-            self.initialize_room_pool(room)
-
-        available = [c for c in room.character_pool if c["id"] not in room.used_character_ids]
-        if not available:
-            # If exhausted, allow reset of pool
-            room.used_character_ids.clear()
-            available = room.character_pool
-
-        if not available:
-            return None
-
-        selected = random.choice(available)
-        room.used_character_ids.add(selected["id"])
-        return selected
+        for character in room.character_pool:
+            identity = character.get("canonical_id") or character.get("base_character_id") or character["id"]
+            if identity not in room.used_character_ids:
+                room.used_character_ids.add(identity)
+                return character
+        return None
 
     select_random_pokemon = select_random_character
 

@@ -2,11 +2,12 @@
 Dynamic SVG Avatar Generator for Anime Characters
 =================================================
 Produces high-aesthetic, lightweight, 100% reliable SVG avatars
-with custom franchise color palettes, energy symbols, and power tier badges.
-Guarantees zero broken image links across any device.
+with franchise color palettes, symbols, and initials.
 """
 
-from typing import Dict, Optional
+from typing import Dict
+
+from xml.sax.saxutils import escape
 
 FRANCHISE_PALETTES: Dict[str, Dict[str, str]] = {
     "dragon_ball": {"bg1": "#dc2626", "bg2": "#f59e0b", "accent": "#fef08a", "symbol": "💥"},
@@ -41,7 +42,7 @@ def generate_character_svg(char: dict) -> str:
     anime_id = char.get("anime_id", "pokemon")
     name = char.get("name", "Unknown Character")
     anime_name = char.get("anime_name", "Anime")
-    tier = char.get("power_tier", "B")
+    anime_id = anime_id if anime_id in FRANCHISE_PALETTES else "arena"
     
     palette = FRANCHISE_PALETTES.get(anime_id, DEFAULT_PALETTE)
     bg1 = palette["bg1"]
@@ -55,7 +56,9 @@ def generate_character_svg(char: dict) -> str:
     
     # Truncate display name
     short_name = name if len(name) <= 16 else name[:14] + "…"
-    short_anime = anime_name if len(anime_name) <= 18 else anime_name[:16] + "…"
+    short_anime = "Marvel MCU" if anime_id == "marvel" else anime_name
+    short_anime = short_anime if len(short_anime) <= 18 else short_anime[:16] + "…"
+    short_name, short_anime, initials = map(escape, (short_name, short_anime, initials))
 
     return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" width="280" height="280">
   <defs>
@@ -68,10 +71,6 @@ def generate_character_svg(char: dict) -> str:
       <stop offset="0%" stop-color="{bg1}"/>
       <stop offset="100%" stop-color="{bg2}"/>
     </linearGradient>
-    <linearGradient id="tier_grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ffd700"/>
-      <stop offset="100%" stop-color="#f59e0b"/>
-    </linearGradient>
     <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
       <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="{bg1}" flood-opacity="0.4"/>
     </filter>
@@ -81,10 +80,6 @@ def generate_character_svg(char: dict) -> str:
   <rect width="280" height="280" rx="28" fill="#0d111a"/>
   <rect width="280" height="280" rx="28" fill="url(#halo_{anime_id})"/>
   <rect width="278" height="278" x="1" y="1" rx="27" fill="none" stroke="{bg1}" stroke-opacity="0.4" stroke-width="1.5"/>
-
-  <!-- Tier Badge (Top-Right) -->
-  <rect x="210" y="18" width="52" height="26" rx="13" fill="#182030" stroke="url(#tier_grad)" stroke-width="1.5"/>
-  <text x="236" y="36" font-family="'Outfit', system-ui, sans-serif" font-size="12" font-weight="900" fill="#ffd700" text-anchor="middle">{tier}</text>
 
   <!-- Anime Symbol (Top-Left) -->
   <text x="32" y="38" font-size="20">{symbol}</text>

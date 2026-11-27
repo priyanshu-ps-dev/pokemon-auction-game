@@ -41,7 +41,7 @@ class TestSkipWithdrawRematch(unittest.TestCase):
             host_name="Ash",
             host_avatar="red",
             session_id="host_ash",
-            starting_purse=500
+            starting_purse=100
         )
         # Add player 2 and player 3
         self.rm.join_room(self.room.room_code, "Gary", "blue", "p2_gary")
@@ -122,15 +122,15 @@ class TestSkipWithdrawRematch(unittest.TestCase):
     def test_05_withdraw_from_match_preserves_roster_and_spent_funds(self):
         """Withdrawal flags player, prevents bidding, preserves team & remaining purse."""
         p_gary = self.room.get_player("p2_gary")
-        # Gary won 1 character for ₹80
-        p_gary.purse = 420
+        # Gary won 1 character for $16
+        p_gary.purse = 84
         char = {"id": "char_1", "name": "Luffy", "power_rating": 90.0, "stats": {"total": 550, "hp": 120}}
         p_gary.team.append(char)
 
         success, msg, new_host, should_end = self.room.withdraw_player("p2_gary")
         self.assertTrue(success)
         self.assertTrue(p_gary.is_withdrawn)
-        self.assertEqual(p_gary.purse, 420)
+        self.assertEqual(p_gary.purse, 84)
         self.assertEqual(len(p_gary.team), 1)
         self.assertEqual(self.room.calculate_max_bid_for_player(p_gary), 0)
         self.assertFalse(should_end)  # 2 active remain: Ash and Brock
@@ -189,7 +189,7 @@ class TestSkipWithdrawRematch(unittest.TestCase):
         self.room.status = "GAME_OVER"
         # Simulate some prior results
         p_ash = self.room.get_player("host_ash")
-        p_ash.purse = 200
+        p_ash.purse = 40
         p_ash.team = [{"id": "p1", "name": "Goku", "power_rating": 98.0, "stats": {"total": 600, "hp": 150}}]
 
         self.room.request_rematch("host_ash")
@@ -210,7 +210,7 @@ class TestSkipWithdrawRematch(unittest.TestCase):
 
         # Verify all players reset
         for p in self.room.players.values():
-            self.assertEqual(p.purse, 500)
+            self.assertEqual(p.purse, 100)
             self.assertEqual(len(p.team), 0)
             self.assertFalse(p.is_withdrawn)
             self.assertFalse(p.has_skipped)

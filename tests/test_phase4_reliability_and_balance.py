@@ -148,14 +148,16 @@ class TestPhase4MultiplayerStress(unittest.TestCase):
                 self.assertNotEqual(code1, code2)
 
                 await r1_b.send(json.dumps({"action": "join_room", "data": {"room_code": code1, "name": "R1B", "avatar": "green", "session_id": "r1_b"}}))
-                await r1_b.recv()
+                guest = json.loads(await r1_b.recv())["data"]
                 await r2_b.send(json.dumps({"action": "join_room", "data": {"room_code": code2, "name": "R2B", "avatar": "yellow", "session_id": "r2_b"}}))
                 await r2_b.recv()
 
                 # Disconnect r1_b and reconnect with same session_id
                 await r1_b.close()
                 async with websockets.connect("ws://127.0.0.1:5050/ws", ping_timeout=60) as r1_b_re:
-                    await r1_b_re.send(json.dumps({"action": "join_room", "data": {"room_code": code1, "name": "R1B", "avatar": "green", "session_id": "r1_b"}}))
+                    await r1_b_re.send(json.dumps({"action": "resume_room", "data": {
+                        key: guest[key] for key in ("room_code", "session_id", "reconnect_token")
+                    }}))
                     re_msg = json.loads(await r1_b_re.recv())
                     self.assertEqual(re_msg["type"], "room_joined")
                     self.assertEqual(re_msg["data"]["room_code"], code1)

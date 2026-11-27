@@ -126,8 +126,18 @@ class TestMarvelCombatAndImporter(unittest.TestCase):
         res = asyncio.run(sess.run_interactive(max_turns=25))
         self.assertIn(res.winner_id, ("p1", "p2"))
 
-    def test_07_marvel_real_image_urls_and_metadata(self):
-        """All 26 combat-eligible Marvel characters have verified real artwork URLs; civilians flagged."""
+    def test_07_archived_comic_artwork_is_preserved(self):
+        """The import archive retains attribution for legacy data."""
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        archive = os.path.join(base_dir, "data", "marvel_combat_database.json")
+        with open(archive, encoding="utf-8") as file:
+            characters = json.load(file)["characters"]
+        thor = characters["marvel_616_thor"]
+        self.assertTrue(thor["image"].startswith("https://cdn.jsdelivr.net/gh/akabab/superhero-api"))
+        self.assertEqual(thor["image_verification_status"], "verified_cdn")
+        self.assertIn("Marvel", thor["image_attribution"])
+
+    def test_08_catalog_is_screen_continuity(self):
         from src.anime_database import AnimeDatabaseManager
 
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -135,64 +145,13 @@ class TestMarvelCombatAndImporter(unittest.TestCase):
             os.path.join(base_dir, "data", "anime_database.json"),
             os.path.join(base_dir, "data", "anime_platform.db"),
         )
-        for cid in (
-            "marvel_616_hulk",
-            "marvel_616_spider_man",
-            "marvel_616_iron_man",
-            "marvel_616_ultron",
-            "marvel_616_thor",
-            "marvel_616_doctor_strange",
-            "marvel_616_thanos",
-            "marvel_616_loki",
-            "marvel_616_wolverine",
-            "marvel_616_magneto",
-        ):
-            ch = db.get_character_by_id(cid)
-            self.assertIsNotNone(ch, f"Missing {cid}")
-            self.assertTrue(ch["image"].startswith("https://cdn.jsdelivr.net/gh/akabab/superhero-api"), ch["image"])
-            self.assertEqual(ch.get("image_verification_status"), "verified_cdn")
-            self.assertIn("SuperHeroAPI", ch.get("image_source", ""))
-            self.assertIn("Marvel", ch.get("image_attribution", ""))
-
-        may = db.get_character_by_id("marvel_616_aunt_may")
-        self.assertIsNotNone(may)
-        self.assertEqual(may.get("image_verification_status"), "missing_artwork_placeholder")
-
-    def test_08_phase8_expanded_catalog_manifest_and_auction_isolation(self):
-        """Phase 8: 2,000+ Marvel records browsable in catalog, but only combat-eligible enter auctions."""
-        from src.anime_database import AnimeDatabaseManager
-
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        manifest_path = os.path.join(base_dir, "data", "marvel_import_manifest.json")
-        self.assertTrue(os.path.exists(manifest_path))
-        with open(manifest_path, "r", encoding="utf-8") as f:
-            manifest = json.load(f)
-
-        self.assertGreater(manifest["unique_ids"], 2000)
-        self.assertGreater(manifest["duplicates_merged"], 0)
-        self.assertEqual(manifest["sources"]["official_marvel_api"]["status"], "skipped_no_credentials")
-        self.assertEqual(manifest["combat_verification_coverage"]["combat_eligible"], 26)
-
-        db = AnimeDatabaseManager(
-            os.path.join(base_dir, "data", "anime_database.json"),
-            os.path.join(base_dir, "data", "anime_platform.db"),
-        )
-        all_marvel = db.search_characters(anime_id="marvel", limit=50, offset=0)
-        self.assertEqual(all_marvel["total"], manifest["unique_ids"])
-        self.assertEqual(len(all_marvel["characters"]), 50)
-
-        villains = db.search_characters(anime_id="marvel", category="Villains", limit=20)
-        self.assertGreater(villains["total"], 100)
-
-        verified_art = db.search_characters(anime_id="marvel", has_artwork="true", limit=20)
-        self.assertGreaterEqual(verified_art["total"], 290)
-
-        combat_only = db.search_characters(anime_id="marvel", combat_eligible="true", limit=50)
-        self.assertEqual(combat_only["total"], 26)
-
-        auction_pool = db.get_characters_for_mode(mode="marvel")
-        self.assertEqual(len(auction_pool), 26)
-        self.assertTrue(all(c.get("is_active") for c in auction_pool))
+        catalog = db.search_characters(anime_id="marvel", limit=100)
+        self.assertEqual(catalog["total"], 52)
+        self.assertEqual({c["id"] for c in catalog["characters"]},
+                         {c["id"] for c in db.get_characters_for_mode(mode="marvel")})
+        self.assertIsNone(db.get_character_by_id("marvel_616_thor"))
+        self.assertTrue(all(c["image"].startswith("/api/avatar/marvel_mcu_")
+                            for c in catalog["characters"]))
 
 
 if __name__ == "__main__":

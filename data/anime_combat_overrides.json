@@ -1,0 +1,96 @@
+{
+  "one_piece_usopp": {
+    "source": "One Piece, Dressrosa arc",
+    "profile_version": 1,
+    "stats": {
+      "strength": 24,
+      "attack_power": 34,
+      "speed": 32,
+      "durability": 34,
+      "defense": 30,
+      "stamina": 52
+    },
+    "attacks": [
+      {
+        "id": "green_star",
+        "name": "Green Star: Devil",
+        "category": "ranged",
+        "element_or_energy_type": "plant"
+      },
+      {
+        "id": "impact_wolf",
+        "name": "Green Star: Impact Wolf",
+        "category": "ranged",
+        "element_or_energy_type": "physical"
+      }
+    ]
+  },
+  "db_goku": {
+    "source": "Dragon Ball Super, Tournament of Power",
+    "profile_version": 1,
+    "stats": {
+      "strength": 98,
+      "attack_power": 99,
+      "speed": 99,
+      "durability": 97,
+      "defense": 98,
+      "stamina": 96
+    },
+    "extra_transformations": [
+      {
+        "id": "db_goku_ssg",
+        "name": "Super Saiyan God",
+        "source": "Dragon Ball Super, Battle of Gods arc",
+        "stamina_cost": 22,
+        "duration_turns": 6
+      },
+      {
+        "id": "db_goku_ssb",
+        "name": "Super Saiyan Blue",
+        "source": "Dragon Ball Super, Resurrection F arc",
+        "stamina_cost": 26,
+        "duration_turns": 5
+      }
+    ]
+  },
+  "anilist_126071": {
+    "source": "Demon Slayer: Kimetsu no Yaiba, Entertainment District arc",
+    "profile_version": 1,
+    "stats": {
+      "strength": 31,
+      "attack_power": 37,
+      "speed": 53,
+      "durability": 38,
+      "defense": 35,
+      "stamina": 57
+    },
+    "attack_ids": [
+      "atk_anilist_126071_sun_halo_dragon_head_dance",
+      "atk_anilist_126071_water_breathing_tenth_form_constant_flux"
+    ]
+  },
+  "db_frieza": {
+    "source": "Dragon Ball Super, Tournament of Power",
+    "exclude_transformations": [
+      "db_frieza_black"
+    ]
+  },
+  "naruto_naruto": {
+    "source": "Naruto: Shippuden and Boruto: Naruto Next Generations anime",
+    "transformation_settings": {
+      "naruto_baryon": {
+        "stamina_cost": 36,
+        "duration_turns": 3
+      }
+    }
+  },
+  "anilist_40": {
+    "source": "One Piece anime, Wano arc",
+    "transformation_settings": {
+      "op_luffy_gear5": {
+        "stamina_cost": 27,
+        "duration_turns": 4
+      }
+    }
+  }
+}

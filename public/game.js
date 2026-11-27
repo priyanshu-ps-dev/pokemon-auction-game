@@ -6,13 +6,10 @@
  * hidden stats during bidding, and dramatic final stats reveal.
  */
 
-// Global Game State (per-tab sessionStorage prevents multi-tab sessionId collisions while surviving F5 refresh)
-const _savedSessionId = sessionStorage.getItem('pkmn_auction_session_id') || ('sess_' + Math.random().toString(36).substring(2, 10));
-sessionStorage.setItem('pkmn_auction_session_id', _savedSessionId);
-
 const gameState = {
   ws: null,
-  sessionId: _savedSessionId,
+  sessionId: sessionStorage.getItem("pkmn_auction_session_id"),
+  reconnectToken: sessionStorage.getItem("pkmn_auction_reconnect_token"),
   roomCode: sessionStorage.getItem('pkmn_auction_room_code') || null,
   isHost: false,
   isWithdrawn: false,
@@ -40,10 +37,14 @@ const TRAINER_AVATARS = [
 ];
 
 // Web Audio API Synthesizer
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let audioCtx;
+window.addEventListener('pointerdown', () => {
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (AudioContext) audioCtx = new AudioContext();
+}, { once: true });
 
 function playTone(freq, type, duration, delay = 0, gainLevel = 0.15) {
-  if (!gameState.soundEnabled) return;
+  if (!gameState.soundEnabled || !audioCtx) return;
   try {
     if (audioCtx.state === 'suspended') audioCtx.resume();
     const osc = audioCtx.createOscillator();
@@ -83,37 +84,66 @@ const soundFX = {
 };
 
 // WebSocket Controller
+let reconnectAttempts = 0;
+let reconnectStartedAt = 0;
+const connectionStatus = () => document.getElementById('connection-status');
+
+function sendAction(action, data = {}) {
+  if (gameState.ws?.readyState !== WebSocket.OPEN) return false;
+  gameState.ws.send(JSON.stringify({ action, data }));
+  return true;
+}
+
+function clearRoomSession() {
+  gameState.roomCode = null;
+  gameState.sessionId = null;
+  gameState.reconnectToken = null;
+  gameState.roomState = null;
+  for (const key of ['room_code', 'session_id', 'reconnect_token']) {
+    sessionStorage.removeItem('pkmn_auction_' + key);
+  }
+}
+
 function connectWebSocket() {
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const wsUrl = `${protocol}//${window.location.host}/ws`;
+  const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const socket = new WebSocket(`${protocol}//${location.host}/ws`);
+  gameState.ws = socket;
 
-  gameState.ws = new WebSocket(wsUrl);
-
-  gameState.ws.onopen = () => {
-    console.log('[WS] Connected to Auction Server');
-    const savedRoom = sessionStorage.getItem('pkmn_auction_room_code');
-    if (savedRoom) {
-      console.log(`[WS] Auto-rejoining room ${savedRoom} with session ${gameState.sessionId}`);
-      sendAction('join_room', {
-        room_code: savedRoom,
-        name: gameState.myName,
-        avatar: gameState.myAvatar
+  socket.onopen = () => {
+    reconnectAttempts = 0;
+    reconnectStartedAt = 0;
+    if (gameState.roomCode && gameState.reconnectToken) {
+      sendAction('resume_room', {
+        room_code: gameState.roomCode,
+        session_id: gameState.sessionId,
+        reconnect_token: gameState.reconnectToken
       });
+    } else {
+      connectionStatus().hidden = true;
     }
   };
 
-  gameState.ws.onmessage = (event) => {
-    try {
-      const msg = JSON.parse(event.data);
-      handleServerMessage(msg.type, msg.data);
-    } catch (e) {
-      console.error('[WS] Parse error', e);
-    }
+  socket.onmessage = ({data}) => {
+    const message = JSON.parse(data);
+    handleServerMessage(message.type, message.data);
   };
 
-  gameState.ws.onclose = () => {
-    console.warn('[WS] Disconnected, attempting reconnect in 2s...');
-    setTimeout(connectWebSocket, 2000);
+  socket.onclose = ({code}) => {
+    if (gameState.ws !== socket) return;
+    if (code === 4001) {
+      clearRoomSession();
+      switchArenaScreen('arena-setup');
+    }
+    const status = connectionStatus();
+    status.hidden = false;
+    if (!reconnectStartedAt) reconnectStartedAt = Date.now();
+    if (Date.now() - reconnectStartedAt >= 120000) {
+      status.textContent = 'Connection lost. Reload to retry.';
+      return;
+    }
+    status.textContent = 'Connection lost. Reconnecting…';
+    const delay = Math.min(10000, 400 * 2 ** reconnectAttempts++) + Math.random() * 300;
+    setTimeout(connectWebSocket, delay);
   };
 }
 
@@ -121,12 +151,29 @@ function connectWebSocket() {
 function handleServerMessage(type, data) {
   switch (type) {
     case 'room_joined': {
+      connectionStatus().hidden = true;
       gameState.roomCode = data.room_code;
+      gameState.sessionId = data.session_id;
+      gameState.reconnectToken = data.reconnect_token;
+      sessionStorage.setItem('pkmn_auction_session_id', data.session_id);
+      sessionStorage.setItem('pkmn_auction_reconnect_token', data.reconnect_token);
       gameState.isHost = data.is_host;
       gameState.roomState = data.room_state;
       sessionStorage.setItem('pkmn_auction_room_code', data.room_code);
       const rs = data.room_state || {};
       const status = rs.status || 'LOBBY';
+      gameState.currentMatchId = rs.match_id;
+      gameState.isWithdrawn = !!rs.players?.find(p => p.session_id === gameState.sessionId)?.is_withdrawn;
+      document.getElementById('lobby-chat-messages')?.replaceChildren();
+      for (const message of data.chat_history || []) appendChatMessage(message);
+      document.getElementById('stage-log-list')?.replaceChildren();
+      for (const lot of data.auction_history || []) {
+        const name = escapeHtml(lot.character?.name || 'Character');
+        const text = lot.winner_name
+          ? `${name} sold to ${escapeHtml(lot.winner_name)} for $${lot.winning_bid}`
+          : `${name} went unsold`;
+        addStageLog(text, lot.winner_name ? 'won' : 'unsold');
+      }
       if (status === 'AUCTION' || status === 'SHOWCASE') {
         switchArenaScreen('arena-stage');
         updateStageUI(rs);
@@ -137,9 +184,13 @@ function handleServerMessage(type, data) {
         updateTimerDisplay(rs.timer_seconds_left != null ? rs.timer_seconds_left : 15);
       } else if (status === 'BATTLE') {
         switchArenaScreen('arena-battle');
-        updateStageUI(rs);
-      } else if (status === 'GAME_OVER') {
+        if (data.live_progress?.turn_entry) {
+          const latest = data.live_progress;
+          applyResolvedInteractiveTurn(latest.turn_entry, latest.player_a_name, latest.player_b_name);
+        }
+      } else if (status === 'GAME_OVER' || status === 'REMATCH_PENDING') {
         switchArenaScreen('arena-results');
+        if (data.finish_data) renderLeaderboard(data.finish_data.leaderboard, data.finish_data.battle_results);
       } else {
         updateLobbyUI(rs);
         switchArenaScreen('arena-lobby');
@@ -147,9 +198,18 @@ function handleServerMessage(type, data) {
       break;
     }
 
+    case 'resume_error':
+      clearRoomSession();
+      connectionStatus().hidden = true;
+      switchArenaScreen('arena-setup');
+      showRoomToast(data.message, 'error');
+      break;
+
     case 'room_state':
       gameState.roomState = data;
+      gameState.isHost = !!data.players?.find(p => p.session_id === gameState.sessionId)?.is_host;
       if (data.status === 'LOBBY') {
+        if (gameState.roomCode && !document.getElementById('arena-lobby').classList.contains('active')) switchArenaScreen('arena-lobby');
         updateLobbyUI(data);
       } else if (data.status === 'AUCTION' || data.status === 'SHOWCASE') {
         updateStageUI(data);
@@ -165,7 +225,7 @@ function handleServerMessage(type, data) {
       if (skipBtn) skipBtn.disabled = gameState.isWithdrawn;
       updateStageUI(data.room_state);
       renderAuctionCard(data.pokemon);
-      addStageLog(`🔔 Round Started! <strong>${data.pokemon.name}</strong> is up for auction!`, 'info');
+      addStageLog(`🔔 Round Started! <strong>${escapeHtml(data.pokemon.name)}</strong> is up for auction!`, 'info');
       break;
 
     case 'character_skipped':
@@ -214,31 +274,18 @@ function handleServerMessage(type, data) {
       break;
 
     case 'host_transferred':
+      gameState.isHost = data.new_host_id === gameState.sessionId;
+      showRoomToast(data.message || 'Host status transferred.', 'info', 4000);
       addStageLog(`👑 ${escapeHtml(data.message)}`, 'info');
-      if (data.new_host_id === gameState.sessionId) {
-        gameState.isHost = true;
-        addStageLog(`👑 You are now the room host!`, 'won');
-      }
       break;
 
     case 'rematch_requested':
       showRematchModal(data);
       break;
-      showRoomToast(data.message || 'Host status transferred.', 'info', 4000);
 
     case 'rematch_vote_update':
       updateRematchTally(data);
       break;
-      if (gameState.roomState && Array.isArray(gameState.roomState.players)) {
-        gameState.roomState.players.forEach(p => {
-          p.is_host = (p.session_id === data.new_host_id);
-        });
-        if (gameState.roomState.status === 'LOBBY') {
-          updateLobbyUI(gameState.roomState);
-        } else {
-          updateStageUI(gameState.roomState);
-        }
-      }
 
     case 'rematch_declined':
       hideRematchModal();
@@ -261,28 +308,16 @@ function handleServerMessage(type, data) {
       gameState.roomCode = null;
       gameState.isHost = false;
       gameState.isWithdrawn = false;
-      sessionStorage.removeItem('pkmn_auction_room_code');
+      clearRoomSession();
       switchArenaScreen('arena-setup');
       break;
 
-    case 'auction_tick': {
-      if (data.room_state) {
-        gameState.roomState = data.room_state;
-      } else if (gameState.roomState) {
-        gameState.roomState.current_bid = data.current_bid;
-      gameState.roomState = null;
-        gameState.roomState.highest_bidder_id = data.highest_bidder_id;
-      closeLeaveRoomModal();
-      closeKickConfirmModal();
-        gameState.roomState.highest_bidder_name = data.highest_bidder_name;
-        gameState.roomState.timer_seconds_left = data.timer_seconds_left;
-      }
     case 'player_kicked':
       gameState.roomCode = null;
       gameState.isHost = false;
       gameState.isWithdrawn = false;
       gameState.roomState = null;
-      sessionStorage.removeItem('pkmn_auction_room_code');
+      clearRoomSession();
       closeLeaveRoomModal();
       closeKickConfirmModal();
       const wModal = document.getElementById('withdraw-modal');
@@ -322,17 +357,11 @@ function handleServerMessage(type, data) {
       }
       break;
 
+    case 'auction_tick':
+      if (data.match_id !== gameState.roomState?.match_id || data.round_id !== gameState.roomState?.auction_character_count) break;
       updateTimerDisplay(data.timer_seconds_left);
-      updateBidStatus(data.current_bid, data.highest_bidder_id, data.highest_bidder_name, data.highest_bidder_avatar);
-      if (gameState.roomState && Array.isArray(gameState.roomState.players)) {
-        const me = gameState.roomState.players.find(p => p.session_id === gameState.sessionId);
-        if (me) updateBidButtonStates(me, gameState.roomState);
-      }
-      if (data.timer_seconds_left <= 3 && data.timer_seconds_left > 0) {
-        soundFX.tick();
-      }
+      if (data.timer_seconds_left <= 3 && data.timer_seconds_left > 0) soundFX.tick();
       break;
-    }
 
     case 'bid_success': {
       soundFX.bid();
@@ -350,7 +379,7 @@ function handleServerMessage(type, data) {
         const me = gameState.roomState.players.find(p => p.session_id === gameState.sessionId);
         if (me) updateBidButtonStates(me, gameState.roomState);
       }
-      addStageLog(`₹ <strong>${data.highest_bidder_name}</strong> bid <strong>₹${data.current_bid.toLocaleString()}</strong>! Timer reset!`, 'bid');
+      addStageLog(`💵 <strong>${escapeHtml(data.highest_bidder_name)}</strong> bid <strong>$${data.current_bid.toLocaleString()}</strong>! Timer reset!`, 'bid');
       break;
     }
 
@@ -360,23 +389,24 @@ function handleServerMessage(type, data) {
 
     case 'auction_won':
       soundFX.sold();
-      addStageLog(`🏆 SOLD! <strong>${data.winner_name}</strong> won <strong>${data.pokemon.name}</strong> for ₹${data.winning_bid.toLocaleString()}!`, 'won');
-      showShowcaseBanner(`SOLD to ${data.winner_name}!`, `Winning Bid: ₹${data.winning_bid.toLocaleString()}`);
+      addStageLog(`🏆 SOLD! <strong>${escapeHtml(data.winner_name)}</strong> won <strong>${escapeHtml(data.pokemon.name)}</strong> for $${data.winning_bid.toLocaleString()}!`, 'won');
+      showShowcaseBanner(`SOLD to ${data.winner_name}!`, `Winning Bid: $${data.winning_bid.toLocaleString()}`);
       updateStageUI(data.room_state);
       break;
 
     case 'auction_unsold':
       soundFX.unsold();
-      addStageLog(`❌ UNSOLD! No bids placed for <strong>${data.pokemon.name}</strong>. Removed from match.`, 'unsold');
+      addStageLog(`❌ UNSOLD! No bids placed for <strong>${escapeHtml(data.pokemon.name)}</strong>. Removed from match.`, 'unsold');
       showShowcaseBanner(`UNSOLD`, `No bids placed. Next Pokémon arriving...`);
       updateStageUI(data.room_state);
       break;
 
     case 'room_event':
-      addStageLog(`📢 ${data.message}`, 'alert');
+      addStageLog(`📢 ${escapeHtml(data.message)}`, 'alert');
       break;
 
     case 'battle_started':
+      gameState.roomState = data.room_state;
       gameState.currentMatchId = data.match_id || gameState.currentMatchId;
       resetBattleUI();
       switchArenaScreen('arena-battle');
@@ -473,7 +503,15 @@ function handleServerMessage(type, data) {
 
 // Screen Switcher
 function updateStageBackgroundVideo() {
-  // Single unified background video (#landing-bg-video: /assets/landing-video.mp4)
+  const video = document.getElementById('landing-bg-video');
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (document.hidden || document.body.classList.contains('in-arena-match') ||
+      reducedMotion || navigator.connection?.saveData) {
+    video.pause();
+    return;
+  }
+  if (!video.src) video.src = '/assets/landing-video.mp4';
+  video.play().catch(() => {});
 }
 
 function switchArenaScreen(screenId) {
@@ -513,12 +551,9 @@ function initArena() {
   setupEventListeners();
   initStageCharacterDex();
 
-  // Ensure background video autoplays cleanly
-  const bgVideo = document.getElementById('landing-bg-video');
-  if (bgVideo) {
-    bgVideo.muted = true;
-    bgVideo.play().catch(() => {});
-  }
+  document.addEventListener('visibilitychange', updateStageBackgroundVideo);
+  matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', updateStageBackgroundVideo);
+  updateStageBackgroundVideo();
 
   // Load sound setting
   const soundBtn = document.getElementById('sound-toggle-btn');
@@ -1029,6 +1064,50 @@ function setupAvatarPicker() {
   }
 }
 
+let pendingKickTarget = null;
+let roomToastTimer = null;
+
+function showRoomToast(message, variant = 'info', durationMs = 4500) {
+  const banner = document.getElementById('room-toast-banner');
+  const textEl = document.getElementById('room-toast-text');
+  if (!banner || !textEl) return;
+  textEl.textContent = message;
+  banner.classList.remove('is-error', 'is-success');
+  if (variant === 'error') banner.classList.add('is-error');
+  if (variant === 'success') banner.classList.add('is-success');
+  banner.style.display = 'flex';
+  if (roomToastTimer) clearTimeout(roomToastTimer);
+  roomToastTimer = setTimeout(() => {
+    banner.style.display = 'none';
+  }, durationMs);
+}
+
+function openKickConfirmModal(sessionId, playerName) {
+  if (!gameState.isHost || sessionId === gameState.sessionId) return;
+  pendingKickTarget = { sessionId, playerName };
+  const nameEl = document.getElementById('kick-confirm-player-name');
+  if (nameEl) nameEl.textContent = playerName;
+  const modal = document.getElementById('kick-confirm-modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeKickConfirmModal() {
+  pendingKickTarget = null;
+  const modal = document.getElementById('kick-confirm-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function openLeaveRoomModal() {
+  const modal = document.getElementById('leave-room-modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeLeaveRoomModal() {
+  const modal = document.getElementById('leave-room-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+
 // Attach User Interactions
 function setupEventListeners() {
   const nameInput = document.getElementById('player-name-input');
@@ -1260,9 +1339,8 @@ function setupEventListeners() {
       data: {
         name: gameState.myName,
         avatar: gameState.myAvatar,
-        session_id: gameState.sessionId,
-        starting_purse: cfg.starting_purse || 500,
-        min_bid: 10,
+        starting_purse: cfg.starting_purse || 100,
+        min_bid: 1,
         anime_mode: cfg.anime_mode || selectedAnimeMode || 'all',
         selected_anime: cfg.selected_anime || Array.from(selectedAnimeFranchises),
         forms_mode: cfg.forms_mode || 'SINGLE_BASE',
@@ -1284,8 +1362,7 @@ function setupEventListeners() {
       data: {
         room_code: cleanCode,
         name: gameState.myName,
-        avatar: gameState.myAvatar,
-        session_id: gameState.sessionId
+        avatar: gameState.myAvatar
       }
     }));
   };
@@ -1480,6 +1557,10 @@ function setupEventListeners() {
     });
   });
 
+  document.getElementById('room-toast-close')?.addEventListener('click', () => {
+    document.getElementById('room-toast-banner').style.display = 'none';
+  });
+
   const leaveCancelBtn = document.getElementById('btn-leave-cancel');
   const leaveConfirmBtn = document.getElementById('btn-leave-confirm');
   if (leaveCancelBtn) {
@@ -1498,7 +1579,7 @@ function setupEventListeners() {
       gameState.isHost = false;
       gameState.isWithdrawn = false;
       gameState.roomState = null;
-      sessionStorage.removeItem('pkmn_auction_room_code');
+      clearRoomSession();
       switchArenaScreen('arena-setup');
     });
   }
@@ -1621,20 +1702,14 @@ function appendChatMessage(msg) {
 
 // Bidding Action
 function placeBid(amount) {
-  if (!gameState.ws) return;
-      closeKickConfirmModal();
-    });
+  const room = gameState.roomState;
+  if (!room || !sendAction('place_bid', {
+    amount,
+    match_id: room.match_id,
+    round_id: room.auction_character_count
+  })) {
+    showBiddingError('Waiting for the server connection.');
   }
-
-  const toastCloseBtn = document.getElementById('room-toast-close');
-  if (toastCloseBtn) {
-    toastCloseBtn.addEventListener('click', () => {
-      const banner = document.getElementById('room-toast-banner');
-      if (banner) banner.style.display = 'none';
-  gameState.ws.send(JSON.stringify({
-    action: 'place_bid',
-    data: { amount }
-  }));
 }
 
 function showBiddingError(msg) {
@@ -1651,7 +1726,7 @@ function showBiddingError(msg) {
 function updateLobbyUI(roomState) {
   gameState.roomState = roomState;
   document.getElementById('lobby-code-display').textContent = roomState.room_code;
-  document.getElementById('lobby-purse-display').textContent = `₹${roomState.starting_purse.toLocaleString()}`;
+  document.getElementById('lobby-purse-display').textContent = `$${roomState.starting_purse.toLocaleString()}`;
   document.getElementById('lobby-player-count').textContent = roomState.players.length;
 
   const list = document.getElementById('lobby-players-list');
@@ -1672,7 +1747,7 @@ function updateLobbyUI(roomState) {
   const startBtn = document.getElementById('start-game-btn');
   if (gameState.isHost) {
     startBtn.style.display = 'inline-flex';
-    startBtn.disabled = roomState.players.length < 2;
+    startBtn.disabled = roomState.players.filter(p => p.is_connected).length < 2;
     startBtn.title = roomState.players.length < 2 ? 'Need at least 2 players to start' : 'Start the auction';
   } else {
     startBtn.style.display = 'none';
@@ -1690,12 +1765,20 @@ function updateLobbyUI(roomState) {
           <span>${escapeHtml(p.name)}</span> ${isMe ? '<span class="you-badge">(You)</span>' : ''}
           ${p.is_host ? '<span class="host-badge">👑 HOST</span>' : ''}
         </div>
-        <div class="player-purse">Purse: ₹${p.purse.toLocaleString()}</div>
+        <div class="player-purse">Purse: $${p.purse.toLocaleString()}</div>
       </div>
       <div class="ready-badge ${p.is_ready ? 'ready' : 'not-ready'}">
-        ${p.is_ready ? 'READY' : 'WAITING'}
+        ${!p.is_connected ? 'RECONNECTING' : p.is_ready ? 'READY' : 'WAITING'}
       </div>
     `;
+    if (gameState.isHost && !isMe) {
+      const kick = document.createElement('button');
+      kick.type = 'button';
+      kick.className = 'btn-kick-player';
+      kick.textContent = 'Kick Player';
+      kick.addEventListener('click', () => openKickConfirmModal(p.session_id, p.name));
+      card.appendChild(kick);
+    }
     list.appendChild(card);
   });
 
@@ -1741,7 +1824,7 @@ function updateStageUI(roomState) {
       barWrap.innerHTML = renderAvatarBadgeHtml(me.avatar, 'avatar-tiny-badge', me.name);
     }
     document.getElementById('my-bar-name').textContent = me.name;
-    document.getElementById('my-bar-purse').textContent = `₹${me.purse.toLocaleString()}`;
+    document.getElementById('my-bar-purse').textContent = `$${me.purse.toLocaleString()}`;
     document.getElementById('my-team-count-display').textContent = `${me.team_count}/6`;
 
     // Team dots
@@ -1752,49 +1835,6 @@ function updateStageUI(roomState) {
 
     // Render my team roster (ONLY artwork, name, and types - NO STATS/TIER!)
     renderMyRoster(me.team);
-let pendingKickTarget = null;
-let roomToastTimer = null;
-
-function showRoomToast(message, variant = 'info', durationMs = 4500) {
-  const banner = document.getElementById('room-toast-banner');
-  const textEl = document.getElementById('room-toast-text');
-  if (!banner || !textEl) return;
-  textEl.textContent = message;
-  banner.classList.remove('is-error', 'is-success');
-  if (variant === 'error') banner.classList.add('is-error');
-  if (variant === 'success') banner.classList.add('is-success');
-  banner.style.display = 'flex';
-  if (roomToastTimer) clearTimeout(roomToastTimer);
-  roomToastTimer = setTimeout(() => {
-    banner.style.display = 'none';
-  }, durationMs);
-}
-
-function openKickConfirmModal(sessionId, playerName) {
-  if (!gameState.isHost || sessionId === gameState.sessionId) return;
-  pendingKickTarget = { sessionId, playerName };
-  const nameEl = document.getElementById('kick-confirm-player-name');
-  if (nameEl) nameEl.textContent = playerName;
-  const modal = document.getElementById('kick-confirm-modal');
-  if (modal) modal.style.display = 'flex';
-}
-
-function closeKickConfirmModal() {
-  pendingKickTarget = null;
-  const modal = document.getElementById('kick-confirm-modal');
-  if (modal) modal.style.display = 'none';
-}
-
-function openLeaveRoomModal() {
-  const modal = document.getElementById('leave-room-modal');
-  if (modal) modal.style.display = 'flex';
-}
-
-function closeLeaveRoomModal() {
-  const modal = document.getElementById('leave-room-modal');
-  if (modal) modal.style.display = 'none';
-}
-
     updateReserveBudgetNote(me);
     updateBidButtonStates(me, roomState);
   }
@@ -1817,11 +1857,11 @@ function renderMyRoster(team) {
       const animeName = p.anime_name || 'Pokémon';
       const formText = p.current_form && p.current_form !== 'Base' ? `(${p.current_form})` : '';
       slot.innerHTML = `
-        <img src="${p.image}" alt="${escapeHtml(p.name)}" class="roster-slot-img" onerror="this.onerror=null; this.src='/api/avatar/' + (p.id || p.name.toLowerCase().replace(/\\s+/g, '_'));">
+        <img src="${escapeHtml(p.image || '/api/avatar/default')}" alt="${escapeHtml(p.name)}" class="roster-slot-img" loading="lazy" onerror="this.onerror=null; this.src='/api/avatar/${encodeURIComponent(p.id)}';">
         <div class="roster-slot-info">
           <div class="roster-slot-name">${escapeHtml(p.name)}</div>
           <div class="roster-slot-meta">
-            <span>${escapeHtml(animeName)} ${escapeHtml(formText)}</span>
+            <span>${escapeHtml(animeName)} ${escapeHtml(formText)}${p.auction_cost ? ' · $' + p.auction_cost : ''}</span>
           </div>
         </div>
         <span class="slot-num">#${i + 1}</span>
@@ -1843,15 +1883,7 @@ function renderOpponents(players) {
   if (countBadge) countBadge.textContent = `(${players.length})`;
   container.innerHTML = '';
 
-      ${gameState.isHost && !isMe ? `<button type="button" class="btn-kick-player" data-session-id="${escapeHtml(p.session_id)}" data-player-name="${escapeHtml(p.name)}">Kick Player</button>` : ''}
   players.forEach(p => {
-    const kickBtn = card.querySelector('.btn-kick-player');
-    if (kickBtn) {
-      kickBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        openKickConfirmModal(p.session_id, p.name);
-      });
-    }
     const isMe = p.session_id === gameState.sessionId;
     const isLeader = p.session_id === (gameState.roomState ? gameState.roomState.highest_bidder_id : null);
     const crownHtml = p.is_host
@@ -1875,13 +1907,15 @@ function renderOpponents(players) {
           ${p.is_team_full ? '<span class="full-badge">FULL</span>' : ''}
         </div>
         <div class="opponent-stats">
-          <span>Purse: ₹${p.purse.toLocaleString()}</span>
+          <span>Purse: $${p.purse.toLocaleString()}</span>
           <span class="stat-sep">|</span>
           <span>Team: ${p.team_count}/6</span>
         </div>
       </div>
       ${crownHtml}
+      ${gameState.isHost && !isMe ? '<button type="button" class="btn-kick-player btn-kick-player--sm">Kick Player</button>' : ''}
     `;
+    card.querySelector('.btn-kick-player')?.addEventListener('click', () => openKickConfirmModal(p.session_id, p.name));
     container.appendChild(card);
   });
 }
@@ -1958,10 +1992,10 @@ function updateBidStatus(amount, bidderId, bidderName, bidderAvatar) {
   const amountEl = document.getElementById('current-bid-amount');
   const bidderEl = document.getElementById('current-bidder-name');
   amountEl.textContent = amount > 0 ? amount.toLocaleString() : '0';
-  const minBid = gameState.roomState ? gameState.roomState.min_bid : 10;
+  const minBid = gameState.roomState ? gameState.roomState.min_bid : 1;
 
   if (!bidderId) {
-    bidderEl.textContent = `No Bids Yet (Opening: ₹${minBid})`;
+    bidderEl.textContent = `No Bids Yet (Opening: $${minBid})`;
     bidderEl.style.color = '#94a3b8';
   } else {
     const isMe = bidderId === gameState.sessionId;
@@ -1983,71 +2017,28 @@ function updateBidStatus(amount, bidderId, bidderName, bidderAvatar) {
 
 // Dynamic Quick Bid Buttons & Next Valid Bid Display
 function updateDynamicQuickBids() {
-  const current = gameState.roomState ? (gameState.roomState.current_bid || 0) : 0;
-  const minBid = gameState.roomState ? (gameState.roomState.min_bid || 10) : 10;
-      ${gameState.isHost && !isMe ? `<button type="button" class="btn-kick-player btn-kick-player--sm" data-session-id="${escapeHtml(p.session_id)}" data-player-name="${escapeHtml(p.name)}">Kick Player</button>` : ''}
-  const nextValid = current === 0 ? minBid : current + 1;
-
-    const kickBtn = card.querySelector('.btn-kick-player');
-    if (kickBtn) {
-      kickBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        openKickConfirmModal(p.session_id, p.name);
-      });
-    }
-  const nextValidDisplay = document.getElementById('next-valid-bid-display');
-  if (nextValidDisplay) {
-    nextValidDisplay.textContent = `₹${nextValid.toLocaleString()}`;
-  }
-
-  const minBtn = document.getElementById('btn-quick-min');
-  const p5Btn = document.getElementById('btn-quick-p5');
-  const p10Btn = document.getElementById('btn-quick-p10');
-  const p25Btn = document.getElementById('btn-quick-p25');
-  const p50Btn = document.getElementById('btn-quick-p50');
-
-  if (minBtn) {
-    minBtn.textContent = `MIN (₹${nextValid.toLocaleString()})`;
-    minBtn.dataset.amount = nextValid;
-  }
-  if (p5Btn) {
-    const v = current === 0 ? minBid + 5 : current + 5;
-    p5Btn.textContent = `+₹5 (₹${v.toLocaleString()})`;
-    p5Btn.dataset.amount = v;
-  }
-  if (p10Btn) {
-    const v = current === 0 ? minBid + 10 : current + 10;
-    p10Btn.textContent = `+₹10 (₹${v.toLocaleString()})`;
-    p10Btn.dataset.amount = v;
-  }
-  if (p25Btn) {
-    const v = current === 0 ? minBid + 25 : current + 25;
-    p25Btn.textContent = `+₹25 (₹${v.toLocaleString()})`;
-    p25Btn.dataset.amount = v;
-  }
-  if (p50Btn) {
-    const v = current === 0 ? minBid + 50 : current + 50;
-    p50Btn.textContent = `+₹50 (₹${v.toLocaleString()})`;
-    p50Btn.dataset.amount = v;
-  }
-
-  const customInput = document.getElementById('custom-bid-input');
-  if (customInput && !customInput.disabled) {
-    customInput.min = nextValid;
-    customInput.placeholder = `Enter ₹${nextValid.toLocaleString()} or higher`;
-  }
+  const current = gameState.roomState?.current_bid || 0;
+  const minBid = gameState.roomState?.min_bid || 1;
+  const next = current === 0 ? minBid : current + 1;
+  document.getElementById('next-valid-bid-display').textContent = '$' + next;
+  document.querySelectorAll('.btn-quick-bid').forEach(button => {
+    const increment = Number(button.dataset.inc);
+    const amount = increment ? (current || minBid) + increment : next;
+    button.textContent = increment ? '+$' + increment + ' ($' + amount + ')' : 'MIN ($' + amount + ')';
+    button.dataset.amount = amount;
+  });
 }
 
 // Reserve Budget Note
 function updateReserveBudgetNote(me) {
   if (!me) return;
   const note = document.getElementById('reserve-budget-note');
-  const minBid = gameState.roomState ? (gameState.roomState.min_bid || 10) : 10;
+  const minBid = gameState.roomState ? (gameState.roomState.min_bid || 1) : 1;
   if (me.team_count >= 6) {
     note.textContent = 'Team full (6/6). Maximum capacity reached.';
     note.style.color = '#94a3b8';
   } else {
-    note.textContent = `Minimum bid is ₹${minBid} • Bids are final • Purse: ₹${me.purse.toLocaleString()} (${me.team_count}/6)`;
+    note.textContent = `Minimum bid is $${minBid} • Bids are final • Purse: $${me.purse.toLocaleString()} (${me.team_count}/6)`;
     note.style.color = '#cbd5e1';
   }
 }
@@ -2058,9 +2049,9 @@ function updateBidButtonStates(me, roomState) {
   const isFull = me.team_count >= 6;
   const isWithdrawn = me.is_withdrawn || gameState.isWithdrawn;
   const hasSkipped = me.has_skipped || (roomState.skipped_player_ids && roomState.skipped_player_ids.includes(gameState.sessionId));
-  const minBid = roomState.min_bid || 10;
+  const minBid = roomState.min_bid || 1;
   const minRequired = roomState.current_bid === 0 ? minBid : roomState.current_bid + 1;
-  const maxAllowed = (isFull || isWithdrawn || hasSkipped) ? 0 : me.purse;
+  const maxAllowed = (isFull || isWithdrawn || hasSkipped) ? 0 : Math.max(0, me.purse - (5 - me.team_count) * minBid);
 
   const quickBtns = document.querySelectorAll('.btn-quick-bid');
   const submitBtn = document.getElementById('submit-bid-btn');
@@ -2068,13 +2059,16 @@ function updateBidButtonStates(me, roomState) {
   const skipBtn = document.getElementById('btn-skip-character');
   const skipBadge = document.getElementById('skip-status-badge');
 
-  const disabled = isLeader || isFull || isWithdrawn || hasSkipped || minRequired > maxAllowed;
+  const disabled = roomState.status !== "AUCTION" || roomState.lot_settled || isLeader || isFull || isWithdrawn || hasSkipped || minRequired > maxAllowed;
 
   quickBtns.forEach(btn => {
-    btn.disabled = disabled;
+    btn.disabled = disabled || Number(btn.dataset.amount) > maxAllowed;
   });
   if (submitBtn) submitBtn.disabled = disabled;
-  if (customInput) customInput.disabled = disabled;
+  if (customInput) {
+    customInput.disabled = disabled;
+    customInput.max = maxAllowed;
+  }
 
   if (skipBtn) {
     skipBtn.disabled = isWithdrawn || hasSkipped || roomState.status !== 'AUCTION';
@@ -2086,7 +2080,7 @@ function updateBidButtonStates(me, roomState) {
   // Update min and placeholder without overwriting the player's entered bid amount
   if (!disabled && customInput) {
     customInput.min = minRequired;
-    customInput.placeholder = `Min ₹${minRequired}`;
+    customInput.placeholder = `Min $${minRequired}`;
   }
 
   if (submitBtn) {
@@ -2112,8 +2106,8 @@ function showShowcaseBanner(title, subtitle) {
   banner.className = 'showcase-overlay';
   banner.innerHTML = `
     <div class="showcase-content">
-      <h2>${title}</h2>
-      <p>${subtitle}</p>
+      <h2>${escapeHtml(title)}</h2>
+      <p>${escapeHtml(subtitle)}</p>
     </div>
   `;
   document.body.appendChild(banner);
@@ -2151,12 +2145,20 @@ function addStageLog(htmlText, type) {
 }
 
 // Render Dynamic Category-Based MVP Showcase Panel
-function renderMvpPanel(leaderboard) {
+function renderMvpPanel(leaderboard, battleResults) {
   if (!Array.isArray(leaderboard) || leaderboard.length === 0) return;
-  if (typeof window.resolveMvpCharacter !== 'function') return;
-
   const winner = leaderboard[0];
-  const mvp = window.resolveMvpCharacter(gameState.roomState, leaderboard);
+  const combatMvp = battleResults?.combat_mvp;
+  const mvp = combatMvp ? {
+    character_name: combatMvp.name,
+    franchise: [combatMvp.franchise, `${combatMvp.knockouts} KO · ${combatMvp.damage} damage`].filter(Boolean).join(' · '),
+    image_url: combatMvp.image,
+    fallback_image_url: '/api/avatar/' + encodeURIComponent(combatMvp.id)
+  } : { character_name: 'No combat MVP', fallback_image_url: '/api/avatar/default' };
+  const bestValue = battleResults?.best_value;
+  document.getElementById('best-value-purchase').textContent = bestValue
+    ? `Best draft value · ${bestValue.name} · $${bestValue.cost} · ${bestValue.damage} damage`
+    : '';
 
   const trainerEl = document.getElementById('mvp-trainer-name');
   const powerEl = document.getElementById('mvp-team-power');
@@ -2174,7 +2176,7 @@ function renderMvpPanel(leaderboard) {
   if (sizeEl) sizeEl.textContent = `${teamCount}/6`;
   if (bstEl) bstEl.textContent = Number(winner.total_bst || 0).toLocaleString();
   if (hpEl) hpEl.textContent = Number(winner.total_hp || 0).toLocaleString();
-  if (purseEl) purseEl.textContent = `₹${Number(winner.remaining_purse || 0).toLocaleString()}`;
+  if (purseEl) purseEl.textContent = `$${Number(winner.remaining_purse || 0).toLocaleString()}`;
 
   if (charNameEl) charNameEl.textContent = mvp.character_name || 'Champion';
   if (franchiseEl) franchiseEl.textContent = mvp.franchise || '';
@@ -2192,7 +2194,7 @@ function renderMvpPanel(leaderboard) {
 
 // Render Final Leaderboard (REVEAL ALL STATS DRAMATICALLY!)
 function renderLeaderboard(leaderboard, battleResults = null) {
-  renderMvpPanel(leaderboard);
+  renderMvpPanel(leaderboard, battleResults);
 
   // 0. Champion Banner from Battle Results
   const champBanner = document.getElementById('battle-champion-banner');
@@ -2232,7 +2234,7 @@ function renderLeaderboard(leaderboard, battleResults = null) {
         <span>HP: ${p.total_hp || 0}</span>
       </div>
       <div style="font-size:0.8rem; color:#94a3b8; margin-top:0.3rem;">
-        Purse: ₹${p.remaining_purse.toLocaleString()}
+        Purse: $${p.remaining_purse.toLocaleString()}
       </div>
     `;
     podium.appendChild(pod);
@@ -2265,7 +2267,7 @@ function renderLeaderboard(leaderboard, battleResults = null) {
       <td><strong style="color:#f59e0b;">${ptsText}</strong></td>
       <td><span style="color:#10b981; font-weight:600;">${teamCount}/6</span></td>
       <td><strong style="color:#38bdf8; font-size:1.05rem;">${p.team_power.toFixed(1)}</strong></td>
-      <td>₹${p.remaining_purse.toLocaleString()}</td>
+      <td>$${p.remaining_purse.toLocaleString()}</td>
       <td>
         <button class="btn btn-outline btn-sm inspect-team-btn" data-session="${p.session_id}">
           🔍 Inspect Team
@@ -2291,7 +2293,7 @@ function renderLeaderboard(leaderboard, battleResults = null) {
               Match ${idx + 1}: ${escapeHtml(m.player_a_name)} vs ${escapeHtml(m.player_b_name)}
             </div>
             <div>Winner: <strong style="color:#10b981;">${escapeHtml(winnerName)}</strong></div>
-            <div style="color:#94a3b8; font-size:0.8rem;">Turns: ${m.turns_played} &bull; ${escapeHtml(m.reason)}</div>
+            <div style="color:#94a3b8; font-size:0.8rem;">Turns: ${m.turns_played} &bull; ${escapeHtml(m.explanation || m.reason)}</div>
           </div>
         `;
       }).join('');
@@ -2376,7 +2378,7 @@ function inspectPlayerTeam(player) {
       card.innerHTML = `
         <span class="card-tier-badge ${tierClass}">${p.power_tier || p.tier || 'A'}</span>
         <div style="font-size:0.7rem; color:#f59e0b; font-weight:700; text-transform:uppercase; margin-bottom:0.25rem;">${escapeHtml(animeName)}</div>
-        <img src="${p.image}" alt="${p.name}" class="showcase-img" onerror="this.onerror=null; this.src='/api/avatar/' + (p.id || p.name.toLowerCase().replace(/\\s+/g, '_'));">
+        <img src="${escapeHtml(p.image || '/api/avatar/default')}" alt="${escapeHtml(p.name)}" class="showcase-img" loading="lazy" onerror="this.onerror=null; this.src='/api/avatar/${encodeURIComponent(p.id)}';">
         <h4 class="showcase-name">${escapeHtml(p.name)}</h4>
         <div style="margin-bottom:0.35rem;">${formBadge}</div>
         <div class="showcase-meta" style="margin-bottom:0.4rem;">
@@ -3626,9 +3628,8 @@ const dexSideState = {
 function initStageCharacterDex() {
   const searchInp = document.getElementById('dex-side-search');
   const franchiseSel = document.getElementById('dex-side-franchise');
-  const tierSel = document.getElementById('dex-side-tier');
   const loadMoreBtn = document.getElementById('dex-side-load-more');
-  if (!searchInp || !franchiseSel || !tierSel) return;
+  if (!searchInp || !franchiseSel) return;
 
   const reload = () => {
     dexSideState.offset = 0;
@@ -3640,7 +3641,6 @@ function initStageCharacterDex() {
     dexSideState.timer = setTimeout(reload, 220);
   });
   franchiseSel.addEventListener('change', reload);
-  tierSel.addEventListener('change', reload);
   if (loadMoreBtn) {
     loadMoreBtn.addEventListener('click', () => {
       dexSideState.offset += dexSideState.limit;
@@ -3659,19 +3659,15 @@ async function fetchStageCharacterDex(append = false) {
 
   const q = (document.getElementById('dex-side-search')?.value || '').trim();
   const animeId = document.getElementById('dex-side-franchise')?.value || '';
-  const tier = document.getElementById('dex-side-tier')?.value || '';
 
   const params = new URLSearchParams({
-    sort: 'power_desc',
-    limit: String(dexSideState.limit),
     offset: String(dexSideState.offset)
   });
   if (q) params.set('q', q);
   if (animeId) params.set('anime_id', animeId);
-  if (tier) params.set('power_tier', tier);
 
   try {
-    const res = await fetch(`/api/characters?${params.toString()}`);
+    const res = await fetch(`/api/auction-catalog?${params.toString()}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const chars = Array.isArray(data.characters) ? data.characters : [];
@@ -3684,7 +3680,6 @@ async function fetchStageCharacterDex(append = false) {
       listEl.innerHTML = '<div class="dex-side-empty">No characters match your filter.</div>';
     } else {
       chars.forEach(c => {
-        const tierKey = (c.power_tier || 'B').replace('+', '-plus');
         const fallback = `/api/avatar/${encodeURIComponent(c.id || String(c.name || 'char').toLowerCase().replace(/\s+/g, '_'))}`;
         const card = document.createElement('div');
         card.className = 'dex-side-card';
@@ -3694,9 +3689,6 @@ async function fetchStageCharacterDex(append = false) {
           <div class="dex-side-meta">
             <div class="dex-side-name" title="${escapeHtml(c.name)}">${escapeHtml(c.name)}</div>
             <div class="dex-side-sub">${escapeHtml(c.anime_name || 'Anime')}</div>
-          </div>
-          <div class="dex-side-stats">
-            <span class="dex-side-tier tier-${tierKey}">${escapeHtml(c.power_tier || 'B')}</span>
           </div>
         `;
         listEl.appendChild(card);

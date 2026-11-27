@@ -13,6 +13,7 @@ import json
 import os
 import sqlite3
 import copy
+from collections import Counter
 from typing import Dict, List, Optional, Any
 
 from src.anime_models import (
@@ -20,6 +21,7 @@ from src.anime_models import (
     calculate_overall_power, get_power_tier, sanitize_for_auction
 )
 from src.auto_anime_importer import AnimeImportManager
+from src.canonical_roster import load_mcu_roster, normalized_name, pokemon_species
 
 class AnimeDatabaseManager:
     def __init__(self, json_path: str, db_path: str):
@@ -50,33 +52,47 @@ class AnimeDatabaseManager:
         else:
             self.characters = {c["id"]: c for c in raw_characters}
 
-        # Load Marvel Universe combat-eligible characters (kept separate from anime_database.json)
-        marvel_path = os.path.join(os.path.dirname(self.json_path), "marvel_combat_database.json")
-        if os.path.exists(marvel_path):
-            with open(marvel_path, "r", encoding="utf-8") as mf:
-                mdata = json.load(mf)
-            mchars = mdata.get("characters", {})
-            if isinstance(mchars, dict) and mchars:
-                self.franchises["marvel"] = {
-                    "id": "marvel",
-                    "name": "Marvel Comics",
-                    "japanese_name": "マーベル・コミック",
-                    "genre": ["Superhero", "Action", "Sci-Fi", "Fantasy"],
-                    "energy_system": "Cosmic / Mystic / Mutant / Tech",
-                    "logo_color": "#dc2626",
-                    "description": "Marvel Comics & MCU characters (Data provided by Marvel).",
-                    "is_enabled": True,
-                    "is_active": True,
-                    "character_count": len(mchars),
-                }
-                for cid, mc in mchars.items():
-                    entry = copy.deepcopy(mc)
-                    entry["id"] = cid
-                    entry["universe"] = "marvel"
-                    entry["anime_id"] = "marvel"
-                    entry["anime_name"] = "Marvel Comics"
-                    entry["is_active"] = bool(mc.get("combat_eligible", False))
-                    self.characters[cid] = entry
+        folder = os.path.dirname(self.json_path)
+        combat_path = os.path.join(folder, "anime_combat_database.json")
+        combat = {}
+        if os.path.isfile(combat_path):
+            with open(combat_path, encoding="utf-8") as stream:
+                combat = json.load(stream)["characters"]
+        overrides = {}
+        overrides_path = os.path.join(folder, "anime_combat_overrides.json")
+        if os.path.isfile(overrides_path):
+            with open(overrides_path, encoding="utf-8") as stream:
+                overrides = json.load(stream)
+        self.curated_anime_ids = {
+            cid for cid, record in combat.items()
+            if record.get("verification_status") == "verified_curated" and record.get("attack_ids")
+        }
+        self.curated_anime_ids.update(cid for cid, profile in overrides.items() if profile.get("attacks"))
+        pokemon_file = os.path.join(folder, "pokemon_database.json")
+        pokemon_metadata = {}
+        if os.path.isfile(pokemon_file):
+            with open(pokemon_file, encoding="utf-8") as stream:
+                pokemon_metadata = {pokemon["id"]: pokemon for pokemon in json.load(stream)}
+        for character in self.characters.values():
+            if character.get("anime_id") == "pokemon":
+                metadata = pokemon_metadata.get(character.get("pokemon_id"), {})
+                for key in ("generation", "is_default", "is_legendary", "is_mythical"):
+                    if key in metadata:
+                        character[key] = metadata[key]
+        self.characters = {
+            cid: char for cid, char in self.characters.items() if char.get("anime_id") != "marvel"
+        }
+        mcu_roster = load_mcu_roster(folder)
+        if mcu_roster:
+            self.franchises["marvel"] = {
+                "id": "marvel",
+                "name": "Marvel Cinematic Universe",
+                "logo_color": "#dc2626",
+                "is_enabled": True,
+                "is_active": self.franchises.get("marvel", {}).get("is_active", True),
+                "character_count": len(mcu_roster),
+            }
+            self.characters.update(mcu_roster)
 
         print(f"[AnimeDB] Loaded {len(self.franchises)} franchises and {len(self.characters)} characters.")
 
@@ -196,14 +212,18 @@ class AnimeDatabaseManager:
 
     def get_all_franchises(self) -> List[dict]:
         """Returns all franchises with character counts."""
-        result = []
-        for fid, f in self.franchises.items():
-            f_copy = copy.deepcopy(f)
-            char_count = sum(1 for c in self.characters.values() if c.get("anime_id") == fid)
-            active_count = sum(1 for c in self.characters.values() if c.get("anime_id") == fid and c.get("is_active", True))
-            f_copy["character_count"] = char_count
-            f_copy["active_character_count"] = active_count
-            result.append(f_copy)
+        counts = Counter(c.get("anime_id") for c in self.characters.values())
+        active = Counter(c.get("anime_id") for c in self.characters.values() if c.get("is_active", True))
+        draft = Counter(c["anime_id"] for c in self.get_characters_for_mode())
+        result = [
+            {
+                **franchise,
+                "character_count": counts[fid],
+                "active_character_count": active[fid],
+                "auction_character_count": draft[fid],
+            }
+            for fid, franchise in self.franchises.items()
+        ]
         return sorted(result, key=lambda x: x["name"])
 
     def get_character_by_id(self, character_id: str) -> Optional[dict]:
@@ -231,6 +251,8 @@ class AnimeDatabaseManager:
         - 'SEPARATE_ENTRIES': Alternate forms become separate auctionable entities
         """
         eligible: List[dict] = []
+        identities = set()
+        ineligible_franchises = {"haikyuu", "blue_lock", "death_note"}
 
         # 1. Filter base characters
         for char in self.characters.values():
@@ -242,9 +264,31 @@ class AnimeDatabaseManager:
             if not franchise.get("is_active", True) and mode != "custom":
                 continue
 
+            if anime_id == "pokemon":
+                if not char.get("is_default", True):
+                    continue
+                identity = ("pokemon", pokemon_species(char))
+            elif anime_id == "marvel":
+                identity = ("marvel", char["canonical_id"])
+            elif char["id"] in self.curated_anime_ids and anime_id not in ineligible_franchises:
+                names = [char["name"], char.get("native_name") or "", *(char.get("alt_names") or [])]
+                aliases = {(anime_id, normalized_name(name)) for name in names if normalized_name(name)}
+                if aliases & identities:
+                    continue
+                identities.update(aliases - {(anime_id, normalized_name(char["name"]))})
+                identity = (anime_id, normalized_name(char["name"]))
+            else:
+                continue
+            if identity in identities:
+                continue
+            identities.add(identity)
+
             match mode:
-                case "pokemon":
-                    if anime_id == "pokemon":
+                case "pokemon" | "pokemon_standard" | "pokemon_legendary":
+                    legendary = char.get("is_legendary") or char.get("is_mythical")
+                    if anime_id == "pokemon" and (
+                        mode == "pokemon" or bool(legendary) == (mode == "pokemon_legendary")
+                    ):
                         eligible.append(char)
                 case "anime_only" | "anime":
                     if anime_id not in ("pokemon", "marvel"):
@@ -272,37 +316,6 @@ class AnimeDatabaseManager:
                         eligible.append(char)
                 case "all" | _:
                     eligible.append(char)
-
-        # 2. Expand forms if forms_mode == 'SEPARATE_ENTRIES'
-        if forms_mode == "SEPARATE_ENTRIES":
-            expanded: List[dict] = []
-            for char in eligible:
-                # Add base entry
-                expanded.append(char)
-                # Add alternate form entries
-                for form in (char.get("forms") or []):
-                    if not isinstance(form, dict):
-                        continue
-                    form_name = form.get("form_name") or form.get("name") or "Alternate Form"
-                    form_id = form.get("form_id") or f"{char['id']}_{form_name.lower().replace(' ', '_').replace('-', '_')}"
-                    form_stats = form.get("stats") or char.get("stats", {})
-                    form_rating = form.get("power_rating") or calculate_overall_power(form_stats)
-                    form_tier = form.get("power_tier") or get_power_tier(form_rating)
-                    
-                    form_entry = copy.deepcopy(char)
-                    form_entry["id"] = form_id
-                    form_entry["base_character_id"] = char["id"]
-                    form_entry["name"] = form_name if "(" in form_name else f"{char['name']} ({form_name})"
-                    form_entry["current_form"] = form_name
-                    form_entry["image"] = form.get("image") or char.get("image")
-                    form_entry["stats"] = form_stats
-                    form_entry["power_rating"] = form_rating
-                    form_entry["power_tier"] = form_tier
-                    form_entry["abilities"] = form.get("abilities", char.get("abilities", []))
-                    form_entry["techniques"] = form.get("techniques", char.get("techniques", []))
-                    form_entry["weapons"] = form.get("weapons", char.get("weapons", []))
-                    expanded.append(form_entry)
-            return expanded
 
         return eligible
 

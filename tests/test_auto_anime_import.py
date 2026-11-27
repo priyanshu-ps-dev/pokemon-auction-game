@@ -203,7 +203,15 @@ class TestAutoAnimeImporter(unittest.TestCase):
     # TEST 13: Admin Database & Import Status Verification
     # -------------------------------------------------------------------------
     def test_13_admin_database_integration(self):
-        req = urllib.request.urlopen(f"{self.base_url}/api/admin/import/status")
+        url = f"{self.base_url}/api/admin/import/status"
+        token = os.getenv("ARENA_ADMIN_TOKEN")
+        if not token:
+            with self.assertRaises(urllib.error.HTTPError) as denied:
+                urllib.request.urlopen(url)
+            self.assertEqual(denied.exception.code, 403)
+            return
+        request = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
+        req = urllib.request.urlopen(request)
         self.assertEqual(req.status, 200)
         data = json.loads(req.read().decode("utf-8"))
         self.assertIn("total_characters", data)
@@ -221,7 +229,7 @@ class TestAutoAnimeImporter(unittest.TestCase):
             host_name="AuctionHost",
             host_avatar="red",
             session_id="host_auc_test",
-            starting_purse=500,
+            starting_purse=100,
             anime_mode="all"
         )
         selected = room_manager.select_random_character(room)

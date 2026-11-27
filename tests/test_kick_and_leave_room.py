@@ -170,21 +170,21 @@ class TestKickAndLeaveWebSocket(unittest.TestCase):
                     "action": "join_room",
                     "data": {"room_code": code, "name": "GuestBlue", "avatar": "blue", "session_id": "ws_g1"}
                 }))
-                await recv_until(ws_guest, {"room_joined"})
+                joined_guest, _ = await recv_until(ws_guest, {"room_joined"})
                 await recv_until(ws_host, {"room_state"})
 
                 await ws_other.send(json.dumps({
                     "action": "join_room",
                     "data": {"room_code": code, "name": "GuestGreen", "avatar": "green", "session_id": "ws_g2"}
                 }))
-                await recv_until(ws_other, {"room_joined"})
+                joined_other, _ = await recv_until(ws_other, {"room_joined"})
                 await recv_until(ws_host, {"room_state"})
                 await recv_until(ws_guest, {"room_state"})
 
                 # Unauthorized non-host kick attempt
                 await ws_guest.send(json.dumps({
                     "action": "kick_player",
-                    "data": {"target_session_id": "ws_g2"}
+                    "data": {"target_session_id": joined_other["data"]["session_id"]}
                 }))
                 err_msg, _ = await recv_until(ws_guest, {"error"})
                 self.assertIn("Only the room host", err_msg["data"]["message"])
@@ -192,10 +192,10 @@ class TestKickAndLeaveWebSocket(unittest.TestCase):
                 # Host kicks ws_g1
                 await ws_host.send(json.dumps({
                     "action": "kick_player",
-                    "data": {"target_session_id": "ws_g1"}
+                    "data": {"target_session_id": joined_guest["data"]["session_id"]}
                 }))
                 kick_ok, _ = await recv_until(ws_host, {"kick_success"})
-                self.assertEqual(kick_ok["data"]["target_session_id"], "ws_g1")
+                self.assertEqual(kick_ok["data"]["target_session_id"], joined_guest["data"]["session_id"])
 
                 kicked_msg, _ = await recv_until(ws_guest, {"player_kicked"})
                 self.assertEqual(kicked_msg["data"]["message"], "You have been removed from this room by the host.")
@@ -203,9 +203,9 @@ class TestKickAndLeaveWebSocket(unittest.TestCase):
                 left_notice, _ = await recv_until(ws_other, {"player_left"})
                 self.assertTrue(left_notice["data"].get("kicked"))
                 remaining_ids = [p["session_id"] for p in left_notice["data"]["room_state"]["players"]]
-                self.assertNotIn("ws_g1", remaining_ids)
-                self.assertIn("ws_h1", remaining_ids)
-                self.assertIn("ws_g2", remaining_ids)
+                self.assertNotIn(joined_guest["data"]["session_id"], remaining_ids)
+                self.assertIn(joined_h["data"]["session_id"], remaining_ids)
+                self.assertIn(joined_other["data"]["session_id"], remaining_ids)
 
                 # Kicked player cannot rejoin same room
                 await ws_guest.send(json.dumps({
@@ -241,7 +241,7 @@ class TestKickAndLeaveWebSocket(unittest.TestCase):
                     "action": "join_room",
                     "data": {"room_code": code, "name": "GuestBlue", "avatar": "blue", "session_id": "lv_g1"}
                 }))
-                await recv_until(ws_guest, {"room_joined"})
+                joined_guest, _ = await recv_until(ws_guest, {"room_joined"})
                 await recv_until(ws_host, {"room_state"})
 
                 # Host leaves room -> room_left for host, host_transferred + player_left for guest
@@ -249,7 +249,7 @@ class TestKickAndLeaveWebSocket(unittest.TestCase):
                 await recv_until(ws_host, {"room_left"})
 
                 host_xfer, _ = await recv_until(ws_guest, {"host_transferred"})
-                self.assertEqual(host_xfer["data"]["new_host_id"], "lv_g1")
+                self.assertEqual(host_xfer["data"]["new_host_id"], joined_guest["data"]["session_id"])
                 p_left, _ = await recv_until(ws_guest, {"player_left"})
                 remaining = p_left["data"]["room_state"]["players"]
                 self.assertEqual(len(remaining), 1)
@@ -327,28 +327,31 @@ class TestBattleActionMembershipGuard(unittest.TestCase):
                         "action": "join_room",
                         "data": {"room_code": code, "name": "KickedBlue", "avatar": "blue", "session_id": "ba_k1"}
                     }))
-                    await recv_until(ws_kicked, {"room_joined"})
+                    joined_kicked, _ = await recv_until(ws_kicked, {"room_joined"})
                     await recv_until(ws_host, {"room_state"})
 
                     await ws_left.send(json.dumps({
                         "action": "join_room",
                         "data": {"room_code": code, "name": "LeftGreen", "avatar": "green", "session_id": "ba_l1"}
                     }))
-                    await recv_until(ws_left, {"room_joined"})
+                    joined_left, _ = await recv_until(ws_left, {"room_joined"})
                     await recv_until(ws_host, {"room_state"})
 
+                    host_id = joined["data"]["session_id"]
+                    kicked_id = joined_kicked["data"]["session_id"]
+                    left_id = joined_left["data"]["session_id"]
                     room = srv.room_manager.rooms[code]
                     room.status = "BATTLE"
                     p1_mon = PokemonCombatant(provider.get_combat_profile("pkmn_25"))
                     p2_mon = PokemonCombatant(provider.get_combat_profile("pkmn_6"))
-                    live = LiveBattleSession("ba_h1", [p1_mon], "ba_k1", [p2_mon], control_mode="player_vs_player", match_id=room.match_id)
+                    live = LiveBattleSession(host_id, [p1_mon], kicked_id, [p2_mon], control_mode="player_vs_player", match_id=room.match_id)
                     live.turn_number = 1
                     room.active_live_battle = live
 
                     # 1. Host kicks ba_k1, then ba_k1 attempts submit_battle_action
                     await ws_host.send(json.dumps({
                         "action": "kick_player",
-                        "data": {"target_session_id": "ba_k1"}
+                        "data": {"target_session_id": kicked_id}
                     }))
                     await recv_until(ws_host, {"kick_success"})
                     await recv_until(ws_kicked, {"player_kicked"})
@@ -360,7 +363,7 @@ class TestBattleActionMembershipGuard(unittest.TestCase):
                     kicked_err, _ = await recv_until(ws_kicked, {"battle_action_error"})
                     self.assertFalse(kicked_err["data"]["success"])
                     self.assertIn("removed from this room by the host", kicked_err["data"]["message"])
-                    self.assertNotIn("ba_k1", live.pending_actions)
+                    self.assertNotIn(kicked_id, live.pending_actions)
 
                     # 2. ba_l1 voluntarily leaves, then attempts submit_battle_action
                     await ws_left.send(json.dumps({"action": "leave_room", "data": {}}))
@@ -373,7 +376,7 @@ class TestBattleActionMembershipGuard(unittest.TestCase):
                     left_err, _ = await recv_until(ws_left, {"battle_action_error"})
                     self.assertFalse(left_err["data"]["success"])
                     self.assertIn("no longer a member of this room", left_err["data"]["message"])
-                    self.assertNotIn("ba_l1", live.pending_actions)
+                    self.assertNotIn(left_id, live.pending_actions)
 
                     # 3. Valid active member (ba_h1) can still submit a battle action
                     first_move_id = p1_mon.moves[0]["id"]
@@ -383,7 +386,7 @@ class TestBattleActionMembershipGuard(unittest.TestCase):
                     }))
                     ack, _ = await recv_until(ws_host, {"battle_action_ack"})
                     self.assertTrue(ack["data"]["success"])
-                    self.assertIn("ba_h1", live.pending_actions)
+                    self.assertIn(host_id, live.pending_actions)
 
                     # Cleanup room
                     srv.room_manager.rooms.pop(code, None)

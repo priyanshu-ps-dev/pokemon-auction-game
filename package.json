@@ -1,13 +1,15 @@
 {
   "name": "pokemon-auction-game",
   "version": "1.0.0",
-  "description": "A complete Pokémon database, competitive power ranking engine, and **real-time multiplayer auction/bidding game** for up to 8 players per room.",
+  "description": "A complete Pok\u00e9mon database, competitive power ranking engine, and **real-time multiplayer auction/bidding game** for up to 8 players per room.",
   "main": "index.js",
   "directories": {
     "test": "tests"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "esbuild src/components/AuctionTicketModal.jsx --bundle --outfile=public/assets/tear-ticket-bundle.js --loader:.jsx=jsx --jsx=automatic --external:/assets/* --minify",
+    "test": "node --check public/game.js && node tests/test_mvp_selector.js",
+    "test:browser": "node tests/arena_browser.cjs"
   },
   "repository": {
     "type": "git",

@@ -11,10 +11,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Chakra+Petch:ital,wght@0,500;0,600;0,700;1,700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
 </head>
 <body class="landing-page-body">
+  <div id="connection-status" role="status" hidden></div>
   <!-- Full-Viewport 4K Animated Anime Background Video -->
   <div id="landing-video-bg" class="landing-video-bg" aria-hidden="true">
-    <video id="landing-bg-video" class="landing-bg-video" autoplay muted loop playsinline preload="auto" poster="/assets/landing-fallback.jpg">
-      <source src="/assets/landing-video.mp4" type="video/mp4">
+    <video id="landing-bg-video" class="landing-bg-video" muted loop playsinline preload="none" poster="/assets/landing-fallback.jpg">
     </video>
     <div class="landing-bg-overlay"></div>
   </div>
@@ -189,7 +189,7 @@
             </button>
             <div class="lobby-purse-text">
               <span class="label">STARTING PURSE</span>
-              <span class="value" id="lobby-purse-display">₹500</span>
+              <span class="value" id="lobby-purse-display">$100</span>
             </div>
           </div>
         </div>
@@ -290,7 +290,7 @@
                   <path d="M4 7v5c0 1.93 3.58 3.5 8 3.5s8-1.57 8-3.5V7" fill="#facc15" stroke="#ca8a04" stroke-width="1.5"/>
                   <path d="M4 12v5c0 1.93 3.58 3.5 8 3.5s8-1.57 8-3.5v-5" fill="#eab308" stroke="#a16207" stroke-width="1.5"/>
                 </svg>
-                <span class="chip-purse" id="my-bar-purse">₹500</span>
+                <span class="chip-purse" id="my-bar-purse">$100</span>
               </div>
             </div>
           </div>
@@ -393,7 +393,7 @@
                     <path d="M15 23.5V28c0 1.88 3.58 3.4 8 3.4s8-1.52 8-3.4v-4.5" fill="#eab308" stroke="#a16207" stroke-width="1.6"/>
                   </svg>
                   <div class="bid-hero-display" id="bid-hero-display">
-                    <span class="currency">₹</span>
+                    <span class="currency">$</span>
                     <span class="amount" id="current-bid-amount">0</span>
                   </div>
                 </div>
@@ -408,7 +408,7 @@
                     <path d="m9 7 8 8"/>
                     <path d="m21 11-8-8"/>
                   </svg>
-                  <span class="bidder" id="current-bidder-name">No Bids Yet (Opening: ₹10)</span>
+                  <span class="bidder" id="current-bidder-name">No Bids Yet (Opening: $1)</span>
                 </div>
 
                 <!-- Prominent Countdown Box -->
@@ -440,20 +440,20 @@
                   </svg>
                   <h3>PLACE YOUR BID</h3>
                 </div>
-                <span class="next-valid-pill">Next Valid: <strong id="next-valid-bid-display">₹10</strong></span>
+                <span class="next-valid-pill">Next Valid: <strong id="next-valid-bid-display">$1</strong></span>
               </div>
 
               <div class="quick-bid-buttons" id="dynamic-quick-bids">
-                <button class="btn btn-quick-bid is-selected" id="btn-quick-min" data-amount="10">MIN (₹10)</button>
-                <button class="btn btn-quick-bid" id="btn-quick-p5" data-inc="5">+₹5 (₹15)</button>
-                <button class="btn btn-quick-bid" id="btn-quick-p10" data-inc="10">+₹10 (₹20)</button>
-                <button class="btn btn-quick-bid" id="btn-quick-p25" data-inc="25">+₹25 (₹35)</button>
-                <button class="btn btn-quick-bid" id="btn-quick-p50" data-inc="50">+₹50 (₹60)</button>
+                <button class="btn btn-quick-bid is-selected" data-amount="1">MIN ($1)</button>
+                <button class="btn btn-quick-bid" data-inc="1">+$1</button>
+                <button class="btn btn-quick-bid" data-inc="2">+$2</button>
+                <button class="btn btn-quick-bid" data-inc="5">+$5</button>
+                <button class="btn btn-quick-bid" data-inc="10">+$10</button>
               </div>
 
               <div class="custom-bid-row">
                 <div class="input-with-label">
-                  <span class="currency-prefix">₹</span>
+                  <span class="currency-prefix">$</span>
                   <input type="number" id="custom-bid-input" class="bid-custom-input" step="1" min="1" placeholder="Enter bid">
                 </div>
                 <button id="submit-bid-btn" class="btn btn-bid-submit">
@@ -469,7 +469,7 @@
               </div>
 
               <div class="bidding-feedback" id="bidding-feedback">
-                <span id="reserve-budget-note" class="reserve-note">Minimum bid is ₹10 • Bids are final</span>
+                <span id="reserve-budget-note" class="reserve-note">Minimum bid is $1 • Bids are final</span>
               </div>
 
               <!-- Skip Character & More Options Dropdown -->
@@ -534,15 +534,7 @@
                   <select id="dex-side-franchise" class="select-input dex-side-select">
                     <option value="">All Franchises</option>
                   </select>
-                  <select id="dex-side-tier" class="select-input dex-side-select dex-side-tier-select">
-                    <option value="">All Tiers</option>
-                    <option value="S+">S+</option>
-                    <option value="S">S</option>
-                    <option value="A">A</option>
-                    <option value="B">B</option>
-                    <option value="C">C</option>
-                    <option value="D">D</option>
-                  </select>
+
                 </div>
               </div>
               <div class="dex-side-list" id="dex-side-list">
@@ -718,7 +710,7 @@
                   <span class="mvp-stat-icon">🪙</span>
                   <div>
                     <div class="mvp-stat-lbl">Purse</div>
-                    <div class="mvp-stat-val is-gold" id="mvp-purse">₹500</div>
+                    <div class="mvp-stat-val is-gold" id="mvp-purse">$100</div>
                   </div>
                 </div>
               </div>
@@ -728,6 +720,7 @@
                 <div class="mvp-character-caption">
                   <span id="mvp-character-name">Champion</span>
                   <span class="mvp-character-franchise" id="mvp-character-franchise"></span>
+                  <p id="best-value-purchase"></p>
                 </div>
               </div>
             </div>
@@ -872,7 +865,7 @@
 
         <div class="quick-toggles" id="anime-quick-franchises">
           <button class="toggle-btn active" data-franchise="">All Universes</button>
-          <button class="toggle-btn" data-franchise="marvel">Marvel Comics</button>
+          <button class="toggle-btn" data-franchise="marvel">Marvel Cinematic Universe</button>
           <button class="toggle-btn" data-franchise="dragon_ball">Dragon Ball</button>
           <button class="toggle-btn" data-franchise="naruto">Naruto</button>
           <button class="toggle-btn" data-franchise="one_piece">One Piece</button>
@@ -1547,8 +1540,6 @@
   <script src="/mvp-config.js"></script>
   <script src="/game.js"></script>
   <script src="/app.js"></script>
-</body>
-</html>
   <!-- Room Notification Toast Banner -->
   <div id="room-toast-banner" class="room-toast-banner" role="alert" aria-live="polite" style="display:none;">
     <span id="room-toast-text"></span>
@@ -1584,4 +1575,5 @@
       </div>
     </div>
   </div>
-
+</body>
+</html>

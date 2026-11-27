@@ -27,13 +27,6 @@ const IconStar = () => (
   </svg>
 );
 
-const IconSwap = () => (
-  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#ffc928" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M4 8h14l-3-3" />
-    <path d="M20 16H6l3 3" />
-  </svg>
-);
-
 const IconGlobe = () => (
   <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#38bdf8" strokeWidth="1.8" aria-hidden="true">
     <circle cx="12" cy="12" r="9.5" fill="rgba(56, 189, 248, 0.18)" />
@@ -68,8 +61,11 @@ const IconSwords = () => (
 );
 
 const AUCTION_MODES = [
-  { id: 'all', icon: <IconGlobe />, label: 'All Anime' },
+  { id: 'all', icon: <IconGlobe />, label: 'Mixed Universes' },
   { id: 'pokemon', icon: <IconBolt />, label: 'Pokémon Only' },
+  { id: 'pokemon_standard', icon: <IconBolt />, label: 'Standard Pokémon' },
+  { id: 'pokemon_legendary', icon: <IconStar />, label: 'Legendary Pokémon' },
+  { id: 'marvel', icon: <IconStar />, label: 'Marvel MCU' },
   { id: 'single', icon: <IconTarget />, label: 'Single Anime' },
   { id: 'multiple', icon: <IconSwords />, label: 'Selected Anime' },
 ];
@@ -175,11 +171,12 @@ function AuctionTicketModalApp() {
   const [franchises, setFranchises] = useState([]);
 
   // Create Room State
-  const [purse, setPurse] = useState(500);
+  const [purse, setPurse] = useState(100);
   const [animeMode, setAnimeMode] = useState('all');
   const [singleAnime, setSingleAnime] = useState('');
   const [selectedAnimeSet, setSelectedAnimeSet] = useState([]);
-  const [formsMode, setFormsMode] = useState('SINGLE_BASE');
+  const [battleControl, setBattleControl] = useState('ai_vs_ai');
+  const [tournamentFormat, setTournamentFormat] = useState('round_robin');
   const [createTorn, setCreateTorn] = useState(false);
   const [createError, setCreateError] = useState('');
 
@@ -236,8 +233,9 @@ function AuctionTicketModalApp() {
       },
       setFranchises: list => {
         if (Array.isArray(list) && list.length > 0) {
-          setFranchises(list);
-          setSingleAnime(prev => prev || list[0].id);
+          const draftFranchises = list.filter(franchise => franchise.auction_character_count > 0);
+          setFranchises(draftFranchises);
+          setSingleAnime(prev => prev || draftFranchises[0]?.id || '');
         }
       },
     };
@@ -274,10 +272,11 @@ function AuctionTicketModalApp() {
     setCreateError('');
     if (typeof window.triggerCreateRoomFromTicket === 'function') {
       window.triggerCreateRoomFromTicket({
-        starting_purse: Number(purse) || 500,
+        starting_purse: Number(purse) || 100,
         anime_mode: animeMode,
         selected_anime: selectedAnime,
-        forms_mode: formsMode,
+        battle_control_mode: battleControl,
+        tournament_format: tournamentFormat,
       });
     }
   };
@@ -391,10 +390,9 @@ function AuctionTicketModalApp() {
                     value={purse}
                     onChange={e => setPurse(Number(e.target.value))}
                   >
-                    <option value={250}>₹250 (Fast / Tactical)</option>
-                    <option value={500}>₹500 (Official Default)</option>
-                    <option value={1000}>₹1,000 (Deep Strategy)</option>
-                    <option value={2000}>₹2,000 (High Roller)</option>
+                    <option value={50}>$50</option>
+                    <option value={75}>$75</option>
+                    <option value={100}>$100 (Default)</option>
                   </select>
                 </div>
 
@@ -430,7 +428,7 @@ function AuctionTicketModalApp() {
                       >
                         {franchises.map(f => (
                           <option key={f.id} value={f.id}>
-                            {f.name} ({f.character_count || 0})
+                            {f.name} ({f.auction_character_count || 0})
                           </option>
                         ))}
                       </select>
@@ -453,19 +451,21 @@ function AuctionTicketModalApp() {
                   )}
                 </div>
 
-                {/* C. Character Forms & Transformations */}
                 <div className="ticket-field-group">
-                  <label htmlFor="ticket-forms-select" className="ticket-field-label">
-                    <IconSwap /> CHARACTER FORMS &amp; TRANSFORMATIONS
-                  </label>
-                  <select
-                    id="ticket-forms-select"
-                    className="ticket-select"
-                    value={formsMode}
-                    onChange={e => setFormsMode(e.target.value)}
-                  >
-                    <option value="SINGLE_BASE">Base Form Only (One entry per character)</option>
-                    <option value="SEPARATE_ENTRIES">Transformations as Separate Entries (SSJ, Ultra Instinct, Gear 5, etc.)</option>
+                  <label htmlFor="ticket-battle-control" className="ticket-field-label">Battle controls</label>
+                  <select id="ticket-battle-control" className="ticket-select" value={battleControl}
+                    onChange={event => setBattleControl(event.target.value)}>
+                    <option value="ai_vs_ai">Simulated</option>
+                    <option value="player_vs_ai">Player vs AI</option>
+                    <option value="player_vs_player">Player vs Player</option>
+                  </select>
+                </div>
+                <div className="ticket-field-group">
+                  <label htmlFor="ticket-tournament-format" className="ticket-field-label">Match format</label>
+                  <select id="ticket-tournament-format" className="ticket-select" value={tournamentFormat}
+                    onChange={event => setTournamentFormat(event.target.value)}>
+                    <option value="round_robin">Round robin</option>
+                    <option value="bracket">Championship bracket</option>
                   </select>
                 </div>
 

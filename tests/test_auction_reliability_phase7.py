@@ -43,7 +43,7 @@ class TestAuctionReliabilityUnitAndConcurrency(unittest.TestCase):
             host_name="Ash",
             host_avatar="red",
             session_id="sess_p1",
-            starting_purse=500,
+            starting_purse=100,
             anime_mode="all",
         )
         self.rm.join_room(self.room.room_code, "Ash", "blue", "sess_p2")  # Same display name as P1!
@@ -66,65 +66,52 @@ class TestAuctionReliabilityUnitAndConcurrency(unittest.TestCase):
 
     def test_02_state_dict_exposes_authoritative_auction_fields(self):
         """Bug 1 & 2: to_state_dict includes all fields needed for bid UI & refresh restore."""
-        self.room.current_bid = 120
+        self.room.current_bid = 24
         self.room.highest_bidder_id = "sess_p3"
         self.room.timer_seconds_left = 9
         state = self.room.to_state_dict()
         self.assertEqual(state["status"], "AUCTION")
-        self.assertEqual(state["current_bid"], 120)
+        self.assertEqual(state["current_bid"], 24)
         self.assertEqual(state["highest_bidder_id"], "sess_p3")
         self.assertEqual(state["highest_bidder_name"], "Misty")
         self.assertEqual(state["timer_seconds_left"], 9)
         self.assertIsNotNone(state["current_pokemon"])
 
-    def test_03_rejoin_mid_auction_preserves_player_state_no_duplicate(self):
-        """Bug 2: Reconnecting with existing session_id restores membership without duplicating."""
-        p2 = self.room.get_player("sess_p2")
-        p2.purse = 340
-        p2.team.append({"id": "c1", "name": "TestChar", "universe": "POKEMON", "cost": 160})
-        p2.is_connected = False
+    def test_03_join_cannot_replace_existing_player(self):
+        player = self.room.get_player("sess_p2")
+        player.purse = 68
+        player.is_connected = False
+        room, _ = self.rm.join_room(self.room.room_code, "Other", "red", player.session_id)
+        self.assertIsNone(room)
+        self.assertEqual(len(self.room.players), 4)
+        self.assertFalse(player.is_connected)
+        self.assertEqual(player.purse, 68)
 
-        room, msg = self.rm.join_room(
-            self.room.room_code, "Ash", "blue", "sess_p2"
-        )
-        self.assertIsNotNone(room)
-        self.assertIn("Reconnected", msg)
-        self.assertEqual(len(room.players), 4)
-        self.assertTrue(p2.is_connected)
-        self.assertEqual(p2.purse, 340)
-        self.assertEqual(len(p2.team), 1)
-        self.assertEqual(room.status, "AUCTION")
-
-    def test_04_rejoin_during_battle_and_game_over_preserves_phase(self):
-        """Bug 2: Reconnecting during BATTLE or GAME_OVER does not reset room to LOBBY."""
+    def test_04_join_cannot_replace_player_in_later_phases(self):
         for phase in ("BATTLE", "GAME_OVER"):
             self.room.status = phase
-            p3 = self.room.get_player("sess_p3")
-            p3.is_connected = False
-            room, msg = self.rm.join_room(
-                self.room.room_code, "Misty", "green", "sess_p3"
-            )
-            self.assertIsNotNone(room)
-            self.assertIn("Reconnected", msg)
-            self.assertEqual(room.status, phase)
-            self.assertTrue(p3.is_connected)
+            player = self.room.get_player("sess_p3")
+            room, _ = self.rm.join_room(self.room.room_code, "Other", "red", player.session_id)
+            self.assertIsNone(room)
+            self.assertEqual(self.room.status, phase)
+            self.assertIs(self.room.get_player(player.session_id), player)
 
     def test_05_single_settlement_exact_deduction_and_assignment(self):
         """Bugs 3 & 4: Normal settlement adds 1 character and deducts bid once."""
-        self.room.current_bid = 75
+        self.room.current_bid = 15
         self.room.highest_bidder_id = "sess_p1"
         res = self.room.settle_current_round(1)
         self.assertIsNotNone(res)
         self.assertEqual(res["status"], "SOLD")
         self.assertEqual(res["winner"].session_id, "sess_p1")
-        self.assertEqual(res["winning_bid"], 75)
+        self.assertEqual(res["winning_bid"], 15)
         p1 = self.room.get_player("sess_p1")
         self.assertEqual(len(p1.team), 1)
-        self.assertEqual(p1.purse, 425)
+        self.assertEqual(p1.purse, 85)
 
     def test_06_duplicate_settlement_same_round_is_idempotent(self):
         """Bugs 3 & 4: Calling settle_current_round twice for same round is a no-op."""
-        self.room.current_bid = 100
+        self.room.current_bid = 20
         self.room.highest_bidder_id = "sess_p2"
         first = self.room.settle_current_round(1)
         second = self.room.settle_current_round(1)
@@ -133,13 +120,13 @@ class TestAuctionReliabilityUnitAndConcurrency(unittest.TestCase):
         self.assertIsNone(second)
         p2 = self.room.get_player("sess_p2")
         self.assertEqual(len(p2.team), 1)
-        self.assertEqual(p2.purse, 400)
+        self.assertEqual(p2.purse, 80)
         self.assertEqual(len(self.room.settlement_ledger), 1)
 
     def test_07_concurrent_settlement_under_lock_no_double_charge(self):
         """Bugs 3 & 4: Concurrent asyncio tasks trying to settle same round settle only once."""
         async def run_concurrent():
-            self.room.current_bid = 150
+            self.room.current_bid = 30
             self.room.highest_bidder_id = "sess_p4"
 
             async def try_settle():
@@ -153,7 +140,7 @@ class TestAuctionReliabilityUnitAndConcurrency(unittest.TestCase):
         asyncio.run(run_concurrent())
         p4 = self.room.get_player("sess_p4")
         self.assertEqual(len(p4.team), 1)
-        self.assertEqual(p4.purse, 350)
+        self.assertEqual(p4.purse, 70)
 
     def test_08_uncontested_single_bid_win(self):
         """Bugs 3 & 4: Single uncontested opening bid settles cleanly once."""
@@ -164,7 +151,7 @@ class TestAuctionReliabilityUnitAndConcurrency(unittest.TestCase):
         self.assertEqual(res["status"], "SOLD")
         p3 = self.room.get_player("sess_p3")
         self.assertEqual(len(p3.team), 1)
-        self.assertEqual(p3.purse, 500 - self.room.min_bid)
+        self.assertEqual(p3.purse, 100 - self.room.min_bid)
 
     def test_09_unsold_round_idempotent(self):
         """Bug 3 & 5: Unsold round (no bids) settles cleanly and cannot be re-settled."""
@@ -177,11 +164,11 @@ class TestAuctionReliabilityUnitAndConcurrency(unittest.TestCase):
         self.assertIsNone(second)
         for p in self.room.players.values():
             self.assertEqual(len(p.team), 0)
-            self.assertEqual(p.purse, 500)
+            self.assertEqual(p.purse, 100)
 
     def test_10_consecutive_rounds_preserve_purse_and_team_invariants(self):
         """Bugs 3, 4 & 5: Multiple consecutive rounds maintain exact purse + team totals."""
-        winners = [("sess_p1", 40), ("sess_p2", 65), (None, 0), ("sess_p1", 80), ("sess_p3", 55)]
+        winners = [("sess_p1", 40), ("sess_p2", 65), (None, 0), ("sess_p1", 30), ("sess_p3", 55)]
         for idx, (wid, price) in enumerate(winners, start=1):
             self.room.auction_character_count = idx
             self.room.current_character_full = self.rm.select_random_character(self.room)
@@ -191,13 +178,13 @@ class TestAuctionReliabilityUnitAndConcurrency(unittest.TestCase):
             self.assertIsNotNone(res)
 
         self.assertEqual(len(self.room.get_player("sess_p1").team), 2)
-        self.assertEqual(self.room.get_player("sess_p1").purse, 500 - 40 - 80)
+        self.assertEqual(self.room.get_player("sess_p1").purse, 100 - 40 - 30)
         self.assertEqual(len(self.room.get_player("sess_p2").team), 1)
-        self.assertEqual(self.room.get_player("sess_p2").purse, 500 - 65)
+        self.assertEqual(self.room.get_player("sess_p2").purse, 100 - 65)
         self.assertEqual(len(self.room.get_player("sess_p3").team), 1)
-        self.assertEqual(self.room.get_player("sess_p3").purse, 500 - 55)
+        self.assertEqual(self.room.get_player("sess_p3").purse, 100 - 55)
         self.assertEqual(len(self.room.get_player("sess_p4").team), 0)
-        self.assertEqual(self.room.get_player("sess_p4").purse, 500)
+        self.assertEqual(self.room.get_player("sess_p4").purse, 100)
 
     def test_11_team_full_blocks_further_bids(self):
         """Bug 4: Player with 6 characters has max bid 0."""
@@ -219,22 +206,19 @@ class TestAuctionReliabilityUnitAndConcurrency(unittest.TestCase):
         self.assertEqual(len(self.room.settlement_ledger), 0)
         self.assertEqual(self.room.status, "AUCTION")
         for p in self.room.players.values():
-            self.assertEqual(p.purse, 500)
+            self.assertEqual(p.purse, 100)
             self.assertEqual(len(p.team), 0)
 
     def test_13_all_universe_modes_select_characters(self):
-        """Regression: POKEMON, ANIME, MARVEL, and MIXED pools all select valid characters."""
-        for mode, unis in (
-            ("POKEMON", ["POKEMON"]),
-            ("ANIME", ["ANIME"]),
-            ("MARVEL", ["MARVEL"]),
-            ("MIXED", ["POKEMON", "ANIME", "MARVEL"]),
+        for mode, universes in (
+            ("pokemon", {"pokemon"}), ("anime", {"anime"}), ("marvel", {"marvel"}),
+            ("all", {"pokemon", "anime", "marvel"}),
         ):
-            r = self.rm.create_room("Host", "red", f"h_{mode}", 500)
-            r.allowed_universes = unis
-            ch = self.rm.select_random_character(r)
-            self.assertIsNotNone(ch, f"Failed to select character for universe_mode={mode}")
-            self.assertIn("name", ch)
+            room = self.rm.create_room("Host", "red", f"h_{mode}", anime_mode=mode)
+            character = self.rm.select_random_character(room)
+            franchise = character["anime_id"]
+            universe = franchise if franchise in ("pokemon", "marvel") else "anime"
+            self.assertIn(universe, universes)
 
 
 class TestFourPlayerWebSocketReliability(unittest.IsolatedAsyncioTestCase):
@@ -244,6 +228,7 @@ class TestFourPlayerWebSocketReliability(unittest.IsolatedAsyncioTestCase):
         game_server.room_auction_tasks.clear()
 
         self.ws_server = await websockets.serve(game_server.ws_handler, "127.0.0.1", 0)
+        self.sessions = {}
         self.port = self.ws_server.sockets[0].getsockname()[1]
         self.ws_url = f"ws://127.0.0.1:{self.port}"
 
@@ -265,6 +250,8 @@ class TestFourPlayerWebSocketReliability(unittest.IsolatedAsyncioTestCase):
             raw = await asyncio.wait_for(ws.recv(), timeout=remaining)
             msg = json.loads(raw)
             msgs.append(msg)
+            if msg["type"] == "room_joined":
+                self.sessions[ws] = msg["data"]
             if msg.get("type") in target_types:
                 return msg["type"], msg.get("data", {}), msgs
         raise TimeoutError(f"Timed out waiting for {target_types}; got {[m.get('type') for m in msgs]}")
@@ -273,6 +260,9 @@ class TestFourPlayerWebSocketReliability(unittest.IsolatedAsyncioTestCase):
         return await websockets.connect(self.ws_url)
 
     async def _send(self, ws, action, **data):
+        if action == "place_bid":
+            room = game_server.room_manager.rooms[self.sessions[ws]["room_code"]]
+            data.update(match_id=room.match_id, round_id=room.auction_character_count)
         await ws.send(json.dumps({"action": action, "data": data}))
 
     async def test_14_four_player_double_start_guard_and_authoritative_bidding(self):
@@ -306,13 +296,13 @@ class TestFourPlayerWebSocketReliability(unittest.IsolatedAsyncioTestCase):
             await self._send(c2, "place_bid", amount=20)
             _, bid2, _ = await self._recv_until(c1, "bid_success")
             await self._recv_until(c2, "bid_success")
-            self.assertEqual(bid2["highest_bidder_id"], "ws_p2")
-            self.assertNotEqual(bid2["highest_bidder_id"], "ws_p1")
+            self.assertEqual(bid2["highest_bidder_id"], self.sessions[c2]["session_id"])
+            self.assertNotEqual(bid2["highest_bidder_id"], self.sessions[c1]["session_id"])
 
             # Player 1 (non-leader with same display name) CAN outbid at 25
             await self._send(c1, "place_bid", amount=25)
             _, bid1, _ = await self._recv_until(c2, "bid_success")
-            self.assertEqual(bid1["highest_bidder_id"], "ws_p1")
+            self.assertEqual(bid1["highest_bidder_id"], self.sessions[c1]["session_id"])
             self.assertEqual(bid1["current_bid"], 25)
         finally:
             for ws in (c1, c2, c3, c4):
@@ -342,7 +332,7 @@ class TestFourPlayerWebSocketReliability(unittest.IsolatedAsyncioTestCase):
             await asyncio.sleep(0.25)
             room = game_server.room_manager.rooms[code]
             self.assertEqual(room.current_bid, 30)
-            self.assertIn(room.highest_bidder_id, {"race_p1", "race_p2", "race_p3", "race_p4"})
+            self.assertIn(room.highest_bidder_id, {self.sessions[ws]["session_id"] for ws in (c1, c2, c3, c4)})
         finally:
             for ws in (c1, c2, c3, c4):
                 await ws.close()
@@ -370,12 +360,14 @@ class TestFourPlayerWebSocketReliability(unittest.IsolatedAsyncioTestCase):
             await asyncio.sleep(0.1)
 
             c2_rejoined = await self._connect()
-            await self._send(c2_rejoined, "join_room", session_id="ref_p2", room_code=code, name="Refresher")
+            session = self.sessions[c2]
+            await self._send(c2_rejoined, "resume_room", session_id=session["session_id"],
+                             room_code=code, reconnect_token=session["reconnect_token"])
             _, rej, _ = await self._recv_until(c2_rejoined, "room_joined")
             rs = rej["room_state"]
             self.assertEqual(rs["status"], "AUCTION")
             self.assertEqual(rs["current_bid"], 40)
-            self.assertEqual(rs["highest_bidder_id"], "ref_p1")
+            self.assertEqual(rs["highest_bidder_id"], j1["session_id"])
             self.assertIsNotNone(rs["current_pokemon"])
             self.assertEqual(len(rs["players"]), 2)
             await c2_rejoined.close()
@@ -405,14 +397,14 @@ class TestFourPlayerWebSocketReliability(unittest.IsolatedAsyncioTestCase):
             room.timer_end_timestamp = time.time() + 0.15
 
             _, won, _ = await self._recv_until(c1, "auction_won", timeout=5.0)
-            self.assertEqual(won["winner_id"], "set_p1")
+            self.assertEqual(won["winner_id"], j1["session_id"])
             self.assertEqual(won["winning_bid"], 55)
             self.assertEqual(won["round_id"], 1)
             self.assertTrue(won.get("settlement_id"))
 
-            p1 = room.get_player("set_p1")
+            p1 = room.get_player(j1["session_id"])
             self.assertEqual(len(p1.team), 1)
-            self.assertEqual(p1.purse, 445)
+            self.assertEqual(p1.purse, 45)
         finally:
             await c1.close()
             await c2.close()
@@ -466,10 +458,10 @@ class TestFourPlayerWebSocketReliability(unittest.IsolatedAsyncioTestCase):
 
             msg_type, data, _ = await self._recv_until(c1, {"auction_won", "auction_unsold"}, timeout=5.0)
             self.assertEqual(msg_type, "auction_won")
-            # Whichever bid won, purse + winning_bid == 500 and team len == 1
+            # Whichever bid won, purse + winning_bid == 100 and team len == 1
             winner = room.get_player(data["winner_id"])
             self.assertEqual(len(winner.team), 1)
-            self.assertEqual(winner.purse + data["winning_bid"], 500)
+            self.assertEqual(winner.purse + data["winning_bid"], 100)
         finally:
             await c1.close()
             await c2.close()
@@ -528,7 +520,7 @@ makeEl('current-bid-amount', { textContent: '0' });
 makeEl('current-bidder-name', { textContent: '' });
 makeEl('next-valid-bid-display', { textContent: '' });
 makeEl('btn-quick-min');
-makeEl('btn-quick-p5');
+makeEl('btn-quick-p5', {dataset: {inc: '5'}});
 makeEl('btn-quick-p10');
 makeEl('btn-quick-p25');
 makeEl('btn-quick-p50');
@@ -545,13 +537,13 @@ const sandbox = {
     isWithdrawn: false,
     roomState: {
       status: 'AUCTION',
-      min_bid: 10,
+      min_bid: 1,
       current_bid: 60,
       highest_bidder_id: 'sess_p1',
       highest_bidder_name: 'PlayerOne',
       players: [
-        { session_id: 'sess_p1', name: 'PlayerOne', purse: 500, team_count: 0, is_withdrawn: false, has_skipped: false },
-        { session_id: 'sess_p2', name: 'PlayerTwo', purse: 500, team_count: 0, is_withdrawn: false, has_skipped: false }
+        { session_id: 'sess_p1', name: 'PlayerOne', purse: 100, team_count: 0, is_withdrawn: false, has_skipped: false },
+        { session_id: 'sess_p2', name: 'PlayerTwo', purse: 100, team_count: 0, is_withdrawn: false, has_skipped: false }
       ]
     }
   },
@@ -562,7 +554,7 @@ const sandbox = {
 };
 vm.createContext(sandbox);
 const start = src.indexOf('function updateBidStatus(');
-const end = src.indexOf('// Showcase Toast Overlay');
+const end = src.indexOf('function showShowcaseBanner');
 if (start < 0 || end < 0) throw new Error('Could not locate bid update functions');
 vm.runInContext(src.slice(start, end), sandbox);
 

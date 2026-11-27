@@ -22,6 +22,7 @@ from src.battle_ai import TacticalBattleAI
 from src.battle_engine import PokemonBattleSimulator, PokemonCombatant
 from src.marvel_battle_engine import MarvelBattleSimulator, MarvelCombatant
 from src.battle_interface import BattleAction, BattleResult
+from src.combat_interactions import end_nonpokemon_turn
 from src.cross_universe_adapter import CrossUniverseBattleSimulator
 
 
@@ -269,34 +270,37 @@ class LiveBattleSession:
                     if atk:
                         dmg, msg = self._anime_sim.resolve_attack(mon, opp, atk)
                         events.append(msg)
-                        action_details.append({"event_type": "attack", "side": side, "target_side": target_side, "move_name": atk["name"], "category": atk.get("category", "special"), "damage": dmg})
+                        action_details.append({"event_type": "attack", "side": side, "target_side": target_side, "attacker_id": mon.combatant_id, "defender_id": opp.combatant_id, "move_name": atk["name"], "category": atk.get("category", "special"), "damage": dmg})
                 elif self._engine_kind == "marvel":
                     atk = next((a for a in mon.attacks if a["id"] == act.move_id), mon.attacks[0] if mon.attacks else None)
                     if atk:
                         dmg, msg = self._marvel_sim.resolve_attack(mon, opp, atk)
                         events.append(msg)
-                        action_details.append({"event_type": "attack", "side": side, "target_side": target_side, "move_name": atk["name"], "category": atk.get("category", "physical"), "damage": dmg})
+                        action_details.append({"event_type": "attack", "side": side, "target_side": target_side, "attacker_id": mon.combatant_id, "defender_id": opp.combatant_id, "move_name": atk["name"], "category": atk.get("category", "physical"), "damage": dmg})
                 else:
                     if isinstance(mon, PokemonCombatant):
                         move = next((m for m in mon.moves if m["id"] == act.move_id), mon.moves[0] if mon.moves else None)
                         if move:
                             dmg, msg = self._cross_sim._pokemon_vs_any_damage(mon, opp, move)
                             events.append(msg)
-                            action_details.append({"event_type": "attack", "side": side, "target_side": target_side, "move_name": move["name"], "category": "elemental" if move.get("category") == "Special" else "physical", "damage": dmg})
+                            action_details.append({"event_type": "attack", "side": side, "target_side": target_side, "attacker_id": mon.combatant_id, "defender_id": opp.combatant_id, "move_name": move["name"], "category": "elemental" if move.get("category") == "Special" else "physical", "damage": dmg})
                     elif isinstance(mon, MarvelCombatant) and mon.attacks:
                         atk = next((a for a in mon.attacks if a["id"] == act.move_id), mon.attacks[0])
                         dmg, msg = self._cross_sim._marvel_vs_any_damage(mon, opp, atk)
                         events.append(msg)
-                        action_details.append({"event_type": "attack", "side": side, "target_side": target_side, "move_name": atk["name"], "category": atk.get("category", "physical"), "damage": dmg})
+                        action_details.append({"event_type": "attack", "side": side, "target_side": target_side, "attacker_id": mon.combatant_id, "defender_id": opp.combatant_id, "move_name": atk["name"], "category": atk.get("category", "physical"), "damage": dmg})
                     elif isinstance(mon, AnimeCombatant) and mon.attacks:
                         atk = next((a for a in mon.attacks if a["id"] == act.move_id), mon.attacks[0])
                         dmg, msg = self._cross_sim._anime_vs_any_damage(mon, opp, atk)
                         events.append(msg)
-                        action_details.append({"event_type": "attack", "side": side, "target_side": target_side, "move_name": atk["name"], "category": atk.get("category", "special"), "damage": dmg})
+                        action_details.append({"event_type": "attack", "side": side, "target_side": target_side, "attacker_id": mon.combatant_id, "defender_id": opp.combatant_id, "move_name": atk["name"], "category": atk.get("category", "special"), "damage": dmg})
 
                 if opp.is_fainted:
                     events.append(f"{opp.name} fainted!")
                     action_details.append({"event_type": "faint", "side": target_side})
+
+        for pid in (self.player_a_id, self.player_b_id):
+            end_nonpokemon_turn(self.get_active(pid), events)
 
         cur_a = self.get_active(self.player_a_id)
         cur_b = self.get_active(self.player_b_id)
@@ -352,8 +356,8 @@ class LiveBattleSession:
             return BattleResult(self.player_a_id, self.player_b_id, False, "TEAM_ELIMINATION", self.turn_number, self.seed, hp_a, hp_b, rem_a, rem_b, self.turn_log)
         if rem_b > 0 and rem_a == 0:
             return BattleResult(self.player_b_id, self.player_a_id, False, "TEAM_ELIMINATION", self.turn_number, self.seed, hp_a, hp_b, rem_a, rem_b, self.turn_log)
-        if hp_a > hp_b:
+        if self._engine_kind == "pokemon" and hp_a > hp_b:
             return BattleResult(self.player_a_id, self.player_b_id, False, "TIME_LIMIT_HP", self.turn_number, self.seed, hp_a, hp_b, rem_a, rem_b, self.turn_log)
-        if hp_b > hp_a:
+        if self._engine_kind == "pokemon" and hp_b > hp_a:
             return BattleResult(self.player_b_id, self.player_a_id, False, "TIME_LIMIT_HP", self.turn_number, self.seed, hp_a, hp_b, rem_a, rem_b, self.turn_log)
         return BattleResult(None, None, True, "DRAW", self.turn_number, self.seed, hp_a, hp_b, rem_a, rem_b, self.turn_log)
