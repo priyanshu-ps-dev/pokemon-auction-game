@@ -3,7 +3,7 @@
  * ==============================================================
  * Handles WebSocket communication, room-specific purse management,
  * authoritative timer rendering, flexible bidding (any valid amount),
- * hidden stats during bidding, and dramatic final stats reveal.
+ * informed character profiles during bidding, and detailed final results.
  */
 
 const gameState = {
@@ -1920,7 +1920,7 @@ function renderOpponents(players) {
   });
 }
 
-// Render Active Pokemon / Anime Character Auction Card (ONLY Artwork, Name, Anime, Form - NO STATS/TIER!)
+// Render the public auction profile: artwork, identity, power and character information.
 function renderAuctionCard(poke) {
   const round = gameState.roomState ? (gameState.roomState.auction_pokemon_count || 1) : 1;
   const maxPool = gameState.roomState ? (gameState.roomState.max_auction_pokemon || 16) : 16;
@@ -1941,6 +1941,10 @@ function renderAuctionCard(poke) {
   const formBadge = (poke.current_form && poke.current_form !== 'Base')
     ? `<div class="form-pill">⚡ ${escapeHtml(poke.current_form)}</div>`
     : '';
+  const power = Number(poke.power_rating || 0).toFixed(1);
+  const tier = poke.power_tier || 'B';
+  const role = poke.role || poke.category || poke.species || 'Fighter';
+  const techniques = (poke.techniques || poke.abilities || []).slice(0, 3);
 
   card.className = `active-auction-card`;
   card.innerHTML = `
@@ -1954,7 +1958,12 @@ function renderAuctionCard(poke) {
     <h2 class="auction-poke-name">${escapeHtml(poke.name)}</h2>
     ${formBadge}
     ${typeBadges ? `<div class="type-pill-list" style="justify-content:center; margin-top:0.5rem; margin-bottom:0.5rem;">${typeBadges}</div>` : ''}
-    <div style="font-size:0.75rem; color:#64748b; margin-top:0.4rem;">Stats hidden &bull; Revealed after tournament</div>
+    <div class="auction-public-profile">
+      <strong>${power} POWER</strong> <span>${escapeHtml(tier)} TIER</span>
+      <div>${escapeHtml(role)}</div>
+      ${poke.description ? `<p>${escapeHtml(poke.description)}</p>` : ''}
+      ${techniques.length ? `<small>${techniques.map(escapeHtml).join(' • ')}</small>` : ''}
+    </div>
   `;
 }
 
@@ -3102,9 +3111,10 @@ const animeDatabaseModule = {
 
     let statsBarsHtml = '';
     const statEntries = Object.entries(st);
+    const statScale = statEntries.some(([, value]) => Number(value) > 100) ? 255 : 100;
     if (statEntries.length > 0) {
       statsBarsHtml = statEntries.map(([k, v]) => {
-        const pct = Math.min(100, Math.round((v / 255) * 100));
+        const pct = Math.min(100, Math.round((Number(v) / statScale) * 100));
         const label = k.replace(/_/g, ' ').toUpperCase();
         return `
           <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.4rem; font-size:0.8rem;">
@@ -3150,7 +3160,7 @@ const animeDatabaseModule = {
             <div style="display:flex; gap:0.4rem; margin-bottom:0.35rem; align-items:center; flex-wrap:wrap;">
               <span class="anime-badge ${char.anime_id || ''}">${escapeHtml(char.anime_name || 'Anime')}</span>
               <span class="card-tier-badge ${tierClass}">${tier} TIER</span>
-              <span style="font-size:0.78rem; color:#94a3b8;">${escapeHtml(char.gender || 'Unknown')} &bull; ${escapeHtml(char.species || 'Entity')}</span>
+              <span style="font-size:0.78rem; color:#94a3b8;">${escapeHtml(char.role || char.category || 'Fighter')} &bull; ${escapeHtml(char.species || 'Entity')}</span>
             </div>
             <h2 style="font-size:1.6rem; font-weight:900; color:#f8fafc; margin-bottom:0.15rem;">${escapeHtml(char.name)}</h2>
             ${char.native_name ? `<div style="font-size:0.9rem; color:#94a3b8; font-weight:600; margin-bottom:0.35rem;">${escapeHtml(char.native_name)}</div>` : ''}
@@ -3170,9 +3180,9 @@ const animeDatabaseModule = {
 
         <!-- Factual Info Strip -->
         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:0.5rem; background:rgba(255,255,255,0.02); padding:0.6rem 0.8rem; border-radius:8px; border:1px solid rgba(255,255,255,0.05); font-size:0.78rem;">
-          <div><strong style="color:#94a3b8;">Age:</strong> ${escapeHtml(char.age || 'Unknown')}</div>
-          <div><strong style="color:#94a3b8;">Birthday:</strong> ${escapeHtml(char.birthday || 'Unknown')}</div>
-          <div><strong style="color:#94a3b8;">Favourites:</strong> ${char.favourites ? Number(char.favourites).toLocaleString() : '—'}</div>
+          <div><strong style="color:#94a3b8;">Role:</strong> ${escapeHtml(char.role || char.category || 'Fighter')}</div>
+          <div><strong style="color:#94a3b8;">Identity:</strong> ${escapeHtml((char.aliases || char.alt_names || [])[0] || char.name)}</div>
+          <div><strong style="color:#94a3b8;">Continuity:</strong> ${escapeHtml(char.incarnation || char.anime_name || 'Database')}</div>
           <div><strong style="color:#94a3b8;">Source:</strong> ${escapeHtml(char.source || 'Database')} ${sourceLink}</div>
         </div>
 
@@ -3681,16 +3691,28 @@ async function fetchStageCharacterDex(append = false) {
     } else {
       chars.forEach(c => {
         const fallback = `/api/avatar/${encodeURIComponent(c.id || String(c.name || 'char').toLowerCase().replace(/\s+/g, '_'))}`;
-        const card = document.createElement('div');
+        const card = document.createElement('button');
+        card.type = 'button';
         card.className = 'dex-side-card';
+        card.setAttribute('aria-label', `Open ${c.name} character information`);
+        const power = Number(c.power_rating || 0).toFixed(1);
+        const tier = c.power_tier || 'B';
+        const role = c.role || c.category || c.species || 'Fighter';
         card.innerHTML = `
           <img src="${escapeHtml(c.image || fallback)}" alt="${escapeHtml(c.name)}" class="dex-side-thumb" loading="lazy"
             onerror="this.onerror=null; this.src='${fallback}';">
           <div class="dex-side-meta">
             <div class="dex-side-name" title="${escapeHtml(c.name)}">${escapeHtml(c.name)}</div>
-            <div class="dex-side-sub">${escapeHtml(c.anime_name || 'Anime')}</div>
+            <div class="dex-side-sub">${escapeHtml(role)}</div>
+            <div class="dex-side-tech">${escapeHtml((c.techniques || c.abilities || []).slice(0, 2).join(' • '))}</div>
+          </div>
+          <div class="dex-side-stats">
+            <span class="dex-side-tier tier-${tier.replace('+', '-plus')}">${escapeHtml(tier)}</span>
+            <span class="dex-side-power">${power} PR</span>
+            <span class="dex-side-more">INFO ›</span>
           </div>
         `;
+        card.addEventListener('click', () => animeDatabaseModule.openDetailModal(c));
         listEl.appendChild(card);
       });
     }

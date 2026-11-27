@@ -150,7 +150,9 @@ class TestMarvelLiveServerIntegration(unittest.TestCase):
                         if msg["type"] == "auction_started":
                             ch = msg["data"]["character"]
                             self.assertEqual(ch["anime_id"], "marvel")
-                            self.assertNotIn("stats", ch)
+                            self.assertIn("stats", ch)
+                            self.assertTrue(ch.get("description"))
+                            self.assertTrue(ch.get("techniques"))
                             if not b1:
                                 b1 = True
                                 await ws1.send(json.dumps({"action": "place_bid", "data": {"amount": 20, "match_id": msg["data"]["room_state"]["match_id"], "round_id": msg["data"]["auction_round"]}}))

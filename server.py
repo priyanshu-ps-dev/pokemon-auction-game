@@ -202,7 +202,7 @@ async def run_room_auction_loop(room: Room):
 
             sanitized_char = room.current_character_sanitized
 
-            # Broadcast ONLY sanitized character (Artwork, Name, Anime, Form)
+            # Broadcast the safe public profile used for informed bidding.
             await broadcast_to_room(room, "auction_started", {
                 "character": sanitized_char,
                 "pokemon": sanitized_char,  # Legacy backwards compatibility

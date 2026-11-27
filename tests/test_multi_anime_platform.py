@@ -144,8 +144,8 @@ def test_4_transformations_modes():
     print(f"  [PASS] Goku alternate forms registered as separate auction entries: {form_names}")
 
 
-def test_5_strict_stat_privacy():
-    print("\n--- TEST 5: Strict In-Auction Stat Privacy ---")
+def test_5_informed_auction_profile():
+    print("\n--- TEST 5: Informed In-Auction Character Profile ---")
     db = AnimeDatabaseManager(JSON_PATH, DB_PATH)
     sample_char = db.get_character_by_id("db_goku")
     assert sample_char is not None, "Goku not found in DB"
@@ -156,14 +156,8 @@ def test_5_strict_stat_privacy():
     assert "anime_name" in sanitized
     assert "image" in sanitized
 
-    # Check what MUST NOT be revealed:
-    forbidden_keys = [
-        "stats", "power_rating", "power_tier", "strength", "attack_power",
-        "speed", "durability", "stamina", "defense", "intelligence", "battle_iq",
-        "special_abilities"
-    ]
-    for key in forbidden_keys:
-        assert key not in sanitized, f"STAT PRIVACY LEAK: '{key}' exposed in sanitized auction card!"
+    for key in ("stats", "power_rating", "power_tier", "description", "techniques"):
+        assert key in sanitized, f"INCOMPLETE AUCTION PROFILE: '{key}' is missing"
 
     # Verify Room serialization hides stats
     host = Player("sess_host", "GokuFan", "red")
@@ -173,10 +167,10 @@ def test_5_strict_stat_privacy():
 
     room_state = room.to_state_dict()
     curr = room_state["current_character"]
-    for key in forbidden_keys:
-        assert key not in curr, f"STAT PRIVACY LEAK: '{key}' in room_state['current_character'] during AUCTION!"
+    for key in ("stats", "power_rating", "power_tier", "description", "techniques"):
+        assert key in curr, f"INCOMPLETE AUCTION PROFILE: '{key}' missing from room state"
 
-    print("  [PASS] Zero stat leakage verified during active auction bidding.")
+    print("  [PASS] Public character information is available during active bidding.")
 
 
 def test_6_pure_team_power_winner_and_reveal():

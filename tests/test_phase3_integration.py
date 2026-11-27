@@ -204,10 +204,10 @@ class TestPhase3LiveMultiplayerLifecycle(unittest.TestCase):
                         seen_types.append(mtype)
 
                         if mtype == "auction_started":
-                            # Verify stats are hidden during auction!
+                            # Verify players can make an informed auction decision.
                             char = msg["data"]["character"]
-                            self.assertNotIn("stats", char)
-                            self.assertNotIn("power_rating", char)
+                            self.assertIn("stats", char)
+                            self.assertIn("power_rating", char)
 
                             if not bid_placed_a:
                                 bid_placed_a = True
