@@ -4025,6 +4025,7 @@ body.in-arena-match .landing-bg-overlay {
 }
 
 .dex-side-card {
+  width: 100%;
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -4032,6 +4033,10 @@ body.in-arena-match .landing-bg-overlay {
   background: rgba(15, 23, 42, 0.72);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 9px;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
   transition: border-color 0.18s ease, background 0.18s ease;
 }
 
@@ -4071,6 +4076,15 @@ body.in-arena-match .landing-bg-overlay {
   text-overflow: ellipsis;
 }
 
+.dex-side-tech {
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 0.6rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .dex-side-stats {
   display: flex;
   flex-direction: column;
@@ -4095,6 +4109,13 @@ body.in-arena-match .landing-bg-overlay {
   color: #38bdf8;
 }
 
+.dex-side-more {
+  color: #a5f3fc;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
 .dex-side-load-more {
   width: 100%;
   padding: 0.45rem;
@@ -4106,6 +4127,23 @@ body.in-arena-match .landing-bg-overlay {
   font-weight: 700;
   cursor: pointer;
 }
+
+.auction-public-profile {
+  margin-top: 0.65rem;
+  padding: 0.65rem;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 9px;
+  background: rgba(2, 8, 23, 0.72);
+  color: #cbd5e1;
+  font-size: 0.74rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.auction-public-profile strong { color: #67e8f9; }
+.auction-public-profile span { margin-left: 0.4rem; color: #fde047; }
+.auction-public-profile p { margin: 0.45rem 0; color: #cbd5e1; }
+.auction-public-profile small { color: #94a3b8; }
 
 .dex-side-load-more:hover {
   border-color: #22d3ee;

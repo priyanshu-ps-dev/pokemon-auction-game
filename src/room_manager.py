@@ -3,7 +3,7 @@ Multi-Anime Character & Pokémon Auction Game: Room & Match Engine
 =================================================================
 Server-authoritative state machine for rooms, live cross-anime auctions,
 timer synchronization, flexible bidding, room-isolated purse management,
-and hidden-stat auctioning with dramatic final reveal.
+and informed character-profile auctioning with detailed final results.
 """
 
 import asyncio
@@ -46,14 +46,16 @@ AUCTION_POOL_TABLE = {p: get_max_auction_characters(p) for p in range(1, 9)}
 
 def sanitize_character_for_auction(char: dict) -> dict:
     """
-    CRITICAL STAT PRIVACY:
-    Strips all competitive stats, battle IQ, power ratings, tiers, and numbers.
-    During active bidding, clients receive ONLY:
+    Public auction profile:
+    During active bidding, clients receive identity, artwork and the combat
+    summary needed to make an informed bid. Server-only state and internal
+    battle implementation details remain excluded.
     - Character artwork/image
     - Character name
     - Anime franchise name & ID
     - Current form name (e.g. Super Saiyan, Gear 5)
-    - Identity metadata (gender, species, energy_system)
+    - Identity metadata, role and short biography
+    - Power rating, tier, public stats and signature techniques
     - Legacy Pokemon metadata (types, generation)
     """
     if not char:
@@ -72,6 +74,16 @@ def sanitize_character_for_auction(char: dict) -> dict:
         "species": char.get("species", ""),
         "race": char.get("race", ""),
         "energy_system": char.get("energy_system", ""),
+        "role": char.get("role", char.get("category", "Fighter")),
+        "category": char.get("category", char.get("role", "Fighter")),
+        "description": char.get("description", char.get("lore", "")),
+        "aliases": char.get("aliases", char.get("alt_names", [])),
+        "abilities": char.get("abilities", []),
+        "techniques": char.get("techniques", []),
+        "power_rating": char.get("power_rating", 0),
+        "power_tier": char.get("power_tier", char.get("tier", "B")),
+        "canonical_bst": char.get("canonical_bst", char.get("bst", 0)),
+        "stats": char.get("stats", {}),
         # Legacy Pokémon compatibility fields
         "national_id": char.get("national_id", 0),
         "types": char.get("types", []),

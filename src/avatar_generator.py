@@ -45,10 +45,11 @@ def generate_character_svg(char: dict) -> str:
     anime_id = anime_id if anime_id in FRANCHISE_PALETTES else "arena"
     
     palette = FRANCHISE_PALETTES.get(anime_id, DEFAULT_PALETTE)
-    bg1 = palette["bg1"]
-    bg2 = palette["bg2"]
+    portrait_colors = char.get("portrait_colors") or []
+    bg1 = portrait_colors[0] if len(portrait_colors) > 0 else palette["bg1"]
+    bg2 = portrait_colors[1] if len(portrait_colors) > 1 else palette["bg2"]
     accent = palette["accent"]
-    symbol = palette["symbol"]
+    symbol = char.get("portrait_emblem") or palette["symbol"]
 
     # Extract initials
     words = [w for w in name.replace("(", "").replace(")", "").split() if w]
@@ -58,7 +59,7 @@ def generate_character_svg(char: dict) -> str:
     short_name = name if len(name) <= 16 else name[:14] + "…"
     short_anime = "Marvel MCU" if anime_id == "marvel" else anime_name
     short_anime = short_anime if len(short_anime) <= 18 else short_anime[:16] + "…"
-    short_name, short_anime, initials = map(escape, (short_name, short_anime, initials))
+    short_name, short_anime, initials, symbol = map(escape, (short_name, short_anime, initials, str(symbol)))
 
     return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" width="280" height="280">
   <defs>
@@ -81,14 +82,19 @@ def generate_character_svg(char: dict) -> str:
   <rect width="280" height="280" rx="28" fill="url(#halo_{anime_id})"/>
   <rect width="278" height="278" x="1" y="1" rx="27" fill="none" stroke="{bg1}" stroke-opacity="0.4" stroke-width="1.5"/>
 
-  <!-- Anime Symbol (Top-Left) -->
-  <text x="32" y="38" font-size="20">{symbol}</text>
+  <!-- Character-specific emblem -->
+  <rect x="20" y="18" width="58" height="28" rx="14" fill="#080d18" fill-opacity="0.82" stroke="{accent}" stroke-opacity="0.65"/>
+  <text x="49" y="37" font-family="'Outfit', system-ui, sans-serif" font-size="13" font-weight="900" fill="{accent}" text-anchor="middle">{symbol}</text>
 
-  <!-- Central Avatar Disc -->
+  <!-- Distinct cinematic portrait silhouette -->
   <g filter="url(#shadow)">
-    <circle cx="140" cy="115" r="58" fill="#141c2b" stroke="url(#grad_{anime_id})" stroke-width="3.5"/>
-    <circle cx="140" cy="115" r="50" fill="url(#grad_{anime_id})" opacity="0.25"/>
-    <text x="140" y="132" font-family="'Outfit', system-ui, sans-serif" font-size="38" font-weight="900" fill="{accent}" text-anchor="middle" letter-spacing="1">{initials}</text>
+    <circle cx="140" cy="111" r="65" fill="#101827" stroke="url(#grad_{anime_id})" stroke-width="4"/>
+    <path d="M101 178 C105 147 119 137 140 137 C161 137 175 147 179 178 Z" fill="url(#grad_{anime_id})" opacity="0.95"/>
+    <path d="M117 100 C117 76 127 63 140 63 C153 63 163 76 163 100 C163 124 154 138 140 138 C126 138 117 124 117 100 Z" fill="{bg2}" opacity="0.9"/>
+    <path d="M121 98 L134 94 L134 103 L121 106 Z M159 98 L146 94 L146 103 L159 106 Z" fill="{accent}" opacity="0.95"/>
+    <circle cx="140" cy="158" r="17" fill="#0b1220" stroke="{accent}" stroke-width="2"/>
+    <text x="140" y="164" font-family="'Outfit', system-ui, sans-serif" font-size="13" font-weight="900" fill="{accent}" text-anchor="middle">{symbol}</text>
+    <text x="140" y="128" font-family="'Outfit', system-ui, sans-serif" font-size="17" font-weight="900" fill="#f8fafc" text-anchor="middle" letter-spacing="1">{initials}</text>
   </g>
 
   <!-- Character & Anime Meta Pill (Bottom) -->

@@ -21,6 +21,12 @@ class CanonicalGameplayTests(unittest.TestCase):
         mcu = db.get_characters_for_mode("marvel")
         self.assertEqual(len(mcu), 52)
         self.assertTrue(all(c["incarnation"] == "MCU screen continuity" for c in mcu))
+        self.assertTrue(all(c.get("description") for c in mcu))
+        self.assertTrue(all(c.get("role") for c in mcu))
+        self.assertTrue(all(c.get("portrait_emblem") for c in mcu))
+        self.assertTrue(all(c.get("power_rating", 0) > 0 for c in mcu))
+        self.assertTrue(all(c.get("power_tier") for c in mcu))
+        self.assertTrue(all(c.get("techniques") for c in mcu))
         for mode in ("all", "pokemon_standard", "pokemon_legendary"):
             roster = db.get_characters_for_mode(mode, forms_mode="SEPARATE_ENTRIES")
             self.assertTrue(roster)
@@ -180,7 +186,10 @@ class AuctionWebSocketTests(unittest.IsolatedAsyncioTestCase):
 
         for _ in range(15):
             lot = (await self.receive(host, "auction_started"))["data"]
-            self.assertNotIn("stats", lot["character"])
+            self.assertIn("stats", lot["character"])
+            self.assertGreater(lot["character"]["power_rating"], 0)
+            self.assertTrue(lot["character"]["description"])
+            self.assertTrue(lot["character"]["techniques"])
             if lot["auction_round"] == 2:
                 losing_socket = guest if sold["winner_id"] == host_session["session_id"] else host
                 await self.send(losing_socket, "place_bid", amount=1, match_id=stage["match_id"], round_id=2)
