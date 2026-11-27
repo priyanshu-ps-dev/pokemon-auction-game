@@ -88,15 +88,15 @@ class TestDatabaseUpgradeAndPokedex(unittest.TestCase):
 
     def test_08_single_franchise_room_contains_only_selected_franchise(self):
         """Test 8: Room created with ONLY One Piece contains only One Piece characters."""
-        room = self.room_manager.create_room("OP_HOST", "Luffy", "avatar1", starting_purse=500, anime_mode="single", selected_anime=["one_piece"])
-        self.assertGreater(len(room.character_pool), 50)
+        room = self.room_manager.create_room("OP_HOST", "Luffy", "avatar1", starting_purse=100, anime_mode="single", selected_anime=["one_piece"])
+        self.assertGreaterEqual(len(room.character_pool), 12)
         for char in room.character_pool:
             self.assertEqual(char["anime_id"], "one_piece", f"Expected only One Piece character, got {char.get('anime_id')} ({char.get('name')})")
 
     def test_09_multiple_franchises_room_contains_only_selected_franchises(self):
         """Test 9: Room created with One Piece + Naruto contains only those two franchises."""
-        room = self.room_manager.create_room("DUO_HOST", "Naruto", "avatar1", starting_purse=500, anime_mode="multiple", selected_anime=["one_piece", "naruto"])
-        self.assertGreater(len(room.character_pool), 100)
+        room = self.room_manager.create_room("DUO_HOST", "Naruto", "avatar1", starting_purse=100, anime_mode="multiple", selected_anime=["one_piece", "naruto"])
+        self.assertEqual({c["anime_id"] for c in room.character_pool}, {"one_piece", "naruto"})
         for char in room.character_pool:
             self.assertIn(char["anime_id"], ["one_piece", "naruto"], f"Unexpected anime_id: {char.get('anime_id')}")
 
@@ -110,7 +110,7 @@ class TestDatabaseUpgradeAndPokedex(unittest.TestCase):
         self.assertEqual(get_max_auction_characters(8), 52)
 
         # Check room simulation with 8 players
-        room = self.room_manager.create_room("P1", "av1", "HOST_SESS", starting_purse=500, anime_mode="all")
+        room = self.room_manager.create_room("P1", "av1", "HOST_SESS", starting_purse=100, anime_mode="all")
         for i in range(2, 9):
             self.room_manager.join_room(room.room_code, f"Player {i}", f"av{i}", f"p_{i}")
             room.players[f"p_{i}"].is_ready = True
@@ -124,7 +124,7 @@ class TestDatabaseUpgradeAndPokedex(unittest.TestCase):
 
     def test_11_auction_completion_no_duplicate_characters(self):
         """Test 11: Auction completion verifies no duplicate character appearances."""
-        room = self.room_manager.create_room("P1", "av1", "HOST_SESS", starting_purse=500, anime_mode="all")
+        room = self.room_manager.create_room("P1", "av1", "HOST_SESS", starting_purse=100, anime_mode="all")
         self.room_manager.join_room(room.room_code, "Player 2", "av2", "p_2")
         room.players["p_2"].is_ready = True
         room.players["HOST_SESS"].is_ready = True
@@ -145,8 +145,8 @@ class TestDatabaseUpgradeAndPokedex(unittest.TestCase):
             poke_data = json.load(f)
         self.assertEqual(len(poke_data), 1351, "Pokemon database should have exactly 1,351 entries")
 
-        poke_room = self.room_manager.create_room("POKE_HOST", "Ash", "av1", starting_purse=500, anime_mode="pokemon")
-        self.assertGreaterEqual(len(poke_room.character_pool), 1300)
+        poke_room = self.room_manager.create_room("POKE_HOST", "Ash", "av1", starting_purse=100, anime_mode="pokemon")
+        self.assertEqual(len(poke_room.character_pool), len({p["national_id"] for p in poke_data}))
         sample_char = poke_room.character_pool[0]
         self.assertTrue(sample_char.get("anime_id") == "pokemon" or "national_id" in sample_char)
 

@@ -51,6 +51,7 @@ class TestFourPlayerManualPvP(unittest.TestCase):
                 for sid in sids:
                     conns.append(await websockets.connect(uri))
 
+                code = None
                 try:
                     # Create room as host
                     await conns[0].send(json.dumps({
@@ -66,6 +67,7 @@ class TestFourPlayerManualPvP(unittest.TestCase):
                     joined0 = json.loads(await conns[0].recv())
                     self.assertEqual(joined0["type"], "room_joined")
                     code = joined0["data"]["room_code"]
+                    sids[0] = joined0["data"]["session_id"]
 
                     for idx in range(1, 4):
                         await conns[idx].send(json.dumps({
@@ -74,6 +76,7 @@ class TestFourPlayerManualPvP(unittest.TestCase):
                         }))
                         jmsg = json.loads(await conns[idx].recv())
                         self.assertEqual(jmsg["type"], "room_joined")
+                        sids[idx] = jmsg["data"]["session_id"]
 
                     room = srv.room_manager.rooms[code]
                     # Simulate completed auction: assign 1 character to each player and exhaust pool

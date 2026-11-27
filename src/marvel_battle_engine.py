@@ -11,6 +11,8 @@ Implements Marvel Comics & MCU native combat mechanics through BaseCombatant:
 """
 
 import random
+
+from src.combat_interactions import end_nonpokemon_turn, resolve_technique_damage, spend_stamina
 from typing import Any, Dict, List, Optional, Tuple
 
 from src.battle_interface import BaseCombatant, BattleAction, BattleResult
@@ -20,6 +22,9 @@ MAX_MARVEL_TURNS = 150
 MARVEL_CATEGORY_POWER = {
     "energy": 74,
     "magical": 74,
+    "magic": 74,
+    "mental": 70,
+    "weapon": 68,
     "physical": 72,
     "ranged": 68,
     "psychic": 70,
@@ -58,6 +63,8 @@ class MarvelCombatant(BaseCombatant):
         self.transformations: List[Dict[str, Any]] = list(profile.get("transformations", []))
         self.active_transformation: Optional[str] = None
         self.shield_turns: int = 0
+        self.max_stamina = max(24, int(stats.get("stamina", 76)))
+        self.stamina = self.max_stamina
         self._status: Optional[str] = None
         self.status_turns: int = 0
 
@@ -210,6 +217,8 @@ class MarvelBattleSimulator:
         defender: MarvelCombatant,
         attack: dict,
     ) -> Tuple[int, str]:
+        if not spend_stamina(attacker, attack):
+            return 0, f"{attacker.name} recovered stamina instead of using {attack['name']}."
         cat = attack.get("category", "physical")
         if cat == "defensive":
             attacker.shield_turns = 2
@@ -219,26 +228,10 @@ class MarvelBattleSimulator:
             return 0, f"{attacker.name} used {attack['name']} and recovered {healed} HP!"
 
         base_power = MARVEL_CATEGORY_POWER.get(cat, 68)
-        off_stat = attacker.strength_stat if cat == "physical" else max(attacker.energy_stat, attacker.combat_skill * 0.85)
-        skill_bonus = 1.0 + (attacker.combat_skill - 50.0) * 0.0025
-        def_stat = max(20.0, defender.durability_stat)
-
-        atk_name_low = attack.get("name", "").lower()
-        if any(imm.lower() in atk_name_low for imm in defender.immunities if imm):
-            return 0, f"{attacker.name} used {attack['name']}, but {defender.name} is immune!"
-
-        mult = 1.0
-        if any(w.lower() in atk_name_low for w in defender.weaknesses if w):
-            mult *= 1.30
-        if any(r.lower() in atk_name_low for r in defender.resistances if r):
-            mult *= 0.78
-        if defender.has_ability_type("defensive"):
-            mult *= 0.90
-
-        roll = self.rng.uniform(0.90, 1.05)
-        raw_dmg = ((base_power * (off_stat / def_stat) * skill_bonus) * 0.42 + 10) * mult * roll
-        actual = defender.take_damage(max(5, int(raw_dmg)))
-        return actual, f"{attacker.name} used {attack['name']} for {actual} damage!"
+        offense = attacker.strength_stat if cat in ("physical", "weapon") else attacker.energy_stat
+        return resolve_technique_damage(
+            attacker, defender, attack, base_power, offense, defender.durability_stat, self.rng
+        )
 
     def run(self) -> BattleResult:
         rem_a = self.remaining_count(self.player_a_id)
@@ -310,6 +303,8 @@ class MarvelBattleSimulator:
                         "event_type": "attack",
                         "side": side,
                         "target_side": target_side,
+                        "attacker_id": char.combatant_id,
+                        "defender_id": opp.combatant_id,
                         "move_name": atk["name"],
                         "category": atk.get("category", "physical"),
                         "damage": dmg,
@@ -319,14 +314,7 @@ class MarvelBattleSimulator:
                         action_details.append({"event_type": "faint", "side": target_side})
 
             for pid in (self.player_a_id, self.player_b_id):
-                c = self.get_active(pid)
-                if c and not c.is_fainted:
-                    if c.shield_turns > 0:
-                        c.shield_turns -= 1
-                    if c.has_ability_type("healing_support"):
-                        healed = c.heal(max(2, c.max_hp // 18))
-                        if healed > 0:
-                            events.append(f"{c.name} regenerated {healed} HP.")
+                end_nonpokemon_turn(self.get_active(pid), events)
 
             cur_a = self.get_active(self.player_a_id)
             cur_b = self.get_active(self.player_b_id)
@@ -349,8 +337,4 @@ class MarvelBattleSimulator:
             return BattleResult(self.player_a_id, self.player_b_id, False, "TEAM_ELIMINATION", turns, self.seed, hp_a, hp_b, rem_a, rem_b, self.turn_log)
         if rem_b > 0 and rem_a == 0:
             return BattleResult(self.player_b_id, self.player_a_id, False, "TEAM_ELIMINATION", turns, self.seed, hp_a, hp_b, rem_a, rem_b, self.turn_log)
-        if hp_a > hp_b:
-            return BattleResult(self.player_a_id, self.player_b_id, False, "TIME_LIMIT_HP", turns, self.seed, hp_a, hp_b, rem_a, rem_b, self.turn_log)
-        if hp_b > hp_a:
-            return BattleResult(self.player_b_id, self.player_a_id, False, "TIME_LIMIT_HP", turns, self.seed, hp_a, hp_b, rem_a, rem_b, self.turn_log)
         return BattleResult(None, None, True, "DRAW", turns, self.seed, hp_a, hp_b, rem_a, rem_b, self.turn_log)

@@ -433,6 +433,8 @@ class PokemonBattleSimulator:
                     "event_type": "attack",
                     "side": side,
                     "target_side": target_side,
+                    "attacker_id": attacker.combatant_id,
+                    "defender_id": defender.combatant_id,
                     "move_name": move["name"],
                     "category": "elemental" if move.get("category") == "Special" else "physical",
                     "damage": actual,

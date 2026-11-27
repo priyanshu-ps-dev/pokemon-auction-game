@@ -8,6 +8,8 @@ explicitly marks characters lacking verified combat data as unsupported.
 """
 
 import random
+
+from src.combat_interactions import end_nonpokemon_turn, resolve_technique_damage, spend_stamina
 from typing import Any, Dict, List, Optional, Tuple
 
 from src.battle_interface import BaseCombatant, BattleAction, BattleResult
@@ -57,7 +59,12 @@ class AnimeCombatant(BaseCombatant):
         self.abilities: List[Dict[str, Any]] = list(profile.get("abilities", []))
         self.transformations: List[Dict[str, Any]] = list(profile.get("transformations", []))
         self.active_transformation: Optional[str] = None
+        self.transformation_turns = 0
+        self.transformed_once = False
+        self.transformation_bonus = (0.0, 0.0)
         self.shield_turns: int = 0
+        self.max_stamina = max(24, int(stats.get("stamina", 76)))
+        self.stamina = self.max_stamina
         self._status: Optional[str] = None
 
         self.weaknesses: List[str] = list(profile.get("weaknesses") or [])
@@ -110,16 +117,30 @@ class AnimeCombatant(BaseCombatant):
         return any(a.get("ability_type") == ability_type for a in self.abilities)
 
     def activate_transformation(self, transformation_id: str) -> Tuple[bool, str]:
-        if self.active_transformation is not None:
-            return False, f"{self._name} is already transformed."
-        tf = next((t for t in self.transformations if t["id"] == transformation_id), None)
+        tf = next((form for form in self.get_available_transformations() if form["id"] == transformation_id), None)
         if not tf:
-            return False, "Transformation not found."
+            return False, "Transformation is unavailable."
+        self.stamina -= tf.get("stamina_cost", 18)
+        self.transformed_once = True
         self.active_transformation = tf["name"]
-        # Modest, transparent state boost when transformation is activated
-        self.attack_stat = min(115.0, self.attack_stat * 1.15)
-        self.defense_stat = min(115.0, self.defense_stat * 1.10)
+        self.transformation_turns = tf.get("duration_turns", 6)
+        boosted_attack = min(115.0, self.attack_stat * 1.15)
+        boosted_defense = min(115.0, self.defense_stat * 1.10)
+        self.transformation_bonus = (boosted_attack - self.attack_stat, boosted_defense - self.defense_stat)
+        self.attack_stat = boosted_attack
+        self.defense_stat = boosted_defense
         return True, f"{self._name} transformed into {tf['name']}!"
+
+    def tick_transformation(self):
+        if self.active_transformation:
+            self.transformation_turns -= 1
+            if self.transformation_turns == 0:
+                name = self.active_transformation
+                self.active_transformation = None
+                self.attack_stat -= self.transformation_bonus[0]
+                self.defense_stat -= self.transformation_bonus[1]
+                return f"{self._name} returned to base form as {name} wore off."
+        return None
 
     def take_damage(self, amount: int) -> int:
         if amount <= 0 or self.is_fainted:
@@ -141,9 +162,9 @@ class AnimeCombatant(BaseCombatant):
         return list(self.attacks)
 
     def get_available_transformations(self) -> List[Dict[str, Any]]:
-        if self.active_transformation is not None:
+        if self.transformed_once:
             return []
-        return list(self.transformations)
+        return [form for form in self.transformations if self.stamina >= form.get("stamina_cost", 18)]
 
     def to_summary_dict(self) -> Dict[str, Any]:
         return {
@@ -209,6 +230,8 @@ class AnimeBattleSimulator:
         defender: AnimeCombatant,
         attack: dict,
     ) -> Tuple[int, str]:
+        if not spend_stamina(attacker, attack):
+            return 0, f"{attacker.name} recovered stamina instead of using {attack['name']}."
         cat = attack.get("category", "unknown")
         if cat == "healing":
             healed = attacker.heal(max(15, int(attacker.max_hp * 0.25)))
@@ -221,26 +244,10 @@ class AnimeBattleSimulator:
             return 0, f"{attacker.name} used {attack['name']} to bolster combat readiness!"
 
         base_power = CATEGORY_BASE_POWER.get(cat, 60)
-        atk_val = attacker.strength_stat if cat == "physical" else attacker.attack_stat
-        def_val = max(20.0, defender.defense_stat)
-
-        # Check documented immunities / resistances / weaknesses
-        elem = (attack.get("element_or_energy_type") or "").lower()
-        if any(imm.lower() in elem for imm in defender.immunities if imm):
-            return 0, f"{attacker.name} used {attack['name']}, but {defender.name} is immune!"
-
-        mult = 1.0
-        if any(w.lower() in elem for w in defender.weaknesses if w):
-            mult *= 1.35
-        if any(r.lower() in elem for r in defender.resistances if r):
-            mult *= 0.75
-        if defender.has_ability_type("defensive"):
-            mult *= 0.90
-
-        roll = self.rng.uniform(0.90, 1.05)
-        raw_dmg = ((base_power * (atk_val / def_val)) * 0.45 + 10) * mult * roll
-        actual = defender.take_damage(max(5, int(raw_dmg)))
-        return actual, f"{attacker.name} used {attack['name']} for {actual} damage!"
+        offense = attacker.strength_stat if cat == "physical" else attacker.attack_stat
+        return resolve_technique_damage(
+            attacker, defender, attack, base_power, offense, defender.defense_stat, self.rng
+        )
 
     def run(self) -> BattleResult:
         rem_a = self.remaining_count(self.player_a_id)
@@ -320,6 +327,8 @@ class AnimeBattleSimulator:
                         "event_type": "attack",
                         "side": side,
                         "target_side": target_side,
+                        "attacker_id": char.combatant_id,
+                        "defender_id": opp.combatant_id,
                         "move_name": atk["name"],
                         "category": anim_cat,
                         "damage": dmg,
@@ -328,16 +337,8 @@ class AnimeBattleSimulator:
                         events.append(f"{opp.name} was defeated!")
                         action_details.append({"event_type": "faint", "side": target_side})
 
-            # End-of-turn passive healing & shield decay
-            for pid in (self.player_a_id, self.player_b_id):
-                c = self.get_active(pid)
-                if c and not c.is_fainted:
-                    if c.shield_turns > 0:
-                        c.shield_turns -= 1
-                    if c.has_ability_type("healing_support"):
-                        healed = c.heal(max(1, c.max_hp // 20))
-                        if healed > 0:
-                            events.append(f"{c.name} regenerated {healed} HP.")
+            for fighter in (act_a, act_b):
+                end_nonpokemon_turn(fighter, events)
 
             cur_a = self.get_active(self.player_a_id)
             cur_b = self.get_active(self.player_b_id)
@@ -360,8 +361,4 @@ class AnimeBattleSimulator:
             return BattleResult(self.player_a_id, self.player_b_id, False, "TEAM_ELIMINATION", turns, self.seed, hp_a, hp_b, rem_a, rem_b, self.turn_log)
         if rem_b > 0 and rem_a == 0:
             return BattleResult(self.player_b_id, self.player_a_id, False, "TEAM_ELIMINATION", turns, self.seed, hp_a, hp_b, rem_a, rem_b, self.turn_log)
-        if hp_a > hp_b:
-            return BattleResult(self.player_a_id, self.player_b_id, False, "TIME_LIMIT_HP", turns, self.seed, hp_a, hp_b, rem_a, rem_b, self.turn_log)
-        if hp_b > hp_a:
-            return BattleResult(self.player_b_id, self.player_a_id, False, "TIME_LIMIT_HP", turns, self.seed, hp_a, hp_b, rem_a, rem_b, self.turn_log)
         return BattleResult(None, None, True, "DRAW", turns, self.seed, hp_a, hp_b, rem_a, rem_b, self.turn_log)

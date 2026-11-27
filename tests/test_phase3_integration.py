@@ -153,7 +153,7 @@ class TestPhase3LiveMultiplayerLifecycle(unittest.TestCase):
                         "name": "Red",
                         "avatar": "red",
                         "session_id": "live_a",
-                        "starting_purse": 500,
+                        "starting_purse": 100,
                         "countdown_seconds": 2,
                         "anime_mode": "pokemon",
                     },
@@ -211,10 +211,10 @@ class TestPhase3LiveMultiplayerLifecycle(unittest.TestCase):
 
                             if not bid_placed_a:
                                 bid_placed_a = True
-                                await ws_a.send(json.dumps({"action": "place_bid", "data": {"amount": 20}}))
+                                await ws_a.send(json.dumps({"action": "place_bid", "data": {"amount": 20, "match_id": msg["data"]["room_state"]["match_id"], "round_id": msg["data"]["auction_round"]}}))
                             elif not bid_placed_b:
                                 bid_placed_b = True
-                                await ws_b.send(json.dumps({"action": "place_bid", "data": {"amount": 25}}))
+                                await ws_b.send(json.dumps({"action": "place_bid", "data": {"amount": 25, "match_id": msg["data"]["room_state"]["match_id"], "round_id": msg["data"]["auction_round"]}}))
                             else:
                                 # Skip remaining rounds quickly so pool exhausts fast
                                 await ws_a.send(json.dumps({"action": "skip_character", "data": {}}))

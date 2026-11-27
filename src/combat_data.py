@@ -8,6 +8,8 @@ combat mechanics across universes.
 
 import json
 import os
+
+from src.canonical_roster import load_mcu_roster
 from typing import Any, Dict, List, Optional, Union
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -58,6 +60,7 @@ class CombatDataProvider:
         self.anime_combat_by_id: Dict[str, dict] = _load_json(
             os.path.join(data_dir, "anime_combat_database.json")
         ).get("characters", {})
+        self.anime_overrides = _load_json(os.path.join(data_dir, "anime_combat_overrides.json"))
         self.anime_attacks_by_id: Dict[str, dict] = _load_json(
             os.path.join(data_dir, "anime_character_attacks.json")
         ).get("attacks", {})
@@ -68,7 +71,9 @@ class CombatDataProvider:
             os.path.join(data_dir, "anime_transformations.json")
         ).get("transformations", {})
 
-        # Marvel datasets
+        self.mcu_by_id = load_mcu_roster(data_dir)
+
+        # Archived Marvel datasets
         self.marvel_combat_by_id: Dict[str, dict] = _load_json(
             os.path.join(data_dir, "marvel_combat_database.json")
         ).get("characters", {})
@@ -201,6 +206,8 @@ class CombatDataProvider:
 
         # Marvel character lookup
         cid = str(character_or_id.get("id") or character_or_id.get("character_id")) if isinstance(character_or_id, dict) else str(character_or_id)
+        if cid in self.mcu_by_id:
+            return {"system": "marvel", **self.mcu_by_id[cid]}
         if cid in self.marvel_combat_by_id:
             mprof = self.marvel_combat_by_id[cid]
             return {
@@ -231,6 +238,19 @@ class CombatDataProvider:
             return None
 
         base_char = self.anime_chars_by_id.get(cid, {})
+        override = self.anime_overrides.get(cid, {})
+        attacks = override.get("attacks")
+        if attacks is None:
+            attack_ids = override.get("attack_ids", profile.get("attack_ids", []))
+            attacks = [self.anime_attacks_by_id[aid] for aid in attack_ids if aid in self.anime_attacks_by_id]
+        excluded_forms = set(override.get("exclude_transformations", []))
+        form_settings = override.get("transformation_settings", {})
+        transformations = [
+            {**form, **form_settings.get(form["id"], {})}
+            for form in self.get_anime_transformations(cid)
+            if form["id"] not in excluded_forms
+        ]
+        transformations.extend(override.get("extra_transformations", []))
         return {
             "system": "anime",
             "character_id": cid,
@@ -238,10 +258,10 @@ class CombatDataProvider:
             "anime_id": profile.get("anime_id"),
             "anime_name": profile.get("anime_name"),
             "energy_system": profile.get("energy_system"),
-            "stats": base_char.get("stats", {}),
-            "attacks": self.get_anime_attacks(cid),
+            "stats": {**base_char.get("stats", {}), **override.get("stats", {})},
+            "attacks": attacks,
             "abilities": self.get_anime_abilities(cid),
-            "transformations": self.get_anime_transformations(cid),
+            "transformations": transformations,
             "weapons": profile.get("weapons", []),
             "weaknesses": profile.get("weaknesses"),
             "resistances": profile.get("resistances"),
@@ -249,6 +269,7 @@ class CombatDataProvider:
             "status_effects_inflicted": profile.get("status_effects_inflicted"),
             "status_effects_resisted": profile.get("status_effects_resisted"),
             "canon_status": profile.get("canon_status"),
-            "verification_status": profile.get("verification_status"),
-            "source": profile.get("source"),
+            "verification_status": "verified_curated" if attacks and override else profile.get("verification_status"),
+            "profile_version": override.get("profile_version", 1),
+            "source": override.get("source", profile.get("source")),
         }

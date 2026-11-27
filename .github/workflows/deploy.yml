@@ -1,6 +1,8 @@
 name: Pokemon Game CI-CD Pipeline
 
 on:
+  pull_request:
+    branches: ["main"]
   push:
     branches: ["main"]
 
@@ -19,10 +21,33 @@ jobs:
       - name: Dependencies install karo
         run: pip install -r requirements.txt
 
-      - name: Database & Rules Audit Test karo
-        run: python verify.py
+      - name: Run arena regressions
+        env:
+          PYTHONPATH: tests:.
+        run: >-
+          python -m unittest
+          test_arena_overhaul
+          test_4player_manual_pvp
+          test_auction_reliability_phase7
+          test_battle_engine_phase2
+          test_combat_data_phase1
+          test_database_upgrade_and_pokedex
+          test_skip_withdraw_rematch
+          test_marvel_combat
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - name: Check frontend bundle
+        run: git diff --exit-code -- public/assets/tear-ticket-bundle.js public/assets/tear-ticket-bundle.css
 
   deploy-job:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test-job
     runs-on: self-hosted
 

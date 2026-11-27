@@ -127,8 +127,13 @@ class TestPhase5Competitive(unittest.TestCase):
             html = f.read()
         with open(os.path.join(BASE_DIR, "public", "game.js"), encoding="utf-8") as f:
             js = f.read()
-        for hook in ("battle-control-select", "tournament-format-select", "battle-control-panel", "battle-moves-grid"):
+        for hook in ("battle-control-panel", "battle-moves-grid"):
             self.assertIn(hook, html)
+        ticket = os.path.join(BASE_DIR, "src", "components", "AuctionTicketModal.jsx")
+        with open(ticket, encoding="utf-8") as file:
+            ticket_source = file.read()
+        for hook in ("ticket-battle-control", "ticket-tournament-format"):
+            self.assertIn(hook, ticket_source)
         for fn in ("renderInteractiveTurnPrompt", "submit_battle_action", "battle_turn_resolved"):
             self.assertIn(fn, js)
 

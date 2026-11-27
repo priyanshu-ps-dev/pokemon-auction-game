@@ -142,7 +142,7 @@ class TestPvPRepeatedRematchesLive(unittest.TestCase):
                     "action": "create_room",
                     "data": {
                         "name": "P1", "avatar": "red", "session_id": "rem_p1",
-                        "starting_purse": 500, "countdown_seconds": 1,
+                        "starting_purse": 100, "countdown_seconds": 1,
                         "anime_mode": "pokemon", "battle_control_mode": "player_vs_player",
                     },
                 }))
@@ -152,7 +152,7 @@ class TestPvPRepeatedRematchesLive(unittest.TestCase):
                     "action": "join_room",
                     "data": {"room_code": code, "name": "P2", "avatar": "blue", "session_id": "rem_p2"},
                 }))
-                await ws2.recv()
+                j2 = json.loads(await ws2.recv())
                 await ws1.send(json.dumps({"action": "start_game", "data": {}}))
 
                 match_rosters = []
@@ -193,19 +193,19 @@ class TestPvPRepeatedRematchesLive(unittest.TestCase):
                             if t == "auction_started":
                                 if not p1_bid_done:
                                     p1_bid_done = True
-                                    await ws1.send(json.dumps({"action": "place_bid", "data": {"amount": 20}}))
+                                    await ws1.send(json.dumps({"action": "place_bid", "data": {"amount": 20, "match_id": msg["data"]["room_state"]["match_id"], "round_id": msg["data"]["auction_round"]}}))
                                 elif not p2_bid_done:
                                     p2_bid_done = True
-                                    await ws2.send(json.dumps({"action": "place_bid", "data": {"amount": 20}}))
+                                    await ws2.send(json.dumps({"action": "place_bid", "data": {"amount": 20, "match_id": msg["data"]["room_state"]["match_id"], "round_id": msg["data"]["auction_round"]}}))
                                 else:
                                     await ws1.send(json.dumps({"action": "skip_character", "data": {}}))
                                     await ws2.send(json.dumps({"action": "skip_character", "data": {}}))
                             elif t == "auction_sold":
                                 wid = msg["data"]["winner_id"]
                                 cname = msg["data"]["character"]["name"]
-                                if wid == "rem_p1":
+                                if wid == m1["data"]["session_id"]:
                                     expected_p1_chars.add(cname)
-                                elif wid == "rem_p2":
+                                elif wid == j2["data"]["session_id"]:
                                     expected_p2_chars.add(cname)
                             elif t == "battle_turn_prompt":
                                 d = msg["data"]

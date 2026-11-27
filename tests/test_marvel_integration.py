@@ -45,7 +45,7 @@ class TestMarvelAuctionAndTournament(unittest.TestCase):
         rm = RoomManager(self.anime_db)
 
         r_marvel = rm.create_room("H", "red", "s1", anime_mode="marvel")
-        self.assertEqual(len(r_marvel.character_pool), 26)  # 26 combat-verified, 2 civilians excluded
+        self.assertEqual(len(r_marvel.character_pool), 52)  # Curated MCU screen fighters
         self.assertTrue(all(c["anime_id"] == "marvel" for c in r_marvel.character_pool))
 
         r_pm = rm.create_room("H", "red", "s2", anime_mode="pokemon_marvel")
@@ -75,13 +75,10 @@ class TestMarvelAuctionAndTournament(unittest.TestCase):
 
     def test_03_frontend_marvel_hooks_present(self):
         """Frontend HTML and JS include Marvel mode buttons, filter toggle, and stats rendering."""
-        with open(os.path.join(BASE_DIR, "public", "index.html"), encoding="utf-8") as f:
-            html = f.read()
-        with open(os.path.join(BASE_DIR, "public", "game.js"), encoding="utf-8") as f:
-            js = f.read()
-        for marker in ('data-mode="marvel"', 'data-mode="pokemon_marvel"', 'data-mode="anime_marvel"', 'data-franchise="marvel"'):
-            self.assertIn(marker, html)
-        self.assertIn("energy_projection", js)
+        with open(os.path.join(BASE_DIR, "src", "components", "AuctionTicketModal.jsx"), encoding="utf-8") as file:
+            self.assertIn("Marvel MCU", file.read())
+        with open(os.path.join(BASE_DIR, "public", "game.js"), encoding="utf-8") as file:
+            self.assertIn("energy_projection", file.read())
 
 
 class TestMarvelLiveServerIntegration(unittest.TestCase):
@@ -121,7 +118,7 @@ class TestMarvelLiveServerIntegration(unittest.TestCase):
                     "action": "create_room",
                     "data": {
                         "name": "Stark", "avatar": "red", "session_id": "m_live_1",
-                        "starting_purse": 500, "countdown_seconds": 1,
+                        "starting_purse": 100, "countdown_seconds": 1,
                         "anime_mode": "marvel", "battle_control_mode": "ai_vs_ai",
                     },
                 }))
@@ -156,10 +153,10 @@ class TestMarvelLiveServerIntegration(unittest.TestCase):
                             self.assertNotIn("stats", ch)
                             if not b1:
                                 b1 = True
-                                await ws1.send(json.dumps({"action": "place_bid", "data": {"amount": 20}}))
+                                await ws1.send(json.dumps({"action": "place_bid", "data": {"amount": 20, "match_id": msg["data"]["room_state"]["match_id"], "round_id": msg["data"]["auction_round"]}}))
                             elif not b2:
                                 b2 = True
-                                await ws2.send(json.dumps({"action": "place_bid", "data": {"amount": 20}}))
+                                await ws2.send(json.dumps({"action": "place_bid", "data": {"amount": 20, "match_id": msg["data"]["room_state"]["match_id"], "round_id": msg["data"]["auction_round"]}}))
                             else:
                                 await ws1.send(json.dumps({"action": "skip_character", "data": {}}))
                                 await ws2.send(json.dumps({"action": "skip_character", "data": {}}))
