@@ -84,10 +84,14 @@ async function game(browser, width) {
 
     const hostId = await host.evaluate(() => sessionStorage.getItem('pkmn_auction_session_id'));
     const guestId = await guest.evaluate(() => sessionStorage.getItem('pkmn_auction_session_id'));
+    const hostPersistentId = await host.evaluate(() => localStorage.getItem('pkmn_auction_session_id'));
+    const guestPersistentId = await guest.evaluate(() => localStorage.getItem('pkmn_auction_session_id'));
     await Promise.all([host.reload(), guest.reload()]);
     await Promise.all([host.locator(stage).waitFor(), guest.locator(stage).waitFor()]);
     assert.equal(await host.evaluate(() => sessionStorage.getItem('pkmn_auction_session_id')), hostId);
     assert.equal(await guest.evaluate(() => sessionStorage.getItem('pkmn_auction_session_id')), guestId);
+    assert.equal(await host.evaluate(() => localStorage.getItem('pkmn_auction_session_id')), hostPersistentId);
+    assert.equal(await guest.evaluate(() => localStorage.getItem('pkmn_auction_session_id')), guestPersistentId);
     assert.equal(await host.locator('#current-bid-amount').textContent(), '6');
     assert.ok(await host.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     await snap(host, `auction-${width}`);

@@ -6,11 +6,29 @@
  * informed character profiles during bidding, and detailed final results.
  */
 
+const ROOM_SESSION_KEYS = ['room_code', 'session_id', 'reconnect_token'];
+
+function readRoomSessionValue(key) {
+  const storageKey = `pkmn_auction_${key}`;
+  // localStorage survives a full refresh/browser restart. Fall back to the
+  // previous sessionStorage location so existing rooms migrate seamlessly.
+  return localStorage.getItem(storageKey) || sessionStorage.getItem(storageKey);
+}
+
+function persistRoomSession(roomCode, sessionId, reconnectToken) {
+  const values = {room_code: roomCode, session_id: sessionId, reconnect_token: reconnectToken};
+  for (const [key, value] of Object.entries(values)) {
+    const storageKey = `pkmn_auction_${key}`;
+    localStorage.setItem(storageKey, value);
+    sessionStorage.setItem(storageKey, value);
+  }
+}
+
 const gameState = {
   ws: null,
-  sessionId: sessionStorage.getItem("pkmn_auction_session_id"),
-  reconnectToken: sessionStorage.getItem("pkmn_auction_reconnect_token"),
-  roomCode: sessionStorage.getItem('pkmn_auction_room_code') || null,
+  sessionId: readRoomSessionValue('session_id'),
+  reconnectToken: readRoomSessionValue('reconnect_token'),
+  roomCode: readRoomSessionValue('room_code') || null,
   isHost: false,
   isWithdrawn: false,
   myName: localStorage.getItem('pkmn_auction_name') || 'Trainer Red',
@@ -99,8 +117,10 @@ function clearRoomSession() {
   gameState.sessionId = null;
   gameState.reconnectToken = null;
   gameState.roomState = null;
-  for (const key of ['room_code', 'session_id', 'reconnect_token']) {
-    sessionStorage.removeItem('pkmn_auction_' + key);
+  for (const key of ROOM_SESSION_KEYS) {
+    const storageKey = 'pkmn_auction_' + key;
+    localStorage.removeItem(storageKey);
+    sessionStorage.removeItem(storageKey);
   }
 }
 
@@ -155,11 +175,9 @@ function handleServerMessage(type, data) {
       gameState.roomCode = data.room_code;
       gameState.sessionId = data.session_id;
       gameState.reconnectToken = data.reconnect_token;
-      sessionStorage.setItem('pkmn_auction_session_id', data.session_id);
-      sessionStorage.setItem('pkmn_auction_reconnect_token', data.reconnect_token);
+      persistRoomSession(data.room_code, data.session_id, data.reconnect_token);
       gameState.isHost = data.is_host;
       gameState.roomState = data.room_state;
-      sessionStorage.setItem('pkmn_auction_room_code', data.room_code);
       const rs = data.room_state || {};
       const status = rs.status || 'LOBBY';
       gameState.currentMatchId = rs.match_id;
