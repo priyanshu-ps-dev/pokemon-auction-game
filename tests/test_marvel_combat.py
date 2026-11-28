@@ -150,8 +150,14 @@ class TestMarvelCombatAndImporter(unittest.TestCase):
         self.assertEqual({c["id"] for c in catalog["characters"]},
                          {c["id"] for c in db.get_characters_for_mode(mode="marvel")})
         self.assertIsNone(db.get_character_by_id("marvel_616_thor"))
-        self.assertTrue(all(c["image"].startswith("/api/avatar/marvel_mcu_")
+        expected_prefix = "/assets/avatars/marvel/"
+        self.assertTrue(all(c["image"].startswith(expected_prefix)
+                            and c["image"].endswith(".jpg")
                             for c in catalog["characters"]))
+        for character in catalog["characters"]:
+            local_path = os.path.join(base_dir, "public", character["image"].lstrip("/"))
+            self.assertTrue(os.path.isfile(local_path), character["name"])
+            self.assertGreater(os.path.getsize(local_path), 10_000, character["name"])
 
 
 if __name__ == "__main__":
