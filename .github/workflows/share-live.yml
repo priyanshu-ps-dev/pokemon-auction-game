@@ -1,0 +1,75 @@
+name: Temporary Public Game Link
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/share-live.yml"
+
+jobs:
+  share-game:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install game dependencies
+        run: pip install -r requirements.txt
+
+      - name: Start game server
+        run: |
+          nohup python server.py 5050 >game-server.log 2>&1 &
+          echo $! >game-server.pid
+          for attempt in {1..30}; do
+            if curl -fsS http://127.0.0.1:5050/api/stats >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat game-server.log
+          exit 1
+
+      - name: Start Cloudflare tunnel
+        run: |
+          curl -fsSL --retry 3 \
+            https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
+            -o cloudflared
+          chmod +x cloudflared
+          nohup ./cloudflared tunnel --url http://127.0.0.1:5050 --no-autoupdate --protocol http2 \
+            >cloudflared.log 2>&1 &
+          echo $! >cloudflared.pid
+          for attempt in {1..45}; do
+            LIVE_URL=$(grep -Eo 'https://[-a-z0-9]+\.trycloudflare\.com' cloudflared.log | head -1 || true)
+            if [ -n "$LIVE_URL" ] && curl -fsS "$LIVE_URL/api/stats" >/dev/null; then
+              printf '%s\n' "$LIVE_URL" >live-url.txt
+              echo "## Live game: $LIVE_URL" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep 1
+          done
+          cat cloudflared.log
+          exit 1
+
+      - name: Publish live URL
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-game-url
+          path: live-url.txt
+          retention-days: 1
+          overwrite: true
+
+      - name: Keep game online
+        run: |
+          LIVE_URL=$(cat live-url.txt)
+          echo "Game is live at $LIVE_URL"
+          while kill -0 "$(cat game-server.pid)" && kill -0 "$(cat cloudflared.pid)"; do
+            curl -fsS "$LIVE_URL/api/stats" >/dev/null || true
+            sleep 30
+          done
+          cat game-server.log
+          cat cloudflared.log
+          exit 1
